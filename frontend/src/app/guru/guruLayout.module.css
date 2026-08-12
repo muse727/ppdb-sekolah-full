@@ -1,0 +1,100 @@
+.layoutContainer { 
+    display: flex; height: 100vh; background-color: #f4f7fb; overflow: hidden; 
+    font-family: 'Poppins', sans-serif;
+}
+
+/* === SIDEBAR DESKTOP === */
+.sidebar {
+    width: 260px; background-color: #1a5f51; color: white; display: flex; flex-direction: column;
+    padding: 30px 20px; box-shadow: 4px 0 20px rgba(0,0,0,0.05); z-index: 10;
+}
+
+.brand h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;}
+.brand p { margin: 0 0 30px 0; font-size: 12px; color: #a7f3d0; font-weight: 500;}
+
+.navMenu { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 5px;}
+.navMenu::-webkit-scrollbar { width: 4px; }
+.navMenu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.navItem {
+    display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px;
+    cursor: pointer; transition: 0.2s; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+.iconWrapper { width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; }
+
+.navItem:hover { background-color: rgba(255,255,255,0.1); color: white; }
+.active { background-color: white !important; color: #1a5f51 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+.logoutBtn { 
+    display: flex; align-items: center; gap: 15px; padding: 12px 16px; cursor: pointer; 
+    font-weight: 700; color: #fca5a5; transition: 0.2s; font-size: 13px; margin-top: 15px;
+}
+.logoutBtn:hover { background-color: rgba(239, 68, 68, 0.15); border-radius: 12px; color: #fecaca;}
+
+/* === MAIN CONTENT === */
+.mainContent { flex: 1; overflow-y: auto; position: relative; background: #f4f7fb; }
+.contentWrapper { min-height: 100%; padding-bottom: 0; }
+
+.mobileNav { display: none; }
+
+@media (max-width: 1024px) {
+    .sidebar { width: 220px; padding: 25px 15px; }
+}
+
+/* === RESPONSIVE MOBILE FIX (NAVBAR BAWAH) === */
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .layoutContainer { flex-direction: column; background: #f4f7fb; }
+    
+    .contentWrapper { padding-bottom: 85px; }
+    
+    .mobileNav {
+        display: flex; 
+        justify-content: flex-start; /* Berubah menjadi rata kiri agar bisa di-scroll */
+        align-items: center;
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+        background: white; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        z-index: 100; padding: 0 15px; box-sizing: border-box;
+        border-top-left-radius: 20px; border-top-right-radius: 20px;
+        overflow-x: auto; /* Mengizinkan penggeseran menu jika layar sempit */
+        gap: 15px; 
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    /* Menyembunyikan bar gulir bawaan */
+    .mobileNav::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .mobileNavItem {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 65px; height: 100%; color: #94a3b8; cursor: pointer; transition: 0.3s ease; gap: 4px;
+        flex-shrink: 0; /* Mencegah item tergencet */
+    }
+    
+    .mobileIconWrapper { 
+        width: 48px; 
+        height: 32px; 
+        display: flex; justify-content: center; align-items: center; 
+        border-radius: 16px;
+        transition: 0.3s ease;
+    }
+    
+    .mobileIconWrapper svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mobileNavItem span { font-size: 10px; font-weight: 600; transition: 0.3s ease;}
+    
+    /* STATE AKTIF */
+    .mobileActive { color: #1a5f51; }
+    .mobileActive .mobileIconWrapper { 
+        background: #e8f5e9; 
+        color: #1a5f51;
+    }
+    .mobileActive span {
+        font-weight: 800;
+    }
+}

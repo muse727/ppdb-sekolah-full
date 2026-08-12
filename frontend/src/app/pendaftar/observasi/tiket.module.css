@@ -1,0 +1,62 @@
+/* src/app/pendaftar/observasi/tiket.module.css */
+
+/* KUNCI LEBAR BIAR GAK MELAR DI DESKTOP */
+.mobileContainer { 
+    width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; 
+    background: #f8fafc; padding-bottom: 40px; box-shadow: 0 0 50px rgba(0,0,0,0.1); 
+    font-family: 'Poppins', sans-serif;
+}
+.loading { text-align: center; padding: 50px; color: #1a5f51; font-weight: 800; }
+
+.headerMini { background-color: #1a5f51; padding: 25px 20px 40px 20px; color: white; border-radius: 0 0 30px 30px; display: flex; align-items: center; gap: 15px; }
+.backBtn { background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+.backBtn:hover { background: rgba(255,255,255,0.3); }
+.headerTitle { margin: 0 0 5px 0; font-size: 20px; font-weight: 800; }
+.headerSubtitle { margin: 0; font-size: 13px; opacity: 0.8; }
+
+.contentWrap { padding: 0 20px; margin-top: -20px; position: relative; z-index: 5; }
+
+.introBox { background: white; padding: 15px; border-radius: 15px; border: 1px solid #edf2f7; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02);}
+.introBox p { margin: 0; font-size: 13px; color: #4a5568; line-height: 1.5;}
+
+/* TIKET DESAIN MEWAH */
+.ticketCard { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 30px rgba(26, 95, 81, 0.08); border: 1px solid #edf2f7; position: relative;}
+.ticketHeader { background: #1a5f51; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; color: white;}
+.schoolInfo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; letter-spacing: 1px;}
+.ticketStatus { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;}
+
+.ticketBody { padding: 25px 20px; display: flex; flex-direction: column; gap: 25px; border-bottom: 2px dashed #cbd5e0; position: relative;}
+
+/* Bolongan Tiket Kiri Kanan */
+.ticketBody::before, .ticketBody::after { content: ''; position: absolute; bottom: -15px; width: 30px; height: 30px; background: #f8fafc; border-radius: 50%; border-top: 1px solid #edf2f7; z-index: 2;}
+.ticketBody::before { left: -15px; border-right: 1px solid #edf2f7; transform: rotate(45deg);}
+.ticketBody::after { right: -15px; border-left: 1px solid #edf2f7; transform: rotate(-45deg);}
+
+.barcodeSection { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-bottom: 20px; border-bottom: 2px dashed #edf2f7; width: 100%;}
+.regNumber { font-size: 14px; font-weight: 900; color: #1a5f51; letter-spacing: 3px;}
+
+.infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;}
+.infoItem label { font-size: 10px; font-weight: 800; color: #a0aec0; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px;}
+.infoItem h3 { margin: 0; font-size: 14px; font-weight: 800; color: #2d3748; line-height: 1.3;}
+
+/* FOOTER UNTUK SD (OBSERVASI) */
+.ticketFooter { background: #e8f5e9; padding: 20px; color: #1a5f51; display: flex; align-items: flex-start; gap: 12px;}
+.footerIcon { flex-shrink: 0; margin-top: 2px;}
+.ticketFooter p { margin: 0 0 10px 0; font-size: 12px; font-weight: 600; line-height: 1.5;}
+.perlengkapanBox { background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #a7f3d0; font-size: 13px; color: #065f46; font-weight: 500;}
+
+/* KONDISI BELUM ADA JADWAL */
+.emptyCard { background: white; border-radius: 20px; padding: 50px 30px; text-align: center; border: 2px dashed #cbd5e0; }
+.emptyIcon { color: #a0aec0; margin-bottom: 20px; }
+.emptyCard h2 { margin: 0 0 10px 0; color: #4a5568; font-size: 20px; font-weight: 800;}
+.emptyCard p { margin: 0; color: #718096; font-size: 14px; line-height: 1.6;}
+
+/* TAMBAHAN UNTUK FOOTER CBT (SMP) */
+.cbtFooter { background: #f8fafc; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-top: 1px solid #edf2f7; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;}
+.cbtText { color: #4a5568; font-size: 12px; font-weight: 500; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;}
+.cbtText svg { color: #1a5f51; flex-shrink: 0; margin-top: 2px;}
+
+/* KOTAK TOKEN UJIAN */
+.tokenDisplayBox { background: #ffffff; border: 2px dashed #cbd5e0; padding: 12px; border-radius: 12px; text-align: center; display: flex; flex-direction: column; gap: 5px;}
+.tokenLabel { font-size: 10px; font-weight: 800; color: #a0aec0; letter-spacing: 1px; text-transform: uppercase;}
+.tokenValue { font-size: 16px; font-weight: 900; color: #1a5f51; letter-spacing: 1px;}

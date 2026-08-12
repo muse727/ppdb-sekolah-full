@@ -1,0 +1,138 @@
+/* src/app/dashboard/kelulusan/kelulusan.module.css */
+
+.container { padding: 40px; width: 100%; max-width: 100%; margin: 0; font-family: 'Poppins', sans-serif; text-align: left;}
+.loading { padding: 50px; text-align: center; color: #1a5f51; font-weight: 800; }
+
+.header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; gap: 20px;}
+.titleArea h1 { font-size: 32px; font-weight: 900; color: #1a5f51; margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px;}
+.titleArea h1 span { background: #e6f0ee; color: #134e40; padding: 4px 12px; border-radius: 8px; font-size: 16px; font-weight: 900;}
+.titleArea p { margin: 0; color: #718096; font-size: 15px; font-weight: 500; }
+
+/* KOTAK STATISTIK */
+.statCards { display: flex; gap: 15px; }
+.statBox { background: white; padding: 15px 25px; border-radius: 16px; border: 1px solid #edf2f7; box-shadow: 0 5px 15px rgba(0,0,0,0.02); text-align: center; min-width: 120px;}
+.statVal { font-size: 24px; font-weight: 900; line-height: 1;}
+.statLabel { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; margin-top: 5px; letter-spacing: 0.5px;}
+
+/* TAB JENJANG */
+.tabContainer { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;}
+.tabBtn { padding: 10px 24px; border-radius: 12px; font-weight: 800; font-size: 14px; border: 1px solid #edf2f7; background: white; color: #a0aec0; cursor: pointer; transition: 0.2s; font-family: inherit; display: flex; align-items: center; gap: 8px;}
+.tabBtn:hover { background: #edf2f7; color: #4a5568;}
+.tabActive { background: #1a5f51; color: white; border-color: #1a5f51; box-shadow: 0 5px 15px rgba(26,95,81,0.2);}
+.tabActive:hover { background: #134e40; color: white;}
+
+/* KARTU UTAMA */
+.card { background: white; border-radius: 20px; border: 1px solid #edf2f7; box-shadow: 0 15px 40px rgba(0,0,0,0.03); overflow: hidden; width: 100%;}
+.toolbar { padding: 20px 25px; background: white; border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
+
+.searchWrapper { 
+    position: relative; 
+    width: 100%; 
+    max-width: 350px; 
+    display: flex;
+    align-items: center;
+}
+
+/* Bersihkan SVG agar warnanya abu-abu lembut elegan */
+.searchWrapper svg { 
+    position: absolute; 
+    left: 15px; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    stroke: #a0aec0 !important; /* Paksa warna stroke ke soft gray */
+    pointer-events: none;
+}
+
+/* Kembalikan warna text input dan background ke standard Go Skool */
+.searchInput { 
+    width: 100%; 
+    padding: 12px 20px 12px 45px; 
+    border-radius: 10px; 
+    border: 2px solid #edf2f7; 
+    font-family: inherit; 
+    font-size: 13.5px; 
+    font-weight: 600;
+    outline: none; 
+    background: #f8fafc; /* Rona background abu-abu bersih */
+    color: #2d3748 !important; /* Text dalam kotak pencarian warna charcoal pekat */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efek saat admin fokus ngetik di input pencarian */
+.searchInput:focus { 
+    border-color: #1a5f51 !important; 
+    background: #ffffff; 
+    box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.08);
+}
+
+/* Sempurnakan warna teks placeholder */
+.searchInput::placeholder {
+    color: #cbd5e0;
+    font-weight: 500;
+}
+
+.statusSelect { padding: 12px 15px; border-radius: 10px; border: 2px solid #edf2f7; font-family: inherit; font-size: 13px; font-weight: 700; color: #4a5568; outline: none; background: #f8fafc; cursor: pointer;}
+
+/* BULK ACTIONS */
+.bulkActions { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 6px 6px 15px; border-radius: 12px; border: 1px solid #edf2f7;}
+.selectedCount { font-size: 12px; font-weight: 800; color: #4a5568; margin-right: 5px;}
+.btnAction { padding: 8px 15px; border-radius: 8px; font-weight: 800; font-size: 12px; border: none; cursor: pointer; color: white; transition: 0.2s; font-family: inherit;}
+.btnSuccess { background: #10b981; } .btnSuccess:hover { background: #059669; }
+.btnDanger { background: #ef4444; } .btnDanger:hover { background: #dc2626; }
+.btnNeutral { background: #cbd5e0; color: #4a5568;} .btnNeutral:hover { background: #94a3b8; color: white; }
+
+/* TABEL */
+.tableWrapper { width: 100%; overflow-x: auto; }
+.dataTable { width: 100%; border-collapse: collapse; }
+.dataTable th { text-align: left; padding: 18px 25px; background: #f8fafc; border-bottom: 2px solid #edf2f7; font-size: 12px; color: #a0aec0; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;}
+.dataTable td { padding: 20px 25px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+.dataTable tr:hover { background: #f8fdfa; }
+.rowSelected { background: #f0fdf4 !important; }
+
+.customCheckbox { width: 20px; height: 20px; cursor: pointer; accent-color: #1a5f51;}
+
+.studentName { font-weight: 800; color: #1a5f51; font-size: 15px; }
+.submitTime { font-size: 13px; color: #718096; font-weight: 500;}
+
+/* BADGES STATUS KELULUSAN */
+.badge { padding: 6px 15px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 1px; display: inline-block;}
+.badgeLulus { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0;}
+.badgeGagal { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;}
+.badgeBelum { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;}
+
+/* QUICK ACTIONS DALAM TABEL */
+.quickActionGroup { display: flex; gap: 8px; justify-content: flex-end;}
+.btnQuick { padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 11px; border: 1px solid transparent; cursor: pointer; font-family: inherit; transition: 0.2s; display: flex; align-items: center; gap: 5px;}
+.quickSuccess { background: white; border-color: #10b981; color: #10b981;} .quickSuccess:hover { background: #10b981; color: white;}
+.quickDanger { background: white; border-color: #ef4444; color: #ef4444;} .quickDanger:hover { background: #ef4444; color: white;}
+.quickReset { background: #f1f5f9; color: #64748b;} .quickReset:hover { background: #e2e8f0; color: #475569;}
+
+.settingJadwalCard { background: white; border-radius: 20px; padding: 25px; border: 1px solid #edf2f7; box-shadow: 0 10px 25px rgba(0,0,0,0.02); margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px;}
+.settingHeader { display: flex; gap: 15px; align-items: center; color: #1a5f51;}
+.settingHeader h3 { margin: 0 0 3px 0; font-size: 16px; font-weight: 800;}
+.settingHeader p { margin: 0; color: #718096; font-size: 13px;}
+.settingForm { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #cbd5e0;}
+.inputWrapperUnified { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 250px;}
+.inputWrapperUnified label { font-size: 13px; font-weight: 800; color: #1a5f51; }
+.datetimeInput { 
+    width: 100%;
+    padding: 12px 15px; 
+    border-radius: 10px; 
+    border: 2px solid #cbd5e0; /* Border sedikit lebih tegas */
+    font-family: inherit; 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: #2d3748 !important; /* Paksa text warna gelap */
+    outline: none;
+    background-color: #ffffff !important; /* Paksa background jadi putih bersih */
+    color-scheme: light; /* Cegah browser maksa UI kalender jadi dark mode */
+    transition: all 0.2s ease-in-out;
+}
+
+.datetimeInput:focus { 
+    border-color: #1a5f51 !important; 
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1); /* Efek glow ijo khas Go Skool */
+}
+.btnSaveJadwal { background: #1a5f51; color: white; border: none; padding: 14px 25px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; transition: 0.2s;}
+.btnSaveJadwal:hover { background: #134e40; transform: translateY(-2px);}

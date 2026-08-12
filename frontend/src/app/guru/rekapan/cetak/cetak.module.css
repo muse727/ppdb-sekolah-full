@@ -1,0 +1,86 @@
+/* src/app/guru/rekapan/cetak/cetak.module.css */
+
+/* HILANGIN SCROLLBAR MENGGANGGU */
+:global(body) {
+    overflow: auto !important;
+    background-color: white !important;
+}
+:global(body::-webkit-scrollbar) {
+    display: none; /* Sembunyiin scrollbar browser biar bersih */
+}
+
+.printContainer {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 40px; /* Padding dilebarin biar gak mepet tepi layar */
+    background: white;
+}
+
+/* FIX HEADER & LOGO KEPOTONG */
+.headerKop { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; /* Pastikan teks tetap di tengah kertas */
+    position: relative; 
+    margin-bottom: 25px; 
+    min-height: 90px; /* KASIH TINGGI MINIMAL BIAR LOGO GAK KEJEPIT */
+}
+.logoBox { 
+    position: absolute; 
+    left: 0; 
+    top: 50%; 
+    transform: translateY(-50%); /* Bikin logo persis di tengah vertikal header */
+    width: 90px; 
+    height: 90px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.logoBox img { 
+    max-width: 100%; 
+    max-height: 100%; 
+    object-fit: contain; 
+}
+.titleBox { 
+    text-align: center; 
+    padding: 0 100px; /* Kasih jarak kiri-kanan biar teks judul panjang ga nabrak logo */
+}
+.titleBox h1 { font-size: 16px; margin: 0 0 4px 0; font-weight: bold; text-transform: uppercase; }
+.titleBox h2 { font-size: 14px; margin: 0 0 4px 0; font-weight: bold; text-transform: uppercase; }
+.titleBox h3 { font-size: 12px; margin: 0; font-weight: bold; text-transform: uppercase; }
+
+/* TABEL UTAMA */
+.printContainer table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+.printContainer td, .printContainer th { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+.printContainer th { background-color: #f2f2f2 !important; text-align: center; font-weight: bold; }
+
+/* IDENTITAS */
+.tableIdentity { margin-bottom: 20px; }
+.labelCol { font-weight: bold; width: 15%; background: #f2f2f2 !important; }
+.valCol { width: 35%; }
+
+/* TITLE SECTION */
+.sectionTitle { font-weight: bold; font-size: 12px; text-transform: uppercase; margin: 20px 0 5px 0; background: #e2e8f0 !important; padding: 6px 8px; border: 1px solid #000;}
+.saranDesc { font-size: 12px; font-style: italic; margin: 5px 0 10px 0; }
+
+/* FIX TANDA TANGAN (DIDORONG KE KANAN) */
+.signatureSection { margin-top: 30px; }
+.tableSignature { border: none !important; width: 100%; }
+.tableSignature td { border: none !important; padding: 5px 10px; text-align: left;}
+
+/* Ini Kuncinya: Kolom kosong di kiri dibikin lebih lebar (65%), jadi TTD kedorong ke kanan mepet (35%) */
+.emptyCol { width: 65%; border: none !important; }
+.signCol { width: 35%; border: none !important; padding-left: 0; } 
+
+.signCol p { margin: 2px 0; font-size: 12px;}
+.ttdBox { height: 75px; display: flex; align-items: center; margin: 5px 0;}
+.ttdBox img { max-height: 70px; max-width: 150px; object-fit: contain; }
+
+/* SETTING KHUSUS WAKTU DIPRINT DI KERTAS FISIK */
+@media print {
+    @page { size: A4; margin: 10mm; }
+    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .printContainer { padding: 0; } /* Hilangin padding web pas masuk mode kertas */
+}

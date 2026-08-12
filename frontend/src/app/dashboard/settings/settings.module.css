@@ -1,0 +1,105 @@
+/* src/app/dashboard/settings/settings.module.css */
+
+.containerPad { padding: 30px; font-family: 'Poppins', sans-serif; }
+.loading { text-align: center; padding: 50px; color: #1a5f51; font-weight: 800; font-size: 16px; }
+
+.topHeader { margin-bottom: 25px; }
+.mainTitle { font-size: 28px; color: #1a5f51; font-weight: 900; margin: 0 0 5px 0; }
+.subTitle { color: #718096; font-size: 14px; margin: 0 0 25px 0; }
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .settingsGrid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background-color: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.cardTitle {
+  font-size: 14px;
+  color: #718096;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 12px;
+}
+
+/* === TABEL ADMIN === */
+.adminTable { width: 100%; margin-top: 16px; border-collapse: collapse; }
+.tableHeader { text-align: left; border-bottom: 2px solid #edf2f7; color: #a0aec0; font-size: 11px; letter-spacing: 0.5px; }
+.thPad { padding: 12px 10px; }
+.tableRow { border-bottom: 1px solid #f7fafc; transition: background-color 0.2s ease; }
+.tableRow:hover { background-color: #f8fafc; }
+.tdPad { padding: 16px 10px; }
+
+.adminName { font-weight: 700; color: #2d3748; font-size: 14px; }
+.adminEmail { font-size: 12px; color: #718096; margin-top: 2px; }
+
+.roleBadge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.roleSuperAdmin { background-color: #e6fffa; color: #1a5f51; }
+.roleAdmin { background-color: #ebf8ff; color: #2b6cb0; }
+
+.deleteBtn { background: none; border: none; color: #e53e3e; cursor: pointer; font-weight: 600; padding: 6px 12px; border-radius: 6px; transition: all 0.2s ease; }
+.deleteBtn:hover { background-color: #fff5f5; }
+
+/* === FORM ADMIN === */
+.adminForm { margin-top: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.formInput {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0; outline: none; background-color: #f8fafc; 
+  font-family: inherit; font-size: 14px; color: #2d3748; transition: all 0.2s ease; width: 100%; box-sizing: border-box;
+}
+.formInput::placeholder { color: #a0aec0; }
+.formInput:focus { border-color: #1a5f51; background-color: white; box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1); }
+
+.selectInput {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232d3748%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat; background-position: right 16px top 50%; background-size: 12px auto; cursor: pointer;
+}
+
+.submitBtn {
+  background-color: #1a5f51; color: white; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(26, 95, 81, 0.3);
+}
+.submitBtn:hover:not(:disabled) { background-color: #134e40; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26, 95, 81, 0.4); }
+.submitBtn:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+
+.btnOutline {
+  background-color: transparent; border: 2px solid #cbd5e0; color: #4a5568; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;
+}
+.btnOutline:hover { border-color: #a0aec0; background-color: #f8fafc; color: #2d3748; }
+
+/* === TAB NAVIGATION === */
+.tabNav { display: flex; gap: 15px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; overflow-x: auto; white-space: nowrap; }
+.tabBtn { padding: 10px 20px; border: none; background: transparent; color: #a0aec0; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; position: relative; transition: 0.3s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tabBtn:hover { color: #4a5568; }
+.tabActive { color: #1a5f51; }
+.tabActive::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 3px; background-color: #1a5f51; border-radius: 3px 3px 0 0; }
+
+/* === RADIO BUTTONS (UMUM) === */
+.radioLabel {
+  flex: 1; padding: 12px; border: 2px solid #edf2f7; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; text-align: center; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; background: white; color: #718096;
+}
+.radioLabel input { display: none; }
+.radioActiveSuccess { border-color: #10b981; background: #f0fdf4; color: #059669; }
+.radioActiveDanger { border-color: #ef4444; background: #fef2f2; color: #dc2626; }

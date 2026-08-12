@@ -1,0 +1,239 @@
+/* src/app/login/login.module.css */
+
+.wrapper {
+  background-color: #fafafa; 
+  background-image: 
+    linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+    linear-gradient(to bottom, #e5e7eb 1px, transparent 1px),
+    radial-gradient(circle 600px at top right, rgba(46, 196, 150, 0.18), transparent),
+    radial-gradient(circle 600px at bottom left, rgba(26, 95, 81, 0.12), transparent);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+  background-attachment: fixed; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.container {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  position: relative;
+  overflow: hidden;
+  width: 768px;
+  max-width: 100%;
+  min-height: 580px; 
+}
+
+.formContainer {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+.signInContainer { left: 0; width: 50%; z-index: 2; }
+.container.rightPanelActive .signInContainer { transform: translateX(100%); }
+.signUpContainer { left: 0; width: 50%; opacity: 0; z-index: 1; }
+.container.rightPanelActive .signUpContainer {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+@keyframes show {
+  0%, 49.99% { opacity: 0; z-index: 1; }
+  50%, 100% { opacity: 1; z-index: 5; }
+}
+
+.form {
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  height: 100%;
+  text-align: center;
+}
+
+.title { font-weight: bold; margin: 0; color: #1a5f51; }
+.paragraph { font-size: 13px; font-weight: 400; line-height: 20px; margin: 10px 0 20px; color: #64748b; }
+.link { color: #1a5f51; font-size: 13px; text-decoration: none; margin: 0; font-weight: 500; }
+
+.inputGroup { position: relative; width: 100%; margin: 8px 0; }
+.icon {
+  position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; color: #94a3b8; 
+}
+
+.input {
+  background-color: #ffffff; color: #000000;
+  border: 1px solid #cbd5e1; padding: 12px 15px 12px 45px; 
+  width: 100%; border-radius: 8px; outline: none;
+  font-size: 14px; transition: all 0.3s ease; box-sizing: border-box;
+}
+.input::placeholder { color: #94a3b8; }
+.input:focus { border: 1px solid #1a5f51; box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1); }
+
+.button {
+  border-radius: 20px; border: 1px solid #1a5f51;
+  background-color: #1a5f51; color: #FFFFFF; font-size: 12px;
+  font-weight: bold; padding: 12px 45px; letter-spacing: 1px;
+  text-transform: uppercase; transition: transform 80ms ease-in;
+  cursor: pointer; margin-top: 15px;
+}
+.button:active { transform: scale(0.95); }
+.buttonGhost { background-color: transparent; border-color: #FFFFFF; }
+
+/* === OVERLAY DESKTOP === */
+.overlayContainer {
+  position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+  overflow: hidden; transition: transform 0.6s ease-in-out; z-index: 100;
+}
+.container.rightPanelActive .overlayContainer { transform: translateX(-100%); }
+
+.overlay {
+  background: linear-gradient(to right, #227b69, #1a5f51);
+  background-repeat: no-repeat; background-size: cover; position: relative;
+  left: -100%; height: 100%; width: 200%; transform: translateX(0);
+  transition: transform 0.6s ease-in-out; color: #ffffff;
+}
+.container.rightPanelActive .overlay { transform: translateX(50%); }
+
+.overlayPanel {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; padding: 0 40px; text-align: center; top: 0;
+  height: 100%; width: 50%; transform: translateX(0); transition: transform 0.6s ease-in-out;
+}
+.overlayLeft { transform: translateX(-20%); }
+.container.rightPanelActive .overlayLeft { transform: translateX(0); }
+.overlayRight { right: 0; transform: translateX(0); }
+.container.rightPanelActive .overlayRight { transform: translateX(20%); }
+
+.overlayParagraph { font-size: 14px; font-weight: 400; line-height: 22px; margin: 15px 0 25px; color: #ffffff; }
+.illustration { width: 180px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1)); }
+
+.mobileToggle { display: none; }
+.mobileHeader { display: none; }
+.mobileToggleBtn { display: none; }
+
+/* === TOGGLE JALUR PENDAFTARAN === */
+.jalurToggleContainer {
+  display: flex; background-color: #f1f5f9; border-radius: 30px;
+  padding: 4px; width: 100%; margin-top: 15px; margin-bottom: 5px; box-sizing: border-box;
+}
+.jalurToggleBtn {
+  flex: 1; padding: 10px; border-radius: 26px; border: none; background: transparent;
+  color: #64748b; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.3s ease; font-family: inherit;
+}
+.jalurActive { background-color: white; color: #1a5f51; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+.inputHighlight { border-color: #fde047 !important; background-color: #fefce8 !important; }
+.inputHighlight:focus { border-color: #eab308 !important; box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2) !important; }
+
+/* === TOMBOL "DAPATKAN TOKEN" === */
+.btnGetToken {
+  width: 100%; background-color: #f0fdf4; color: #059669; border: 2px dashed #34d399;
+  padding: 12px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer;
+  transition: all 0.2s; margin-top: 10px; margin-bottom: 5px; display: flex; justify-content: center;
+  align-items: center; gap: 8px; font-family: inherit; box-sizing: border-box;
+}
+.btnGetToken:hover { background-color: #d1fae5; border-color: #10b981; }
+
+/* === FITUR KEAMANAN LOGIN (MATA, INGAT SAYA, CAPTCHA) === */
+.inputPassword { padding-right: 45px !important; }
+
+.eyeBtn {
+  position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; color: #94a3b8; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0;
+}
+.eyeBtn:hover { color: #1a5f51; }
+
+.loginOptions {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; margin-top: 5px; margin-bottom: 15px; box-sizing: border-box;
+}
+.rememberMe {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #64748b; font-weight: 500;
+}
+.rememberMe input[type="checkbox"] { accent-color: #1a5f51; width: 16px; height: 16px; cursor: pointer; }
+
+.captchaBox {
+  display: flex; align-items: center; justify-content: space-between; background: #f8fafc;
+  border: 1px dashed #cbd5e1; padding: 10px 15px; border-radius: 8px; width: 100%; margin-bottom: 15px; box-sizing: border-box;
+}
+.captchaLabel { font-size: 13px; color: #475569; }
+.captchaInput {
+  width: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+  text-align: center; font-weight: bold; font-family: inherit; outline: none; box-sizing: border-box;
+}
+.captchaInput:focus { border-color: #1a5f51; }
+
+/* === CUSTOM MODAL TOKEN PREMIUM === */
+.modalOverlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+  display: flex; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease-out; padding: 20px;
+}
+.modalContent { background: white; border-radius: 24px; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 24px 30px 15px; border-bottom: 1px solid #f1f5f9; }
+.modalTitle { font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; }
+.modalCloseBtn { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; transition: 0.2s; }
+.modalCloseBtn:hover { background: #f1f5f9; color: #ef4444; }
+.modalBody { padding: 25px 30px 30px; text-align: left;}
+.modalDesc { font-size: 14px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5; }
+
+.cardSelectGroup { display: flex; flex-direction: column; gap: 15px; }
+.cardSelect { display: flex; align-items: center; gap: 15px; padding: 15px 20px; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; background: white; }
+.cardSelect:hover { border-color: #1a5f51; background: #f8fafc; transform: translateY(-2px); }
+.cardIconWrapper { width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+.cardSelectText h4 { margin: 0 0 3px 0; font-size: 16px; font-weight: 800; color: #1e293b; }
+.cardSelectText p { margin: 0; font-size: 12px; color: #64748b; font-weight: 500; }
+
+.btnModalPrimary { flex: 1; background: #1a5f51; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; }
+.btnModalPrimary:hover:not(:disabled) { background: #134e40; }
+.btnModalPrimary:disabled { opacity: 0.7; cursor: not-allowed; }
+.btnModalOutline { flex: 1; background: transparent; color: #64748b; border: 2px solid #e2e8f0; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; }
+.btnModalOutline:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+.btnModalWhatsApp { flex: 2; background: #25D366; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btnModalWhatsApp:hover { background: #1da851; transform: translateY(-2px); }
+
+.successIconWrapper { width: 70px; height: 70px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; }
+.tokenDisplayBox { background: #f1f5f9; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 16px; font-size: 28px; font-weight: 900; letter-spacing: 3px; color: #1a5f51; margin-top: 15px; font-family: monospace; text-align: center; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* === RESPONSIVE MOBILE === */
+@media (max-width: 768px) {
+  .wrapper { padding: 0; }
+  .container { width: 100vw; height: 100dvh; max-width: 100%; min-height: 100dvh; border-radius: 0; box-shadow: none; overflow: hidden; }
+  .overlayContainer { display: none; }
+  .formContainer { width: 100%; height: 100%; transition: transform 0.5s ease-in-out; overflow-y: auto; }
+  .form { padding: 0; justify-content: flex-start; min-height: 100%; padding-bottom: 50px; }
+  
+  .mobileHeader { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; background: linear-gradient(to right, #227b69, #1a5f51); padding: 40px 20px 30px; border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; margin-bottom: 30px; color: white; box-sizing: border-box; }
+  .mobileIllustration { width: 140px; height: auto; margin-bottom: 15px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)); }
+  .mobileHeaderTitle { font-size: 22px; font-weight: bold; margin: 0 0 5px 0; }
+  .mobileHeaderDesc { font-size: 13px; opacity: 0.9; margin: 0; }
+
+  .title, .paragraph, .inputGroup, .button, .loginOptions, .captchaBox, .btnGetToken, .jalurToggleContainer { width: 85%; max-width: 400px; margin-left: auto; margin-right: auto; }
+  
+  .signInContainer { opacity: 1; z-index: 5; transform: translateX(0); }
+  .signUpContainer { opacity: 1; z-index: 5; transform: translateX(100%); }
+  .container.rightPanelActive .signInContainer { transform: translateX(-100%); }
+  .container.rightPanelActive .signUpContainer { transform: translateX(0); animation: none; }
+
+  .mobileToggleBtn { display: block; width: 85%; max-width: 400px; margin: 20px auto 0; background: transparent; border: 2px solid #e2e8f0; color: #64748b; padding: 14px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; transition: 0.2s; font-family: inherit; }
+  .mobileToggleBtn:hover { border-color: #cbd5e1; color: #1e293b; background: #f8fafc; }
+}

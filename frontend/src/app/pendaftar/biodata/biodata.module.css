@@ -1,0 +1,116 @@
+/* src/app/pendaftar/biodata/biodata.module.css */
+
+.mobileContainer { 
+    width: 100%; max-width: 480px; margin: 0 auto; 
+    background-color: #f8fafc; min-height: 100vh; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative; overflow-x: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    display: flex; flex-direction: column; 
+    padding-bottom: 40px;
+}
+
+/* HEADER MINI */
+.headerMini {
+    background: linear-gradient(135deg, #1a5f51 0%, #227b69 100%);
+    padding: 25px 20px 60px 20px; color: white;
+    border-radius: 0 0 24px 24px;
+    display: flex; align-items: center; gap: 15px;
+}
+
+.backBtn {
+    background: rgba(255,255,255,0.2);
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: 0.2s;
+}
+.backBtn:active { transform: scale(0.9); }
+
+.headerTitle { font-size: 18px; font-weight: 800; margin: 0; }
+.headerSubtitle { font-size: 12px; opacity: 0.8; margin: 0; }
+
+/* KARTU FORM UTAMA */
+.formCard {
+    background: white;
+    margin: -35px 20px 20px 20px;
+    border-radius: 20px;
+    padding: 25px 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    position: relative; z-index: 2;
+}
+
+.sectionTitle {
+    font-size: 15px; font-weight: 800; color: #1a5f51;
+    margin: 0 0 20px 0;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 2px dashed #edf2f7;
+    padding-bottom: 10px;
+}
+.sectionTitle svg { color: #1a5f51; }
+
+.inputGroup {
+    margin-bottom: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+.label {
+    font-size: 12px; font-weight: 700; color: #4a5568;
+    margin-left: 5px;
+}
+.required { color: #e53e3e; }
+
+.inputWrapper {
+    position: relative;
+    display: flex; align-items: center;
+}
+
+.inputIcon {
+    position: absolute; left: 15px;
+    color: #a0aec0; transition: 0.3s;
+}
+
+.inputField {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    border-radius: 14px;
+    border: 2px solid #edf2f7;
+    background-color: #f8fafc;
+    font-size: 14px; font-weight: 600; color: #2d3748;
+    outline: none; transition: all 0.3s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.inputField::placeholder { color: #cbd5e0; font-weight: 500;}
+
+.inputField:focus {
+    border-color: #1a5f51;
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(26, 95, 81, 0.1);
+}
+.inputField:focus + .inputIcon, 
+.inputField:focus ~ .inputIcon { 
+    color: #1a5f51; 
+}
+
+/* KHUSUS SELECT (DROPDOWN) */
+.selectField {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a0aec0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px top 50%;
+    background-size: 12px auto;
+}
+
+/* TOMBOL SUBMIT */
+.submitBtn {
+    background-color: #1a5f51; color: white;
+    width: 100%; padding: 18px; border-radius: 16px;
+    font-size: 15px; font-weight: 800; border: none;
+    cursor: pointer; transition: 0.3s;
+    box-shadow: 0 10px 20px rgba(26, 95, 81, 0.3);
+    margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;
+}
+.submitBtn:hover { background-color: #134e40; transform: translateY(-2px); }
+.submitBtn:active { transform: translateY(0); }

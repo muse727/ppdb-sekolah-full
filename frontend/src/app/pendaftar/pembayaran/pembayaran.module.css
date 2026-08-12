@@ -1,0 +1,236 @@
+/* src/app/pendaftar/pembayaran/pembayaran.module.css */
+
+.mobileContainer { 
+    width: 100%; max-width: 480px; margin: 0 auto; 
+    background-color: #f4f7fe; min-height: 100vh; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative; overflow-x: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column; 
+    padding-bottom: 250px; /* Diperbesar karena bottom sheet lebih tinggi */
+}
+
+/* HEADER MINI */
+.headerMini {
+    background-color: #1a5f51;
+    padding: 25px 20px 40px 20px; 
+    color: white;
+    border-radius: 0 0 30px 30px;
+    display: flex; align-items: center; gap: 15px;
+    position: relative; overflow: hidden;
+}
+.headerMini::after {
+    content: ''; position: absolute; right: -20px; top: -30px;
+    width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;
+}
+
+.backBtn {
+    background: rgba(255,255,255,0.2);
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: 0.2s; position: relative; z-index: 2;
+}
+.backBtn:active { transform: scale(0.9); }
+
+.headerTitle { font-size: 18px; font-weight: 800; margin: 0; position: relative; z-index: 2;}
+.headerSubtitle { font-size: 12px; opacity: 0.8; margin: 0; position: relative; z-index: 2;}
+
+/* KONTEN UTAMA */
+.contentWrap {
+    padding: 0 20px; margin-top: 20px; 
+    position: relative; z-index: 5;
+}
+
+.sectionTitle {
+    font-size: 13px; font-weight: 800; 
+    color: #1a5f51; 
+    margin: 0 0 15px 5px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* KOTAK ARAHAN INFORMATIF */
+.guideBox {
+    background: #fffbeb; 
+    border-radius: 16px; 
+    padding: 18px;
+    display: flex; gap: 15px; align-items: flex-start;
+    border: 1px solid #fde68a; 
+    margin-top: 5px; 
+    margin-bottom: 25px;
+}
+.guideIcon { font-size: 20px; margin-top: 2px; flex-shrink: 0;}
+.guideText { font-size: 12.5px; color: #92400e; line-height: 1.6; font-weight: 500;}
+.guideText strong { display: block; font-weight: 800; color: #b45309; margin-bottom: 4px; font-size: 13px;}
+.guideText b { font-weight: 700; color: #1e293b;}
+
+/* ========================================================
+   RENOVASI TALL STICKY BOTTOM CHECKOUT
+   ======================================================== */
+.checkoutBarTall {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px; background: white;
+    padding: 25px 25px 35px 25px; /* Jauh lebih tinggi dan lega */
+    border-radius: 35px 35px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column;
+    z-index: 100; box-sizing: border-box;
+}
+
+.checkoutBarHeader {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.checkoutBarHeader p { 
+    margin: 0 0 5px 0; font-size: 13px; color: #64748b; 
+    font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+}
+.checkoutBarHeader h3 { 
+    margin: 0; font-size: 34px; font-weight: 900; 
+    color: #1a5f51; line-height: 1; letter-spacing: -1px;
+}
+
+.checkoutActionGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* TOMBOL UTAMA (OTOMATIS) */
+.payBtnAuto {
+    background: #1a5f51; color: white;
+    padding: 16px; border-radius: 16px;
+    font-size: 14.5px; font-weight: 800; border: none;
+    cursor: pointer; transition: 0.2s;
+    box-shadow: 0 8px 20px rgba(26, 95, 81, 0.25);
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    font-family: inherit;
+}
+.payBtnAuto:hover { background: #134e40; transform: translateY(-2px);}
+
+/* TOMBOL KEDUA (MANUAL) */
+.payBtnManual {
+    background: white; color: #475569;
+    padding: 15px; border-radius: 16px;
+    font-size: 13.5px; font-weight: 700; 
+    border: 2px solid #cbd5e1;
+    cursor: pointer; transition: 0.2s;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    font-family: inherit;
+}
+.payBtnManual:hover { 
+    border-color: #1a5f51; color: #1a5f51; background: #f8fafc;
+}
+
+/* ========================================================
+   INVOICE & AUTO DETECT CARDS
+   ======================================================== */
+.invoiceCard {
+    background: white; border-radius: 20px; padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
+    position: relative; overflow: hidden;
+}
+.invoiceHeader { text-align: center; border-bottom: 2px dashed #edf2f7; padding-bottom: 20px; margin-bottom: 20px;}
+.successIcon { width: 60px; height: 60px; background: #e8f5e9; color: #27ae60; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto;}
+.invoiceHeader h3 { margin: 0 0 5px 0; font-size: 20px; font-weight: 900; color: #27ae60;}
+.invoiceHeader p { margin: 0; font-size: 12px; color: #a0aec0; font-weight: 600;}
+.invoiceRow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px;}
+.invoiceLabel { color: #718096; font-weight: 600;}
+.invoiceValue { color: #2d3748; font-weight: 800; text-align: right;}
+.invoiceTotal { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #edf2f7;}
+.invoiceTotal .invoiceLabel { font-size: 14px; color: #2d3748;}
+.invoiceTotal .invoiceValue { font-size: 22px; color: #1a5f51; font-weight: 900;}
+.statusBadge { position: absolute; top: 20px; right: -30px; background: #27ae60; color: white; font-size: 10px; font-weight: 900; padding: 5px 30px; transform: rotate(45deg); letter-spacing: 1px;}
+.warningIcon { width: 60px; height: 60px; background: #fff8e1; color: #f39c12; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto;}
+
+.autoDetectedCard { background: white; border-radius: 20px; border: 1px solid #edf2f7; box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow: hidden; margin-bottom: 20px;}
+.autoCardHeader { background-color: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #edf2f7; display: flex; align-items: center; gap: 10px; font-size: 11.5px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px;}
+.lockBadgeIcon { color: #eab308; display: flex; align-items: center;}
+.autoCardBody { padding: 25px 20px; display: flex; align-items: center; gap: 20px;}
+.levelIconActive { width: 56px; height: 56px; background-color: #1a5f51; color: white; border-radius: 16px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 20px rgba(26, 95, 81, 0.2);}
+.autoCardText h4 { margin: 0 0 4px 0; font-size: 18px; font-weight: 900; color: #1a5f51;}
+.autoCardText p { margin: 0; font-size: 12px; color: #718096; font-weight: 500;}
+
+/* ========================================================
+   CUSTOM MODAL MANUAL TRANSFER PREMIUM
+   ======================================================== */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+    display: flex; justify-content: center; align-items: flex-end; /* Nempel di bawah ala Mobile App */
+    z-index: 1000;
+    animation: fadeInOverlay 0.2s ease-out;
+}
+
+.modalContent {
+    background: white; width: 100%; max-width: 480px;
+    border-radius: 28px 28px 0 0; /* Melengkung di atas */
+    padding: 25px 25px 35px 25px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeader {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+}
+.modalHeader h3 { margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; }
+.closeModalBtn {
+    background: #f1f5f9; border: none; width: 32px; height: 32px;
+    border-radius: 50%; font-size: 14px; font-weight: bold; color: #64748b;
+    cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+}
+.closeModalBtn:hover { background: #e2e8f0; color: #ef4444; }
+
+.modalBody { text-align: center; }
+.modalDesc { font-size: 13px; color: #64748b; margin: 0 0 5px 0; }
+.modalPrice { font-size: 28px; font-weight: 900; color: #1a5f51; margin: 0 0 20px 0; letter-spacing: -0.5px; }
+
+/* KOTAK REKENING DENGAN TOMBOL COPY */
+.rekBox {
+    background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px;
+    padding: 15px; margin-bottom: 25px; text-align: center;
+}
+.rekBank { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px;}
+.rekNumberWrapper {
+    display: flex; justify-content: center; align-items: center; gap: 15px;
+    margin-bottom: 8px;
+}
+.rekNumber { font-size: 22px; font-weight: 900; color: #1e293b; letter-spacing: 1px; }
+.copyBtn {
+    background: #1a5f51; color: white; border: none; padding: 6px 12px;
+    border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.2s;
+}
+.copyBtn:hover { background: #134e40; }
+.rekOwner { display: block; font-size: 13px; color: #475569; font-weight: 600;}
+
+/* AREA UPLOAD & PREVIEW */
+.modalUploadLabel { font-size: 13px; font-weight: 700; color: #1e293b; text-align: left; margin-bottom: 10px; display: block;}
+
+.uploadArea {
+    background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px;
+    padding: 25px; display: flex; flex-direction: column; align-items: center;
+    gap: 10px; cursor: pointer; transition: 0.2s; color: #a0aec0; font-weight: 600; font-size: 13px;
+}
+.uploadArea:hover { border-color: #1a5f51; background: #f0fdf4; color: #1a5f51;}
+
+.previewArea {
+    position: relative; border-radius: 16px; overflow: hidden;
+    border: 2px solid #e2e8f0; height: 160px; background: #000;
+}
+.previewArea img { width: 100%; height: 100%; object-fit: contain; }
+.changeImgBtn {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.7); color: white; border: none; padding: 6px 12px;
+    border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; backdrop-filter: blur(4px);
+}
+
+/* TOMBOL SUBMIT MODAL */
+.submitModalBtn {
+    width: 100%; background: #fbbf24; color: #78350f; border: none;
+    padding: 16px; border-radius: 16px; font-size: 14.5px; font-weight: 900;
+    margin-top: 20px; cursor: pointer; transition: 0.2s;
+}
+.submitModalBtn:hover:not(:disabled) { background: #f59e0b; }
+.submitModalBtn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUpModal { from { transform: translateY(100%); } to { transform: translateY(0); } }

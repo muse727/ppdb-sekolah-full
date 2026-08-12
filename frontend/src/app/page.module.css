@@ -1,0 +1,173 @@
+/* src/app/page.module.css */
+
+.mainContainer {
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Poppins', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* === NAVBAR === */
+.navbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 5%; background-color: #0f3d2e; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.navBrand { display: flex; align-items: center; gap: 10px; }
+.logoCircle { color: #00aa5b; display: flex; justify-content: center; align-items: center; }
+.brandText { color: white; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;}
+
+.navLinks { display: flex; gap: 30px; }
+.navLinks a { color: #94a3b8; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.2s;}
+.navLinks a:hover { color: white; }
+
+.btnLogin {
+  background-color: transparent; color: white; padding: 10px 24px; border-radius: 30px;
+  font-weight: 700; font-size: 14px; border: 2px solid white; cursor: pointer; transition: 0.2s;
+}
+.btnLogin:hover { background-color: white; color: #0f3d2e; }
+
+@media (max-width: 768px) { .navLinks { display: none; } }
+
+/* === HERO SECTION (IMAGE BANNER) === */
+.heroSection {
+  width: 100%; min-height: 500px; background-size: cover; background-position: center; background-repeat: no-repeat; position: relative;
+}
+
+.heroOverlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to right, rgba(15, 61, 46, 0.95) 0%, rgba(15, 61, 46, 0.4) 100%);
+  display: flex; align-items: center; padding: 0 5%;
+}
+
+.heroContent { max-width: 600px; color: white; }
+.heroTitle { font-size: 52px; font-weight: 900; line-height: 1.1; margin: 0 0 20px 0; letter-spacing: -1px;}
+.heroSubtitle { font-size: 16px; color: #cbd5e1; line-height: 1.6; margin-bottom: 40px; font-weight: 500;}
+
+.btnPrimaryLg {
+  background-color: #00aa5b; color: white; padding: 16px 36px; border-radius: 30px;
+  font-weight: 800; font-size: 16px; border: none; cursor: pointer; transition: 0.2s;
+}
+.btnPrimaryLg:hover { background-color: #008c4a; transform: translateY(-2px); }
+
+/* =========================================================
+   SKALA KAMI / INFO KUOTA SECTION (FIXED LAYOUT) 
+   ========================================================= */
+.skalaSection { padding: 80px 5% 100px 5%; background: #ffffff; text-align: center; }
+
+.skalaHeader { margin-bottom: 60px; display: flex; flex-direction: column; align-items: center; gap: 15px;}
+.skalaHeader h2 { font-size: 38px; font-weight: 900; color: #1e293b; margin: 0; letter-spacing: -0.5px;}
+
+.btnPill {
+  background-color: #1a5f51; color: white; padding: 10px 28px; border-radius: 30px;
+  font-weight: 800; font-size: 14px; border: none; cursor: pointer; transition: 0.2s;
+}
+.btnPill:hover { background-color: #134e40; transform: scale(1.05); }
+
+.skalaGrid { 
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; 
+  max-width: 1200px; margin: 0 auto;
+}
+
+.skalaCard {
+  border-radius: 32px; padding: 40px 30px; display: flex; flex-direction: column;
+  min-height: 400px; color: white; text-align: left; transition: transform 0.3s ease;
+}
+.skalaCard:hover { transform: translateY(-8px); }
+
+.skalaGreen { background-color: #1a5f51; box-shadow: 0 20px 40px rgba(26, 95, 81, 0.3); }
+.skalaPurple { background-color: #93328e; box-shadow: 0 20px 40px rgba(147, 50, 142, 0.3); }
+.skalaOrange { background-color: #ea580c; box-shadow: 0 20px 40px rgba(234, 88, 12, 0.3); }
+
+/* PERBAIKAN 1: WADAH IKON BENAR-BENAR DI TENGAH RUANG KOSONG */
+.skalaIconWrapper {
+  flex: 1; /* Mengisi seluruh sisa ruang kosong di atas teks */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.iconPublic {
+  width: 100px; /* Sedikit diperbesar */
+  height: 100px;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
+  animation: floatGojek 4s ease-in-out infinite;
+}
+
+/* PERBAIKAN 2: FONT ANGKA RAKSASA */
+.skalaTextBottom { margin-top: 0; }
+
+.animatedNumber { 
+  font-size: 48px; /* Ukuran super jumbo */
+  font-weight: 900; 
+  margin: 0 0 10px 0; 
+  letter-spacing: -1px; 
+  line-height: 1;
+}
+
+.normalText {
+  font-size: 24px; /* Ukuran teks di sebelahnya tetap proporsional */
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.titleOnly {
+  font-size: 32px;
+  font-weight: 900;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.skalaTextBottom p { font-size: 14.5px; margin: 0; line-height: 1.5; font-weight: 500; opacity: 0.9; }
+
+@keyframes floatGojek { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+@media (max-width: 900px) {
+  .skalaGrid { grid-template-columns: 1fr; }
+  .skalaCard { min-height: 350px; }
+}
+
+/* =========================================================
+   TATA CARA SECTION 
+   ========================================================= */
+.tataCaraSection { background-color: #0f3d2e; padding: 80px 5% 100px 5%; }
+.tataCaraHeader { text-align: center; margin-bottom: 60px; }
+.tataCaraHeader h2 { font-size: 38px; font-weight: 900; color: white; margin: 0; line-height: 1.2; letter-spacing: -0.5px; }
+
+.tataCaraGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px; }
+
+.tcCard { border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; color: white; min-height: 320px; }
+.cardGreen { background-color: #00aa5b; }
+.cardRed { background-color: #ee2737; }
+.cardPurple { background-color: #93328e; }
+
+.tcContent { padding: 40px 30px; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+.tcListItem { display: flex; align-items: center; gap: 15px; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+
+.tcBottom { padding: 20px 30px; font-size: 18px; font-weight: 900; text-align: center; }
+.bottomGreen { background-color: #008c4a; }
+.bottomRed { background-color: #cc1b29; }
+.bottomPurple { background-color: #7a2675; }
+
+@media (max-width: 900px) { .tataCaraGrid { grid-template-columns: 1fr; } .tcCard { min-height: auto; } }
+
+.tcActionContainer { text-align: center; }
+.btnActionGreen { background-color: #00aa5b; color: white; padding: 14px 30px; border-radius: 30px; font-size: 15px; font-weight: 800; border: none; cursor: pointer; transition: 0.2s; }
+.btnActionGreen:hover { background-color: #008c4a; transform: scale(1.05); }
+
+/* === FOOTER === */
+.darkFooter { background-color: #082f22; padding: 60px 5% 30px 5%; color: white; border-top: 1px solid rgba(255,255,255,0.05);}
+.footerGrid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 50px; margin-bottom: 60px;}
+
+.footerBrand { display: flex; align-items: center; font-size: 24px; font-weight: 900; margin-bottom: 15px; }
+.footerDesc { font-size: 13px; color: #94a3b8; line-height: 1.6; max-width: 350px;}
+
+.footerGrid h4 { font-size: 16px; font-weight: 800; margin: 0 0 20px 0; }
+.footerGrid a { display: block; color: #94a3b8; text-decoration: none; font-size: 14px; margin-bottom: 12px; font-weight: 500; transition: 0.2s;}
+.footerGrid a:hover { color: white; }
+
+.footerBottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; text-align: center; }
+.footerBottom p { font-size: 12px; color: #64748b; margin: 0;}
+
+@media (max-width: 900px) { .footerGrid { grid-template-columns: 1fr; gap: 40px; } }

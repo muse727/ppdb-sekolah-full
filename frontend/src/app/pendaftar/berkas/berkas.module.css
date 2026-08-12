@@ -1,0 +1,94 @@
+/* src/app/pendaftar/berkas/berkas.module.css */
+
+.mobileContainer { 
+    width: 100%; 
+    max-width: 480px; /* KUNCI LEBAR BIAR GAK MELAR DI DESKTOP */
+    margin: 0 auto; /* POSISI TENGAH */
+    min-height: 100vh; 
+    background: #f8fafc; 
+    padding-bottom: 30px; 
+    box-shadow: 0 0 50px rgba(0,0,0,0.1); 
+}
+
+.headerMini { background-color: #1a5f51; padding: 25px 20px 40px 20px; color: white; border-radius: 0 0 30px 30px; display: flex; align-items: center; gap: 15px; }
+.backBtn { background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+.backBtn:hover { background: rgba(255,255,255,0.3); }
+.headerTitle { margin: 0 0 5px 0; font-size: 20px; font-weight: 800; }
+.headerSubtitle { margin: 0; font-size: 13px; opacity: 0.8; }
+
+/* FIX: Pakai Flex Column biar gap nya rapi */
+.contentWrap { padding: 0 20px; margin-top: -20px; position: relative; z-index: 5; display: flex; flex-direction: column; gap: 15px;}
+
+.infoBox { display: flex; padding: 15px; border-radius: 15px; border: 1px dashed; align-items: center; }
+
+/* FIX: Tinggi kartu seragam pakai Flex Space Between */
+.berkasCard { 
+    background: white; border-radius: 20px; padding: 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #edf2f7; 
+    display: flex; flex-direction: column; justify-content: space-between; 
+    min-height: 190px; /* Jaga biar gak menciut */
+}
+
+.berkasHeader { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; }
+.berkasIcon { width: 50px; height: 50px; background: #e6f0ee; color: #1a5f51; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+.berkasHeader h3 { margin: 0 0 3px 0; font-size: 15px; font-weight: 800; color: #2d3748; }
+.berkasHeader p { margin: 0; font-size: 11px; color: #718096; line-height: 1.4; }
+
+/* FIX: Tombol upload & box upload di dorong ke bawah pakai margin-top: auto */
+.uploadBtn { width: 100%; padding: 15px; background: #f8fafc; border: 2px dashed #cbd5e0; color: #4a5568; font-weight: 800; border-radius: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.2s; font-size: 14px; margin-top: auto;}
+.uploadBtn:hover { background: #e6f0ee; border-color: #1a5f51; color: #1a5f51; }
+
+.berkasUploaded { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #edf2f7; margin-top: auto;}
+.statusVerified { display: inline-flex; align-items: center; gap: 5px; background: #d1fae5; color: #065f46; padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; border: 1px solid #a7f3d0;}
+.viewBtn { flex: 1; text-align: center; padding: 12px; background: #1a5f51; color: white; text-decoration: none; font-size: 12px; font-weight: 700; border-radius: 8px; display: block; transition: 0.2s;}
+.viewBtn:hover { background: #134e40; }
+.changeBtn { flex: 1; text-align: center; padding: 12px; background: white; color: #e53e3e; border: 1px solid #e53e3e; cursor: pointer; font-size: 12px; font-weight: 700; border-radius: 8px; display: block; transition: 0.2s;}
+.changeBtn:hover { background: #fff5f5; }
+
+/* FIX: TOMBOL KUNING GEDE DIUBAH JADI ELEGAN & ESTETIK */
+.continueBtn { 
+    width: 100%; padding: 15px; background: #1a5f51; color: white; border: none; 
+    font-weight: 800; border-radius: 15px; cursor: pointer; display: flex; 
+    justify-content: center; align-items: center; gap: 10px; font-size: 15px; 
+    margin-top: 10px; box-shadow: 0 10px 20px rgba(26, 95, 81, 0.2); transition: 0.3s;
+    font-family: inherit;
+}
+.continueBtn:hover { transform: translateY(-3px); background: #134e40; box-shadow: 0 12px 25px rgba(26, 95, 81, 0.3); }
+
+/* ==========================================
+ MODAL UPLOAD CUSTOM
+========================================== */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    z-index: 1000; display: flex; justify-content: center; align-items: flex-end; 
+}
+
+.modalContent {
+    background: white; width: 100%; max-width: 480px;
+    border-radius: 25px 25px 0 0; padding: 30px 25px;
+    animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.modalTitle { margin: 0 0 5px 0; font-size: 18px; font-weight: 800; color: #2d3748; text-align: center;}
+.modalDesc { margin: 0 0 25px 0; font-size: 13px; color: #718096; text-align: center; line-height: 1.5;}
+
+.actionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+.actionBox {
+    background: #f8fafc; border: 2px solid #edf2f7; border-radius: 16px;
+    padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.2s;
+    position: relative;
+}
+.actionBox:hover { border-color: #1a5f51; background: #e6f0ee; }
+.actionBox svg { color: #1a5f51; margin-bottom: 10px; }
+.actionBox p { margin: 0; font-size: 13px; font-weight: 800; color: #2d3748; }
+.hiddenInput { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+.cancelBtn { width: 100%; padding: 15px; background: #edf2f7; color: #4a5568; border: none; font-weight: 800; border-radius: 12px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+.cancelBtn:hover { background: #e2e8f0; }

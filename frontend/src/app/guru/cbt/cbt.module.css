@@ -1,0 +1,97 @@
+/* src/app/guru/cbt/cbt.module.css */
+.container { padding: 40px; max-width: 1200px; margin: 0 auto; font-family: 'Poppins', sans-serif; }
+
+/* HEADER */
+.header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+.title h1 { font-size: 32px; font-weight: 900; color: #1a5f51; margin: 0 0 5px 0; }
+.title p { margin: 0; color: #718096; font-size: 15px; font-weight: 500; }
+
+/* TOMBOL TAMBAH (Konsisten Hijau Gelap) */
+.addBtn { background: #1a5f51; color: white; border: none; padding: 14px 25px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; font-family: inherit; font-size: 15px; box-shadow: 0 8px 20px rgba(26, 95, 81, 0.2);}
+.addBtn:hover { background: #134e40; transform: translateY(-3px); box-shadow: 0 12px 25px rgba(26, 95, 81, 0.3); }
+
+/* GRID & CARD SESI */
+.gridSessions { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+.sessionCard { background: white; border-radius: 20px; padding: 30px; border: 1px solid #edf2f7; box-shadow: 0 10px 40px rgba(26, 95, 81, 0.05); display: flex; flex-direction: column; gap: 20px; transition: 0.3s;}
+.sessionCard:hover { transform: translateY(-5px); border-color: #cbd5e0;}
+
+/* BADGE & INFO DI DALAM CARD */
+.badgeRuang { background: #e6f0ee; color: #1a5f51; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; margin-bottom: 5px; border: 1px solid #1a5f51;}
+.sessionCard h3 { margin: 0; font-size: 20px; color: #1a5f51; font-weight: 900; }
+.metaData { display: flex; gap: 20px; margin-top: 5px; }
+.metaItem { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #718096; font-weight: 600; }
+
+/* KOTAK TOKEN */
+.tokenBox { background: #f8fafc; border: 2px dashed #cbd5e0; padding: 15px; border-radius: 15px; text-align: center; margin-top: 10px;}
+.tokenBox label { font-size: 11px; font-weight: 800; color: #a0aec0; display: block; margin-bottom: 5px; letter-spacing: 1px;}
+.tokenCode { font-size: 32px; font-weight: 900; color: #1a5f51; letter-spacing: 8px; }
+
+/* AKSI CARD */
+.cardActions { display: flex; gap: 10px; margin-top: auto; }
+.editBtn, .deleteBtn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; border: 2px solid #edf2f7; transition: 0.2s; background: white; color: #4a5568; font-family: inherit; }
+.editBtn:hover { background: #f8fafc; border-color: #cbd5e0; color: #1a5f51;}
+.deleteBtn:hover { background: #fff5f5; color: #e53e3e; border-color: #feb2b2; }
+
+/* =======================================
+   MODAL FORM SESI UJIAN (FIX WARNA INPUT)
+======================================= */
+.modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 95, 81, 0.4); backdrop-filter: blur(5px); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+.modalContent { background: white; width: 95%; max-width: 600px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+.modalTitle { margin: 0 0 25px 0; color: #1a5f51; font-weight: 900; font-size: 24px;}
+
+.formGroup { margin-bottom: 20px; }
+.formGroup label { display: block; font-size: 14px; font-weight: 700; color: #4a5568; margin-bottom: 10px; }
+
+/* FIX: Paksa Background Terang & Text Gelap */
+.formInput { 
+    width: 100%; padding: 14px 18px; border-radius: 12px; 
+    border: 2px solid #edf2f7; font-family: inherit; font-size: 14px; 
+    outline: none; background-color: #f8fafc; color: #2d3748; 
+    font-weight: 600; transition: 0.2s;
+}
+.formInput:focus { border-color: #1a5f51; background-color: white; box-shadow: 0 0 0 4px rgba(26, 95, 81, 0.1);}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* TOMBOL GENERATE TOKEN */
+.tokenInputWrapper { display: flex; gap: 10px; }
+.magicBtn { background: #e6f0ee; color: #1a5f51; border: 1px solid #1a5f51; padding: 0 20px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; transition: 0.2s; font-family: inherit;}
+.magicBtn:hover { background: #1a5f51; color: white; }
+
+/* TOMBOL SIMPAN & BATAL */
+.modalActions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 35px; }
+.cancelBtn { padding: 15px 25px; background: white; border: 2px solid #e2e8f0; color: #4a5568; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; transition: 0.2s;}
+.cancelBtn:hover { background: #f8fafc; border-color: #cbd5e0;}
+.saveBtn { padding: 15px 30px; background: #1a5f51; color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; transition: 0.2s; box-shadow: 0 8px 20px rgba(26, 95, 81, 0.2);}
+.saveBtn:hover { transform: translateY(-2px); background: #134e40; box-shadow: 0 12px 25px rgba(26, 95, 81, 0.3);}
+
+/* TAMBAHAN UNTUK LAYER BANK SOAL */
+.manageSoalBtn { width: 100%; background: #1a5f51; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-family: inherit; margin-top: 15px;}
+.manageSoalBtn:hover { background: #134e40; transform: translateY(-2px); }
+
+.editorHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(26,95,81,0.05); border: 1px solid #edf2f7;}
+.backBtn { background: white; border: 2px solid #edf2f7; padding: 10px 20px; border-radius: 12px; color: #4a5568; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: inherit; transition: 0.2s;}
+.backBtn:hover { background: #f8fafc; border-color: #cbd5e0; }
+.editorTitle { flex: 1; text-align: center; }
+.editorTitle h2 { margin: 0 0 5px 0; font-size: 22px; font-weight: 900; color: #2d3748; }
+.editorTitle h2 span { color: #1a5f51; }
+.editorTitle p { margin: 0; font-size: 13px; color: #718096; }
+
+.soalList { display: flex; flex-direction: column; gap: 20px; }
+.soalCard { background: white; border-radius: 20px; padding: 25px; border: 1px solid #edf2f7; box-shadow: 0 10px 30px rgba(26,95,81,0.03); }
+.soalHeader { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #edf2f7; padding-bottom: 15px; margin-bottom: 15px; }
+.soalNumber { font-weight: 900; color: #1a5f51; font-size: 16px; }
+.badgePG { background: #e8f8f5; color: #16a085; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; border: 1px solid #16a085; }
+.badgeEsai { background: #fff5f5; color: #e53e3e; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; border: 1px solid #e53e3e; }
+.soalText { font-size: 16px; color: #2d3748; line-height: 1.6; margin-bottom: 20px; font-weight: 500;}
+
+.opsiGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.opsiItem { background: #f8fafc; padding: 12px 15px; border-radius: 10px; border: 2px solid #edf2f7; font-size: 14px; color: #4a5568; }
+.correctOpsi { background: #e8f8f5; border-color: #1a5f51; font-weight: 700; color: #1a5f51; }
+
+.soalActions { display: flex; gap: 10px; }
+.editBtnSmall, .deleteBtnSmall { padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; border: 1px solid #edf2f7; background: white; color: #4a5568; font-family: inherit;}
+.editBtnSmall:hover { background: #f8fafc; }
+.deleteBtnSmall:hover { background: #fff5f5; color: #e53e3e; border-color: #feb2b2; }
+
+.formTextarea { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #edf2f7; font-family: inherit; font-size: 14px; outline: none; background-color: #f8fafc; color: #2d3748; min-height: 100px; resize: vertical; transition: 0.2s;}
+.formTextarea:focus { border-color: #1a5f51; background-color: white; }

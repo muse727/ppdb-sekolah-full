@@ -1,0 +1,107 @@
+/* src/app/cbt/ujian.module.css */
+
+/* BLOKIR SELEKSI TEKS BIAR GAK BISA COPAS */
+.examContainer, .loginContainer { user-select: none; -webkit-user-select: none; font-family: 'Poppins', sans-serif; }
+
+/* FIX DARK MODE BAWAAN NEXTJS */
+.loginContainer { display: flex; justify-content: center; align-items: center; height: 100vh; background: #edf2f7 !important; }
+.loginCard { background: #ffffff !important; padding: 50px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); text-align: center; width: 100%; max-width: 400px; }
+.logoBox { background: #e6f0ee; width: 80px; height: 80px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; }
+.loginCard h1 { color: #1a5f51 !important; font-size: 24px; font-weight: 900; margin: 0 0 10px 0; }
+.loginCard p { color: #718096 !important; font-size: 14px; margin-bottom: 30px; }
+
+/* FIX FORM LOGIN BIAR NGGAK HITAM */
+.formInput { width: 100%; padding: 15px; border: 2px solid #edf2f7; border-radius: 12px; font-size: 14px; color: #1a5f51 !important; background-color: #f8fafc !important; margin-bottom: 15px; outline: none; transition: 0.2s; font-weight: 600;}
+.formInput:focus { border-color: #1a5f51; background-color: #ffffff !important;}
+.tokenInput { width: 100%; padding: 15px; border: 2px solid #cbd5e0; border-radius: 12px; font-size: 24px; font-weight: 900; text-align: center; letter-spacing: 5px; color: #1a5f51 !important; background-color: #ffffff !important; margin-bottom: 25px; outline: none; text-transform: uppercase;}
+.tokenInput:focus { border-color: #1a5f51; }
+
+.loginBtn { width: 100%; background: #1a5f51 !important; color: white !important; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+.loginBtn:hover { background: #134e40 !important; transform: translateY(-2px); }
+
+/* EXAM LAYOUT */
+.examContainer { background: #f8fafc !important; min-height: 100vh; display: flex; flex-direction: column; }
+.examHeader { background: #ffffff !important; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #edf2f7; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+.badgeSiswa { background: #e6f0ee; color: #1a5f51; padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 13px; }
+.cheatWarning { background: #fee2e2; color: #e53e3e; padding: 8px 15px; border-radius: 10px; font-weight: 800; font-size: 13px; border: 1px solid #fecaca; animation: pulse 1s infinite alternate;}
+@keyframes pulse { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.02); } }
+.timerBox { background: #2d3748; color: white; padding: 10px 20px; border-radius: 10px; font-weight: 900; font-size: 16px; letter-spacing: 1px;}
+
+.examLayout { display: flex; gap: 30px; padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1;}
+
+.questionSection { flex: 3; background: #ffffff !important; border-radius: 20px; padding: 40px; border: 1px solid #edf2f7; display: flex; flex-direction: column;}
+.questionNumber { font-size: 14px; font-weight: 800; color: #a0aec0; margin-bottom: 15px; }
+.imageWrapper { text-align: center; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 15px; border: 2px dashed #edf2f7; }
+.soalImg { max-width: 100%; max-height: 350px; object-fit: contain; border-radius: 10px; }
+.questionText { font-size: 20px; color: #2d3748 !important; font-weight: 600; line-height: 1.6; margin-bottom: 30px; }
+
+.optionsList { display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px; }
+.optionCard { display: flex; align-items: center; padding: 15px 20px; border: 2px solid #edf2f7; border-radius: 15px; cursor: pointer; transition: 0.2s; background: #f8fafc !important; }
+.optionCard:hover { border-color: #cbd5e0; }
+.optionActive { border-color: #1a5f51; background: #e6f0ee !important; }
+.optionLetter { width: 35px; height: 35px; border-radius: 8px; background: white; border: 2px solid #cbd5e0; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #4a5568; margin-right: 15px; }
+.optionActive .optionLetter { background: #1a5f51; border-color: #1a5f51; color: white; }
+.optionText { font-size: 16px; color: #4a5568 !important; font-weight: 500; }
+.optionActive .optionText { color: #1a5f51 !important; font-weight: 700; }
+
+.esaiInput { width: 100%; min-height: 200px; padding: 20px; border-radius: 15px; border: 2px solid #edf2f7; font-family: inherit; font-size: 15px; color: #2d3748 !important; background: #f8fafc !important; resize: vertical; outline: none; margin-bottom: 30px;}
+.esaiInput:focus { border-color: #1a5f51; background: white !important; }
+
+.navigationBtns { display: flex; justify-content: space-between; margin-top: auto; border-top: 1px solid #edf2f7; padding-top: 20px;}
+.navBtn { background: white !important; border: 2px solid #cbd5e0; color: #4a5568 !important; padding: 12px 25px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit;}
+.navBtnPrimary { background: #1a5f51 !important; color: white !important; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit;}
+
+/* TOMBOL SELESAI UBAH KE HIJAU GELAP */
+.submitBtn { background: #1a5f51 !important; color: white !important; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit;}
+.submitBtn:hover { background: #134e40 !important; }
+
+.sidebarSection { flex: 1; background: #ffffff !important; border-radius: 20px; padding: 25px; border: 1px solid #edf2f7; max-height: fit-content;}
+.sidebarTitle { margin: 0 0 20px 0; font-size: 16px; color: #2d3748 !important; font-weight: 800; text-align: center; border-bottom: 2px dashed #edf2f7; padding-bottom: 15px;}
+.numberGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.numBox { aspect-ratio: 1; border-radius: 10px; border: 2px solid #edf2f7; background: #f8fafc !important; font-size: 14px; font-weight: 800; color: #718096 !important; cursor: pointer; display: flex; justify-content: center; align-items: center; font-family: inherit;}
+.numAnswered { background: #1a5f51 !important; color: white !important; border-color: #1a5f51; }
+.numCurrent { box-shadow: 0 0 0 4px rgba(26, 95, 81, 0.2); border-color: #1a5f51; }
+
+.reviewContainer { background: #f8fafc !important; min-height: 100vh; padding: 40px 20px; font-family: 'Poppins', sans-serif;}
+.reviewHeader { text-align: center; max-width: 800px; margin: 0 auto 40px auto; }
+.scoreCard { background: #1a5f51; color: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(26, 95, 81, 0.2); margin-bottom: 20px; }
+.scoreCard h2 { margin: 0 0 10px 0; font-size: 18px; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px;}
+.scoreNumber { font-size: 80px; font-weight: 900; line-height: 1; margin-bottom: 15px; }
+.scoreStats { display: flex; justify-content: center; gap: 20px; font-weight: 800; font-size: 15px; }
+.statBenar { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 12px; }
+.statSalah { background: rgba(229, 62, 62, 0.3); padding: 8px 16px; border-radius: 12px; }
+.reviewThanks { color: #4a5568; font-size: 15px; }
+
+.reviewList { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px; }
+.reviewCard { background: white; padding: 30px; border-radius: 20px; border-top: 6px solid #cbd5e0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+.cardCorrect { border-top-color: #38a169; } /* Garis Atas Hijau */
+.cardWrong { border-top-color: #e53e3e; }   /* Garis Atas Merah */
+.cardNeutral { border-top-color: #d69e2e; } /* Garis Atas Kuning Esai */
+
+.reviewSoalHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.badgeBenar { background: #c6f6d5; color: #22543d; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; }
+.badgeSalah { background: #fed7d7; color: #742a2a; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; }
+.badgeEsai { background: #fefcbf; color: #744210; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; }
+
+.soalImgReview { max-width: 100%; max-height: 250px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #edf2f7;}
+
+.reviewOptionsList { display: flex; flex-direction: column; gap: 10px; }
+.reviewOption { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; position: relative;}
+.reviewOptionCorrect { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 2px solid #38a169; background: #f0fff4; position: relative;}
+.reviewOptionWrong { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 2px solid #e53e3e; background: #fff5f5; position: relative;}
+
+.reviewOptionLetter { width: 30px; height: 30px; border-radius: 6px; background: white; border: 1px solid #cbd5e0; display: flex; justify-content: center; align-items: center; font-weight: 800; color: #4a5568; margin-right: 15px; font-size: 13px;}
+.reviewOptionCorrect .reviewOptionLetter { background: #38a169; border-color: #38a169; color: white; }
+.reviewOptionWrong .reviewOptionLetter { background: #e53e3e; border-color: #e53e3e; color: white; }
+
+.reviewOptionText { font-size: 15px; color: #2d3748; font-weight: 500; }
+.reviewOptionCorrect .reviewOptionText { color: #22543d; font-weight: 700; }
+.reviewOptionWrong .reviewOptionText { color: #742a2a; font-weight: 700; }
+
+.yourAnswerBadge { position: absolute; right: 15px; font-size: 11px; font-weight: 800; text-transform: uppercase; background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 6px; color: #4a5568;}
+
+.reviewEsaiBox { background: #fffaf0; border: 1px solid #fbd38d; padding: 20px; border-radius: 12px; color: #744210; font-size: 15px; line-height: 1.6;}
+
+.reviewFooter { text-align: center; margin-top: 40px; }
+.logoutBtn { background: #1a5f51; color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; font-family: inherit; box-shadow: 0 10px 20px rgba(26, 95, 81, 0.2);}
+.logoutBtn:hover { transform: translateY(-3px); background: #134e40; }

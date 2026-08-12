@@ -1,0 +1,181 @@
+/* src/app/pendaftar/pendaftar.module.css */
+
+.mobileContainer { 
+  width: 100%; max-width: 480px; margin: 0 auto; 
+  background-color: #f4f7fe; min-height: 100vh; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative; overflow-x: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; 
+  padding-bottom: 100px;
+}
+
+/* ==========================================
+ HEADER HERO & PATTERN BLOB
+========================================== */
+.dashHeaderCurve {
+  background-color: #1a5f51; /* Warna hijau solid yang lebih dalam */
+  padding: 30px 20px 150px 20px; color: white;
+  border-radius: 0 0 40px 40px; 
+  position: relative;
+  overflow: hidden;
+}
+
+/* Pattern Blob (Bentuk Abstrak Halus) */
+.dashHeaderCurve::before {
+  content: ''; position: absolute;
+  top: -50px; left: -50px;
+  width: 250px; height: 250px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  animation: morph 8s ease-in-out infinite;
+}
+.dashHeaderCurve::after {
+  content: ''; position: absolute;
+  bottom: -60px; right: -30px;
+  width: 200px; height: 200px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: morph 10s ease-in-out infinite reverse;
+}
+
+@keyframes morph {
+  0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; }
+  67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
+  100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+}
+
+.dashTopNav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; position: relative; z-index: 2;}
+.headerTitle { position: relative; z-index: 2; }
+.headerTitle p { font-size: 13px; opacity: 0.8; margin: 0 0 5px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;}
+.headerTitle h2 { font-size: 26px; font-weight: 800; margin: 0; }
+
+/* ==========================================
+ KOTAK MENU PINTAR (GRID BERSIH 2 BARIS)
+========================================== */
+.menuPanel {
+  margin: -100px 20px 20px 20px; /* Tarik ke atas, ada margin kiri-kanan */
+  background: white;
+  border-radius: 24px;
+  padding: 25px 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+  position: relative; z-index: 10;
+}
+
+/* Supaya di HP & Desktop keliatan pas, kita buat Grid 3 kolom. Nggak perlu geser. */
+.menuGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 10px;
+}
+
+.menuCard {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  cursor: pointer; transition: all 0.2s ease; position: relative;
+}
+.menuCard:active { transform: scale(0.92); }
+
+.menuIcon {
+  width: 50px; height: 50px; border-radius: 16px;
+  display: flex; justify-content: center; align-items: center;
+  margin-bottom: 10px; 
+}
+
+.menuTitle { font-size: 11px; font-weight: 800; color: #2d3748; margin: 0; line-height: 1.3;}
+
+/* Warna Icon Menu (Solid & Premium, Fokus Hijau/Aksen) */
+.bgActive { background-color: #e8f5e9; color: #1a5f51; } /* Hijau khas aplikasi */
+.bgWarning { background-color: #fff3e0; color: #d35400; } /* Orange kalau penting */
+
+/* Badge Kunci & Selesai */
+.cardLocked { opacity: 0.6; }
+.cardLocked .menuIcon { background-color: #f1f5f9; color: #a0aec0;}
+.cardLocked .menuTitle { color: #a0aec0; }
+.cardLocked:active { transform: none; cursor: not-allowed; }
+
+.lockBadge, .checkBadge {
+  position: absolute; top: -5px; right: 10px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; justify-content: center; align-items: center; border: 2px solid white;
+}
+.lockBadge { background-color: #cbd5e0; color: white; }
+.checkBadge { background-color: #1a5f51; color: white; } /* Hijau Mubarak */
+
+/* ==========================================
+ PROGRESS BAR DETIL (DI BAWAH MENU)
+========================================== */
+.sectionTitle { font-size: 16px; font-weight: 800; color: #2d3748; margin: 10px 20px 15px 20px;}
+
+.progressCard {
+  background: white; margin: 0 20px 20px 20px; border-radius: 24px; padding: 25px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+}
+.progressHeader { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;}
+.progressTitle { font-size: 14px; font-weight: 800; color: #4a5568; margin: 0;}
+.progressPercentage { font-size: 32px; font-weight: 900; color: #1a5f51; line-height: 1;}
+.progressBarBg { width: 100%; height: 8px; background: #edf2f7; border-radius: 10px; overflow: hidden; margin-bottom: 20px;}
+.progressBarFill { height: 100%; background: #1a5f51; border-radius: 10px; transition: width 1s ease-in-out;}
+
+/* Kotak Peringatan/Instruksi */
+.progressAlert { 
+  background: #f8fafc; border-left: 4px solid #1a5f51; 
+  padding: 15px; border-radius: 12px; display: flex; gap: 15px;
+}
+.alertIcon { color: #1a5f51; flex-shrink: 0; margin-top: 2px;}
+.progressAlert h4 { margin: 0 0 5px 0; font-size: 14px; color: #2d3748; font-weight: 800;}
+.progressAlert p { margin: 0; font-size: 12px; color: #718096; line-height: 1.5; font-weight: 600;}
+
+/* ==========================================
+ BANNER INFORMASI
+========================================== */
+.bannerCard {
+  margin: 0 20px 20px 20px; 
+  background-color: #1a5f51; /* Pakai warna primer */
+  border-radius: 20px; padding: 20px; color: white; display: flex; gap: 15px; align-items: center;
+  box-shadow: 0 8px 20px rgba(26, 95, 81, 0.25);
+  position: relative; overflow: hidden;
+}
+/* Motif dekorasi banner */
+.bannerCard::before {
+  content: ''; position: absolute; right: -20px; top: -20px;
+  width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;
+}
+.bannerIcon { background: rgba(255,255,255,0.2); width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; position: relative; z-index: 2;}
+.bannerText { position: relative; z-index: 2; }
+.bannerText h4 { margin: 0 0 5px 0; font-size: 15px; font-weight: 800;}
+.bannerText p { margin: 0; font-size: 12px; opacity: 0.9; line-height: 1.4; font-weight: 500;}
+
+/* ==========================================
+ CHART KUOTA
+========================================== */
+.quotaCard {
+  background: white; margin: 0 20px 20px 20px; border-radius: 24px; padding: 25px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+}
+.quotaItem { margin-bottom: 20px; }
+.quotaItem:last-child { margin-bottom: 0; }
+.quotaHeader { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: flex-end;}
+.quotaLabel h5 { font-size: 14px; font-weight: 800; color: #2d3748; margin: 0 0 2px 0;}
+.quotaLabel p { font-size: 11px; color: #a0aec0; margin: 0; font-weight: 600;}
+.quotaValue { font-size: 14px; font-weight: 800; color: #1a5f51; background: #e8f5e9; padding: 4px 10px; border-radius: 10px;}
+.quotaBarBg { width: 100%; height: 10px; background: #edf2f7; border-radius: 10px; overflow: hidden;}
+.quotaBarFill { height: 100%; border-radius: 10px; transition: width 1s ease-in-out;}
+.quotaSd { background: #1a5f51; } /* Samain Hijau Mubarak */
+.quotaSmp { background: #27ae60; } /* Hijau lebih terang */
+
+/* BOTTOM NAV */
+.bottomNav { 
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+  width: 100%; max-width: 480px; background: white; 
+  display: flex; justify-content: space-around; padding: 15px 0 25px 0; 
+  border-top-left-radius: 24px; border-top-right-radius: 24px; 
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100;
+}
+.navItem { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #94a3b8; cursor: pointer; transition: 0.2s;}
+.navItemActive { color: #1a5f51; }
+.navQrBtn { 
+  width: 60px; height: 60px; background: #1a5f51; color: white; 
+  border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+  margin-top: -35px; border: 5px solid #f4f7f6; box-shadow: 0 10px 20px rgba(26, 95, 81, 0.3); 
+}

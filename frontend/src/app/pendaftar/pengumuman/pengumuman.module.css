@@ -1,0 +1,206 @@
+/* src/app/pendaftar/pengumuman/pengumuman.module.css */
+
+.mobileContainer { 
+    width: 100%; 
+    max-width: 480px; 
+    margin: 0 auto; 
+    min-height: 100vh; 
+    background: #f8fafc; /* Solid Flat */
+    padding: 30px 20px 50px 20px; 
+    font-family: 'Poppins', sans-serif;
+}
+
+.loading { 
+    text-align: center; padding: 100px 20px; color: #1a5f51; font-weight: 800; font-size: 16px;
+}
+
+.backBtn { 
+    background: #e2e8f0; /* Flat abu-abu pengganti border */
+    border: none; /* NO BORDER */
+    padding: 10px 18px; 
+    border-radius: 12px; 
+    color: #475569; 
+    font-weight: 800; 
+    cursor: pointer; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    font-family: inherit; 
+    font-size: 13px; 
+    margin-bottom: 25px; 
+    transition: 0.2s;
+}
+.backBtn:hover { background: #cbd5e1; }
+
+.headerTitle { animation: fadeInUp 0.4s ease-out forwards; }
+.headerTitle h1 { font-size: 24px; font-weight: 900; color: #1a5f51; margin: 0 0 5px 0; }
+.headerTitle p { margin: 0 0 30px 0; color: #64748b; font-size: 13.5px; font-weight: 500;}
+
+/* KARTU PROSES & GAGAL (CLEAN FLAT) */
+.waitingCard { 
+    background: white; 
+    border: none; /* NO BORDER */
+    border-radius: 20px; 
+    padding: 50px 25px; 
+    text-align: center; 
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+.clockIcon { color: #cbd5e1; margin-bottom: 20px; animation: spinClock 4s linear infinite;}
+.waitingCard h2 { margin: 0 0 10px 0; color: #1e293b; font-size: 19px; font-weight: 800;}
+.waitingCard p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.6; font-weight: 500;}
+
+.failedCard { 
+    background: #fef2f2; /* Flat Merah Muda */
+    border: none; /* NO BORDER */
+    border-radius: 20px; 
+    padding: 45px 25px; 
+    text-align: center; 
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+.failedIcon { color: #ef4444; margin-bottom: 20px; }
+.failedCard h2 { margin: 0 0 12px 0; color: #991b1b; font-size: 19px; font-weight: 800;}
+.failedCard p { margin: 0; color: #7f1d1d; font-size: 13px; line-height: 1.6; font-weight: 500;}
+
+/* ========================================================
+   KARTU LULUS CLEAN (SOLID COLOR + FLAT CONFETTI)
+   ======================================================== */
+.successCard { 
+    background: #1a5f51; /* Solid Color, No Gradient */
+    border: none; /* No Border */
+    border-radius: 20px; 
+    padding: 40px 20px; 
+    text-align: center; 
+    position: relative; 
+    overflow: hidden; 
+    color: white; 
+    animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+/* CONFETTI FIX: Muncul Sekali Jalan (No Infinite) */
+.confettiBg {
+    position: absolute; 
+    top: -100%; left: 0; right: 0; bottom: 0; 
+    opacity: 0.6; 
+    pointer-events: none;
+    /* Ganti fill warna kuning di SVG jadi putih biar selaras */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect x='15' y='15' width='10' height='14' fill='%23ffffff' transform='rotate(20 20 22)'/%3E%3Crect x='70' y='30' width='12' height='12' fill='%236ee7b7' transform='rotate(45 76 36)'/%3E%3Crect x='30' y='80' width='8' height='12' fill='%23f87171' transform='rotate(70 34 86)'/%3E%3Crect x='90' y='90' width='14' height='8' fill='%2360a5fa' transform='rotate(15 97 94)'/%3E%3C/svg%3E");
+    /* Hapus infinite, ubah jadi beranimasi sekali saja */
+    animation: confettiFall 4s linear 1 forwards; 
+    z-index: 1;
+}
+
+.successBadge { 
+    position: relative; z-index: 2; display: inline-block; 
+    background: #ffffff; /* Ganti Kuning jadi Putih */
+    color: #0f3d2e; /* Ganti Coklat jadi Hijau Gelap */
+    padding: 6px 16px; 
+    border-radius: 20px; font-size: 11px; font-weight: 900; 
+    letter-spacing: 2px; margin-bottom: 25px; 
+}
+
+/* Icon Bulat Flat, Tanpa Glowing Ring, Stroke SVG jadi Putih */
+.successIconWrapper {
+    position: relative; z-index: 2; width: 70px; height: 70px;
+    background: transparent; /* Ubah Putih jadi transparent karena latar successCard udah hijau */
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center; 
+    margin: 0 auto 20px auto; border: none;
+}
+
+.successTitle { position: relative; z-index: 2; font-size: 24px; font-weight: 900; margin: 0 0 12px 0; color: white;}
+.successDesc { position: relative; z-index: 2; font-size: 13px; color: #e2e8f0; line-height: 1.6; margin: 0 0 25px 0; font-weight: 400;}
+
+/* Unduh Dokumen (Flat Solid Background) */
+.documentActionArea { 
+    position: relative; z-index: 2; background: #0f3d2e; /* Solid Hijau Gelap */
+    padding: 22px 18px; border-radius: 16px; border: none; margin-bottom: 5px;
+}
+.docInfo { font-size: 11.5px; color: #a7f3d0; margin: 0 0 15px 0; font-weight: 600;}
+.btnGroup { display: flex; flex-direction: column; gap: 10px; }
+
+.downloadBtnMain { 
+    width: 100%; padding: 14px; 
+    background: #ffffff; /* Ganti Kuning jadi Putih */
+    color: #0f3d2e; /* Ganti Coklat jadi Hijau Gelap */
+    border: none; font-weight: 900; border-radius: 12px; cursor: pointer; 
+    display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 13.5px; 
+    font-family: inherit; transition: 0.2s;
+}
+.downloadBtnMain:hover { background: #f1f5f9; }
+
+.downloadBtnSecondary { 
+    width: 100%; padding: 14px; background: #1e6b5a; /* Solid Hijau Medium */
+    color: white; border: none; font-weight: 800; border-radius: 12px; cursor: pointer; 
+    display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 13.5px; 
+    font-family: inherit; transition: 0.2s;
+}
+.downloadBtnSecondary:hover { background: #23806b; }
+
+/* ========================================================
+   TOMBOL DAFTAR ULANG DIPISAH (WARNA PUTIH)
+   ======================================================== */
+.actionWrapperBottom {
+    margin-top: 15px;
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.continueDaftarUlangBtn {
+    width: 100%;
+    background: #ffffff; /* Ganti Kuning jadi Putih Solid */
+    color: #0f3d2e; /* Ganti Coklat jadi Hijau Gelap */
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+    transition: 0.2s;
+}
+.continueDaftarUlangBtn:hover {
+    background: #f1f5f9;
+}
+
+/* ========================================================
+   COUNTDOWN MODE INTERFACE (NO KUNING)
+   ======================================================== */
+.countdownWrapperCard {
+    background: #1a5f51; /* Solid */
+    border: none;
+    border-radius: 20px;
+    padding: 40px 20px; text-align: center; color: white;
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+.countdownWrapperCard h2 { font-size: 22px; font-weight: 900; margin: 0 0 10px 0;}
+.countdownWrapperCard p { font-size: 12.5px; color: #a7f3d0; line-height: 1.6; margin: 0 0 25px 0; font-weight: 400;}
+
+.timerBadge { 
+    display: inline-block; background: #0f3d2e; color: white; padding: 6px 14px; 
+    border-radius: 8px; font-size: 10px; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px;
+}
+.countdownGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px;}
+
+.timeBox { 
+    background: #0f3d2e; /* Solid */
+    border: none; 
+    padding: 14px 5px; border-radius: 12px;
+}
+.timeNum { 
+    font-size: 24px; font-weight: 900; 
+    color: #ffffff; /* Ganti Kuning jadi Putih */
+    line-height: 1;
+}
+.timeLabel { font-size: 10px; font-weight: 700; color: #94a3b8; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+.noticeBoxFooter { 
+    background: #0f3d2e; padding: 12px; border-radius: 10px; font-size: 11px; 
+    color: #a7f3d0; text-align: center; font-weight: 500;
+}
+
+/* ANIMATION KEYFRAMES ENGINE */
+@keyframes spinClock { 100% { transform: rotate(360deg); } }
+@keyframes confettiFall { 0% { background-position: 0px 0px; opacity: 1; } 100% { background-position: 0px 360px; opacity: 0; } }
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }

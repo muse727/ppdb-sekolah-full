@@ -1,0 +1,115 @@
+.container {
+    padding: 30px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.header { margin-bottom: 30px; }
+.headerTitle { font-size: 24px; font-weight: 800; color: #1e293b; margin: 0 0 4px 0; }
+.headerSubtitle { color: #64748b; margin: 0; font-size: 13px; font-weight: 500; }
+
+.bentoGrid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+}
+
+/* KARTU STATISTIK (TOP ROW: 4 KARTU) */
+.statCard {
+    grid-column: span 3;
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 130px; box-sizing: border-box;
+}
+
+.statCardGreen { background: #1a5f51; border: none; box-shadow: 0 8px 20px rgba(26, 95, 81, 0.2); }
+
+.statHeader { display: flex; justify-content: space-between; align-items: flex-start; }
+.statTitle { font-size: 11px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+.statIcon { width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+
+.statValue { font-size: 32px; font-weight: 800; margin: 12px 0 0 0; line-height: 1; }
+.statDesc { font-size: 11px; font-weight: 500; margin: 6px 0 0 0; display: flex; align-items: center; gap: 6px; }
+
+/* KARTU AKSI UTAMA (PANJANG KE BAWAH) */
+.actionCard {
+    grid-column: span 3; grid-row: span 2; background: #1a5f51; border-radius: 20px; padding: 24px; color: white;
+    cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(26, 95, 81, 0.2); min-height: 280px; box-sizing: border-box; border: none;
+}
+.actionCard:hover { transform: translateY(-4px); background: #134e40; }
+
+.actionIconTop {
+    width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 12px;
+    display: flex; justify-content: center; align-items: center; color: white;
+}
+.actionTextBottom { margin-top: auto; }
+.actionTitle { font-size: 18px; font-weight: 800; margin: 0 0 8px 0; color: #ffffff; line-height: 1.3;}
+.actionDesc { font-size: 12px; color: #ffffff; opacity: 0.85; margin: 0; line-height: 1.6;}
+
+/* KARTU REGULER LAINNYA */
+.regularCard {
+    background: white; border-radius: 20px; padding: 24px;
+    border: 1px solid #e2e8f0; display: flex; flex-direction: column; box-sizing: border-box;
+}
+
+.colSpan4 { grid-column: span 4; }
+.colSpan5 { grid-column: span 5; }
+
+/* KALENDER */
+.calendarHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.calendarTitle { font-size: 14px; font-weight: 800; color: #1e293b; margin: 0; }
+.calendarNav { display: flex; gap: 6px; }
+.calNavBtn {
+    background: #f8fafc; border: 1px solid #e2e8f0; width: 24px; height: 24px; border-radius: 6px;
+    display: flex; justify-content: center; align-items: center; cursor: pointer; color: #64748b; transition: 0.2s; font-size: 12px;
+}
+.calNavBtn:hover { background: #edf2f7; color: #1e293b; }
+
+.calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.calDayName { text-align: center; font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 6px; }
+.calDay { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: 600; color: #475569; border-radius: 6px; }
+.calDayActive { background: #1a5f51; color: white; font-weight: 800; box-shadow: 0 4px 10px rgba(26, 95, 81, 0.3); }
+
+/* DAFTAR SISWA (LIST VIEW) */
+.listHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.listTitle { font-size: 14px; font-weight: 800; color: #1e293b; margin: 0; }
+.listAction { background: transparent; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; color: #475569; cursor: pointer; transition: 0.2s;}
+.listAction:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+.listContainerScroll { flex: 1; overflow-y: auto; max-height: 200px; padding-right: 5px;}
+.listItem { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #e2e8f0; }
+.listItem:last-child { border-bottom: none; }
+.itemLeft { display: flex; align-items: center; gap: 12px; }
+.itemIcon { width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #f1f5f9; color: #64748b;}
+.itemName { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 2px 0; }
+.itemDesc { font-size: 10px; color: #64748b; margin: 0; }
+
+.itemBadge { padding: 4px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; }
+.badgePending { background: #fffbeb; color: #d97706; }
+.badgeSuccess { background: #f0fdf4; color: #10b981; }
+.emptyText { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 0; }
+
+/* PROGRESS BAR CHART */
+.progressContainer { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 10px 0;}
+.progressCircle { position: relative; width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#1a5f51 var(--p, 0%), #edf2f7 0); display: flex; justify-content: center; align-items: center;}
+.progressInner { width: 90px; height: 90px; background: white; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+.progressValue { font-size: 24px; font-weight: 900; color: #1e293b; margin: 0; line-height: 1;}
+.progressLabel { font-size: 10px; color: #64748b; font-weight: 600; margin-top: 4px;}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .statCard { grid-column: span 6; }
+    .actionCard { grid-column: span 4; grid-row: span 1; min-height: 200px;}
+    .colSpan4 { grid-column: span 8; }
+    .colSpan5 { grid-column: span 12; }
+}
+
+@media (max-width: 768px) {
+    .container { padding: 15px; }
+    .bentoGrid { display: flex; flex-direction: column; gap: 15px; }
+    .statCard, .actionCard, .regularCard { width: 100%; min-height: 120px; }
+    .listContainerScroll { max-height: none; }
+}

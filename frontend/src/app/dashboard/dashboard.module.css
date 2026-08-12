@@ -1,0 +1,510 @@
+/* src/app/dashboard/dashboard.module.css */
+
+.wrapper {
+  background-color: #f4f7fe; /* Warna background abu-abu super soft */
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  gap: 25px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+/* ============================ */
+/* SIDEBAR KIRI (FLOATING)      */
+/* ============================ */
+.sidebar {
+  background-color: #1a5f51; /* Hijau Al-Mubarak */
+  width: 90px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+  box-shadow: 0px 10px 30px rgba(26, 95, 81, 0.2);
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 40px);
+}
+
+.logo {
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 50px;
+  line-height: 1.2;
+}
+
+.menuList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  align-items: center;
+}
+
+.menuItem {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menuItem:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menuItemActive {
+  background-color: white;
+  color: #1a5f51;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.menuItemActive:hover {
+  background-color: white;
+  color: #1a5f51;
+}
+
+.logoutBtn {
+  margin-top: auto;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.logoutBtn:hover {
+  color: #ff6b6b;
+}
+
+/* ============================ */
+/* MAIN CONTENT & TOPBAR        */
+/* ============================ */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+}
+
+/* SEARCH BAR PREMIUM & ANTI DARK-MODE */
+.searchContainer {
+  background-color: white; 
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-radius: 30px;
+  border: 1px solid #e2e8f0;
+  width: 300px;
+  transition: all 0.2s ease;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.01);
+}
+
+.searchContainer:focus-within {
+  border-color: #1a5f51;
+  box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1);
+  width: 350px; /* Animasi melebar dikit pas diklik (Premium feel) */
+}
+
+.searchInput {
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: #2d3748; /* Paksa hitam */
+  font-size: 14px;
+  width: 100%;
+}
+
+.searchInput::placeholder { 
+  color: #a0aec0; 
+}
+
+.topActions {
+  display: flex;
+  gap: 15px;
+}
+
+.actionBtn {
+  background-color: white;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #1a5f51;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.actionBtn:hover {
+  transform: translateY(-2px);
+}
+
+.notifBadge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4757;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* ============================ */
+/* KELAS LAYOUT (JANGAN DIHAPUS)*/
+/* ============================ */
+.loadingScreen {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f4f7fe;
+}
+.loadingText { color: #1a5f51; }
+
+.userProfileBtn {
+  width: auto;
+  padding: 5px 15px 5px 20px;
+  gap: 12px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.userProfileBtn:hover { 
+  background-color: #f8fafc; 
+  border-color: #cbd5e0;
+}
+
+.userName { 
+  font-size: 13px; 
+  font-weight: 700; 
+  color: #2d3748; 
+}
+
+.userAvatarContainer {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #cbd5e0;
+  overflow: hidden;
+}
+
+.userAvatarImg { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+}
+
+
+/* ============================ */
+/* DASHBOARD GRID (BERANDA)     */
+/* ============================ */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+  height: 100%;
+}
+
+.leftCol, .rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* HERO BANNER */
+.heroBanner {
+  background: linear-gradient(135deg, #1a5f51 0%, #227b69 100%);
+  border-radius: 24px;
+  padding: 30px 40px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0px 10px 25px rgba(26, 95, 81, 0.25);
+}
+
+.heroDate {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.heroTitle {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 5px 0;
+  letter-spacing: -0.5px;
+}
+
+.heroSubtitle {
+  font-size: 14px;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.heroIllustration {
+  position: absolute;
+  right: 20px;
+  bottom: -10px;
+  height: 130%;
+  opacity: 0.15;
+}
+
+/* KARTU KOMPONEN (Global Dashboard) */
+.card {
+  background-color: white;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  color: #718096;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* ANTI DARK MODE BUAT DROPDOWN / SELECT */
+.dropdownMini {
+  background-color: #f4f7fe;
+  color: #2d3748; /* Paksa Hitam */
+  border: 1px solid #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* STATS CARDS */
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.statCard {
+  background-color: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease;
+}
+.statCard:hover {
+  transform: translateY(-3px);
+}
+
+.statTitle {
+  font-size: 12px;
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2d3748;
+  margin: 0 0 5px 0;
+}
+
+.statDesc {
+  font-size: 12px;
+  color: #48bb78;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* PROFILE CARD */
+.profileCard {
+  background-color: white;
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.profileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #718096;
+}
+
+.editBtn {
+  background-color: #f4f7fe;
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #1a5f51;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.editBtn:hover { background-color: #e2e8f0; }
+
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #cbd5e0;
+  object-fit: cover;
+  border: 2px solid #edf2f7;
+}
+
+.profileName {
+  font-size: 18px;
+  font-weight: 800;
+  color: #2d3748;
+  margin: 0 0 5px 0;
+}
+
+.profileRole {
+  font-size: 12px;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.profileStats {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #edf2f7;
+  padding-top: 20px;
+}
+
+.pStat { text-align: center; }
+.pStatLabel { font-size: 11px; color: #a0aec0; margin-bottom: 5px; font-weight: 600; }
+.pStatValue { font-size: 13px; font-weight: 700; color: #2d3748; }
+
+/* ============================ */
+/* WIDGETS BAWAH (Chart & Dll)  */
+/* ============================ */
+.bottomRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chartWrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.donutSvg { width: 120px; height: 120px; }
+.circleBg { fill: none; stroke: #edf2f7; stroke-width: 3; }
+.circleColor {
+  fill: none; stroke: #1a5f51; stroke-width: 3; stroke-linecap: round;
+  animation: fillAnimation 1.5s ease-out forwards;
+}
+@keyframes fillAnimation { 0% { stroke-dasharray: 0, 100; } }
+.chartCenterText { fill: #2d3748; font-size: 10px; font-weight: 800; text-anchor: middle; }
+.chartCenterLabel { fill: #718096; font-size: 3px; text-anchor: middle; }
+.chartLegend { display: flex; flex-direction: column; gap: 15px; }
+.legendItem { display: flex; flex-direction: column; }
+.legendVal { font-size: 20px; font-weight: 800; color: #2d3748; }
+.legendLabel { font-size: 12px; color: #a0aec0; font-weight: 500; }
+
+.progressList { display: flex; flex-direction: column; gap: 18px; }
+.progressItem { width: 100%; }
+.progressHeader {
+  display: flex; justify-content: space-between; margin-bottom: 8px;
+  font-size: 13px; font-weight: 600; color: #4a5568;
+}
+.progressTrack {
+  width: 100%; height: 8px; background-color: #edf2f7;
+  border-radius: 10px; overflow: hidden;
+}
+.progressBar { height: 100%; border-radius: 10px; transition: width 1s ease-in-out; }
+
+.calendarGrid { display: flex; flex-direction: column; gap: 15px; }
+.calDays {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: #a0aec0; font-weight: 600;
+}
+.calDates { display: flex; justify-content: space-between; }
+.calDate {
+  width: 35px; height: 40px; display: flex; justify-content: center;
+  align-items: center; border-radius: 10px; font-size: 14px;
+  font-weight: 600; color: #4a5568; cursor: pointer; transition: all 0.2s;
+}
+.calDate:hover { background-color: #f4f7fe; }
+.calDateActive {
+  background-color: #1a5f51; color: white;
+  box-shadow: 0 4px 10px rgba(26, 95, 81, 0.3);
+}
+
+.agendaList { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+.agendaItem { display: flex; gap: 15px; align-items: flex-start; }
+.agendaTime {
+  font-size: 12px; color: #a0aec0; font-weight: 600;
+  min-width: 65px; padding-top: 2px;
+}
+.agendaContent {
+  position: relative; padding-left: 15px;
+  border-left: 2px dashed #e2e8f0; padding-bottom: 15px;
+}
+.agendaDot {
+  position: absolute; left: -6px; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.agendaTitle { font-size: 13px; font-weight: 700; color: #2d3748; margin: 0; }
+.agendaDesc { font-size: 12px; color: #a0aec0; margin: 5px 0 0 0; }
