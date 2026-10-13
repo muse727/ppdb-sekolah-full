@@ -3,17 +3,32 @@
 import { useState, useEffect } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import type { HasilObservasiRecord, JawabanObservasi, RekomendasiAkhir } from '@/lib/domain';
+import { beginObservasiIdempotentOp, clearObservasiIdempotentOp } from '@/lib/observasiIdempotency';
+import { handleObservasiSubmitError } from '@/lib/observasiSubmitErrors';
 import styles from './rekapan.module.css';
 
+/**
+ * Persisted to localStorage under `goSkool_printSettings` and read back by
+ * /guru/rekapan/cetak, so every field must round-trip as a string.
+ */
+interface PrintSettings {
+    tanggal: string;
+    namaKepsek: string;
+    nipKepsek: string;
+    logoB64: string;
+    ttdB64: string;
+}
+
 export default function RekapanObservasiPage() {
-    const [hasilList, setHasilList] = useState<any[]>([]);
+    const [hasilList, setHasilList] = useState<HasilObservasiRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
     const [activeTab, setActiveTab] = useState('REKAPAN');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('SEMUA'); 
 
-    const [printSettings, setPrintSettings] = useState({
+    const [printSettings, setPrintSettings] = useState<PrintSettings>({
         tanggal: 'Jakarta, 15 November 2025',
         namaKepsek: 'Amang Suryaman, M.Pd.',
         nipKepsek: '',
@@ -21,13 +36,15 @@ export default function RekapanObservasiPage() {
         ttdB64: ''
     });
 
-    const [editingData, setEditingData] = useState<any>(null);
-    const [editedJson, setEditedJson] = useState<any>({});
-    const [rekomendasiAkhir, setRekomendasiAkhir] = useState('LULUS');
+    /** Report currently open in the editor, or null while listing. */
+    const [editingData, setEditingData] = useState<HasilObservasiRecord | null>(null);
+    /** Working copy of `editingData.jawaban_json`, keyed by component code. */
+    const [editedJson, setEditedJson] = useState<Record<string, JawabanObservasi>>({});
+    const [rekomendasiAkhir, setRekomendasiAkhir] = useState<RekomendasiAkhir>('LULUS');
 
     const fetchHasil = async () => {
         try {
-            const res = await libAxios.get('/api/guru/rekapan-observasi');
+            const res = await libAxios.get<HasilObservasiRecord[]>('/api/guru/rekapan-observasi');
             setHasilList(res.data);
         } catch (error) {
             console.error(error);
@@ -59,9 +76,11 @@ export default function RekapanObservasiPage() {
         Swal.fire('Tersimpan', 'Pengaturan dokumen siap digunakan untuk cetak PDF.', 'success');
     };
 
-    const openEditor = (hasil: any) => {
+    const openEditor = (hasil: HasilObservasiRecord) => {
         setEditingData(hasil);
-        setEditedJson(JSON.parse(JSON.stringify(hasil.jawaban_json)));
+        // Deep clone so edits stay local until saved. Falls back to {} when the
+        // decoded json column is null — otherwise Object.keys() below throws.
+        setEditedJson(JSON.parse(JSON.stringify(hasil.jawaban_json ?? {})));
         setRekomendasiAkhir(hasil.rekomendasi_akhir || 'LULUS');
     };
 
@@ -106,33 +125,60 @@ export default function RekapanObservasiPage() {
     };
 
     const saveEditorChanges = async () => {
+        // The save button only renders inside the `if (editingData)` editor
+        // view, so this is unreachable in practice; the guard keeps the null
+        // case from producing a request with an undefined user_id.
+        if (!editingData) return;
         Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-            await libAxios.post('/api/guru/observasi/submit', { 
-                user_id: editingData.user_id, 
+            // E.12C: SIAP_CETAK only flips on AFTER the server save succeeds — it
+            // stays inside the try, after the awaited POST. On failure the catch
+            // runs and localStorage is never touched, so a failed save can never
+            // mark a report "ready to print".
+            //
+            // E.12G Phase 4: idempotent EDIT — expected_version from the loaded
+            // record (server truth; NOT auto-bumped on 409 — the guru must
+            // reload and re-edit from newest data), plus an Idempotency-Key
+            // persisted in sessionStorage before the request so a refresh
+            // mid-save replays with the same key instead of double-writing.
+            const payload = {
+                user_id: editingData.user_id,
                 jawaban_json: editedJson,
-                rekomendasi_akhir: rekomendasiAkhir 
+                rekomendasi_akhir: rekomendasiAkhir,
+                expected_version: editingData.version,
+            };
+            const idemKey = beginObservasiIdempotentOp('observasi_submit', editingData.user_id, payload);
+            await libAxios.post('/api/guru/observasi/submit', payload, {
+                headers: { 'Idempotency-Key': idemKey },
             });
+            clearObservasiIdempotentOp('observasi_submit', editingData.user_id);
             localStorage.setItem(`status_cetak_${editingData.id}`, 'SIAP_CETAK');
             Swal.fire('Berhasil!', 'Laporan telah dirapikan dan siap dicetak.', 'success');
             setEditingData(null); 
             fetchHasil(); 
-        } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
+        } catch (err: unknown) {
+            handleObservasiSubmitError(err, {
+                onDefinitive: () => {
+                    if (editingData) clearObservasiIdempotentOp('observasi_submit', editingData.user_id);
+                },
+            });
+        } 
     };
 
-    const handleCetakPDF = (hasil: any) => {
+    const handleCetakPDF = (hasil: HasilObservasiRecord) => {
         localStorage.setItem('goSkool_printData', JSON.stringify(hasil));
         window.open('/guru/rekapan/cetak', '_blank');
     };
 
-    const getScoreData = (jawabanJson: any) => {
+    const getScoreData = (jawabanJson: Record<string, JawabanObservasi> | null | undefined) => {
         if (!jawabanJson) return { total: 0, max: 0, warning: false };
         let total = 0;
         let max = 0;
         Object.keys(jawabanJson).forEach(key => {
             max += 2;
-            if (jawabanJson[key].jawaban === 'YA') total += 2;
-            else if (jawabanJson[key].jawaban === 'TIDAK KONSISTEN') total += 1;
+            const jawaban = jawabanJson[key]?.jawaban;
+            if (jawaban === 'YA') total += 2;
+            else if (jawaban === 'TIDAK KONSISTEN') total += 1;
         });
         const percentage = max > 0 ? (total / max) * 100 : 0;
         return { total, max, warning: percentage < 60 };
@@ -192,10 +238,10 @@ export default function RekapanObservasiPage() {
                             className={styles.editorTextarea} 
                             style={{ minHeight: 'auto', padding: '15px', fontWeight: 700, border: '2px solid #cbd5e1' }}
                             value={rekomendasiAkhir} 
-                            onChange={(e) => setRekomendasiAkhir(e.target.value)}
+                            onChange={(e) => setRekomendasiAkhir(e.target.value as RekomendasiAkhir)}
                         >
                             <option value="LULUS">Lulus (Direkomendasikan Penuh)</option>
-                            <option value="LULUS BERSYARAT">Lulus Bersyarat (Membutuhkan Perhatian Khusus)</option>
+                            <option value="LULUS BERSYARAT">Lulus Bersyarat (Diterima dengan Syarat/Kesepakatan)</option>
                             <option value="TIDAK LULUS">Tidak Lulus (Belum Direkomendasikan)</option>
                         </select>
                         {rekomendasiAkhir === 'LULUS BERSYARAT' && (
@@ -310,6 +356,14 @@ export default function RekapanObservasiPage() {
                             <div className={styles.formGroup}>
                                 <label>Logo Sekolah</label>
                                 <div className={styles.uploadBox}>
+                                    {/* P4-A.3 Group B — `logoB64` is an inline base64 data URI
+                                        (FileReader.readAsDataURL in handleImageUpload), later persisted
+                                        to localStorage for the print document. Next.js forces
+                                        `unoptimized` for data:/blob: sources, so <Image> renders the
+                                        identical payload with no compression benefit.
+                                        .previewImg { max-width: 100%; max-height: 120px;
+                                        object-fit: contain } unchanged. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     {printSettings.logoB64 ? <img src={printSettings.logoB64} alt="Logo" className={styles.previewImg} /> : <div className={styles.placeholderImg}>Pilih Gambar</div>}
                                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'logoB64')} />
                                 </div>
@@ -317,6 +371,10 @@ export default function RekapanObservasiPage() {
                             <div className={styles.formGroup}>
                                 <label>Tanda Tangan Kepsek</label>
                                 <div className={styles.uploadBox}>
+                                    {/* P4-A.3 Group B — inline base64 data URI (see the logo preview
+                                        above); <Image> would pass it through unoptimized.
+                                        .previewImg sizing unchanged. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     {printSettings.ttdB64 ? <img src={printSettings.ttdB64} alt="TTD" className={styles.previewImg} /> : <div className={styles.placeholderImg}>Pilih Gambar</div>}
                                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'ttdB64')} />
                                 </div>

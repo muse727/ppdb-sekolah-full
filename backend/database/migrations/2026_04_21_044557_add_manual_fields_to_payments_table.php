@@ -12,7 +12,7 @@ return new class extends Migration
    public function up(): void
 {
     Schema::table('payments', function (Blueprint $table) {
-        $table->string('payment_method')->default('DOKU')->after('amount'); // DOKU atau MANUAL
+        $table->string('payment_method')->default('MANUAL')->after('amount'); // manual-transfer only
         $table->string('proof_of_payment')->nullable()->after('payment_method'); // Path gambar
     });
 }

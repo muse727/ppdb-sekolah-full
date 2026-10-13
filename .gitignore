@@ -1,0 +1,12 @@
+# Root-level local artifacts — ber-anchor (/) agar tidak menyembunyikan
+# path bernama sama di dalam backend/ atau frontend/.
+# Aturan per-subfolder (backend/.gitignore, frontend/.gitignore) tidak diubah.
+
+# Skrip kerja & artefak verifikasi sekali pakai (screenshot, patch baseline).
+/.work/
+
+# Salinan nested anomali struktur project (bukan source; lihat audit git).
+/home/
+
+# Preferensi editor pribadi.
+/.vscode/

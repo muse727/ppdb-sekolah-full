@@ -3,19 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import libAxios from '@/lib/axios';
+import type { AuthenticatedUser } from '@/lib/domain';
 import styles from './guruDashboard.module.css';
+
+type Antrean = Pick<AuthenticatedUser, 'id' | 'name' | 'jadwal_observasi' | 'status_kelulusan'> & { sudah_dites: boolean };
 
 export default function GuruDashboard() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<AuthenticatedUser | null>(null);
     const [summary, setSummary] = useState({ total: 0, menunggu: 0, dinilai: 0, lulus: 0, progress: 0 });
-    const [antreanList, setAntreanList] = useState<any[]>([]);
+    const [antreanList, setAntreanList] = useState<Antrean[]>([]);
     
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        libAxios.get('/api/user')
+        libAxios.get<AuthenticatedUser>('/api/user')
             .then((res) => {
                 if (res.data.role !== 'guru' && res.data.role !== 'super_admin') {
                     router.push('/login');
@@ -28,13 +31,13 @@ export default function GuruDashboard() {
         const fetchRangkuman = async () => {
             try {
                 // Tarik data cukup 1 kali dari rute guru yang diizinkan (Anti-Lag)
-                const resAntrean = await libAxios.get('/api/guru/antrean-observasi');
+                const resAntrean = await libAxios.get<Antrean[]>('/api/guru/antrean-observasi');
                 const data = resAntrean.data || [];
                 
                 const total = data.length;
-                const dinilai = data.filter((s: any) => s.sudah_dites).length;
+                const dinilai = data.filter((s: Antrean) => s.sudah_dites).length;
                 const menunggu = total - dinilai;
-                const lulus = data.filter((s: any) => s.status_kelulusan === 'LULUS').length;
+                const lulus = data.filter((s: Antrean) => s.status_kelulusan === 'LULUS').length;
                 const progressVal = total > 0 ? Math.round((dinilai / total) * 100) : 0;
 
                 setSummary({ total, menunggu, dinilai, lulus, progress: progressVal });
@@ -148,7 +151,7 @@ export default function GuruDashboard() {
 
                 {/* === BARIS 2: KONTEN UTAMA (OBSERVASI, KALENDER, DAFTAR TUNGGU) === */}
                 
-                <div className={styles.actionCard} onClick={() => router.push('/guru/observasi')}>
+                <button type="button" className={styles.actionCard} onClick={() => router.push('/guru/observasi')}>
                     <div className={styles.actionIconTop}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     </div>
@@ -156,7 +159,7 @@ export default function GuruDashboard() {
                         <h3 className={styles.actionTitle} style={{color: '#ffffff'}}>Buka Papan Observasi</h3>
                         <p className={styles.actionDesc} style={{color: '#ffffff'}}>Masuk ke mode penilaian untuk memulai proses wawancara dan observasi motorik calon peserta didik.</p>
                     </div>
-                </div>
+                </button>
 
                 <div className={`${styles.regularCard} ${styles.colSpan4}`}>
                     <div className={styles.calendarHeader}>

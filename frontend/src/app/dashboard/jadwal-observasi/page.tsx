@@ -4,10 +4,11 @@
 import { useState, useEffect } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import type { JadwalObservasiRow } from '@/lib/domain';
 import styles from './jadwal.module.css'; 
 
 export default function JadwalObservasiAdminPage() {
-    const [students, setStudents] = useState<any[]>([]);
+    const [students, setStudents] = useState<JadwalObservasiRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
     // Fitur Search & Filter
@@ -19,12 +20,12 @@ export default function JadwalObservasiAdminPage() {
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
-    const [activeStudent, setActiveStudent] = useState<any>(null);
+    const [activeStudent, setActiveStudent] = useState<JadwalObservasiRow | null>(null);
     const [form, setForm] = useState({ tanggal: '', jam: '', ruangan: '', perlengkapan: '' });
 
     const fetchStudents = async () => {
         try {
-            const res = await libAxios.get('/api/admin/jadwal-observasi');
+            const res = await libAxios.get<JadwalObservasiRow[]>('/api/admin/jadwal-observasi');
             setStudents(res.data);
         } catch (error) { console.error(error); } 
         finally { setIsLoading(false); }
@@ -57,7 +58,7 @@ export default function JadwalObservasiAdminPage() {
     };
 
     // === BUKA MODAL ===
-    const openModalSingle = (siswa: any) => {
+    const openModalSingle = (siswa: JadwalObservasiRow) => {
         setActiveStudent(siswa);
         setForm({ 
             tanggal: siswa.jadwal_observasi || '', 
@@ -97,7 +98,7 @@ export default function JadwalObservasiAdminPage() {
             setShowModal(false);
             setSelectedIds([]); 
             fetchStudents();
-        } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error'); }
+        } catch { Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error'); }
     };
 
     if (isLoading) return <div className={styles.loading}>Memuat Data Siswa...</div>;

@@ -1,0 +1,436 @@
+/* src/app/pendaftar/daftar-ulang/daftar-ulang.module.css
+ *
+ * B.7.4-C — Konsultasi ke Sekolah (parent consultation surface).
+ * ADDITIVE ONLY: every class here is new and namespaced `du*`, so the shared
+ * pembayaran.module.css that this page also imports is never touched and the
+ * existing DU markup keeps resolving exactly as before.
+ *
+ * Design tokens mirror the rest of the DU flow: primary #1a5f51, hover #134e40,
+ * ink #1e293b, muted #64748b, hairline #cbd5e1, surface #f8fafc, danger #b42318,
+ * 16px radii. Mobile-first, matching the existing bottom-sheet modal.
+ */
+
+/* ========================================================
+   SECTION SHELL
+   ======================================================== */
+.duSection {
+    margin-top: 18px;
+}
+
+/* Matches .sectionTitle in pembayaran.module.css. Duplicated rather than
+   imported so this component never reaches back into src/app. */
+.duSectionTitle {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1a5f51;
+    margin: 0 0 15px 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.duIntro {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+    margin: 0 0 12px 0;
+}
+
+/* Amber informational box, matching the .guideBox look used across the DU page
+   so the consultation surface reads as part of the same flow. */
+.duNotice {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 15px;
+    font-size: 12.5px;
+    color: #92400e;
+    line-height: 1.6;
+    font-weight: 500;
+}
+.duNotice strong {
+    display: block;
+    font-weight: 800;
+    color: #b45309;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+/* ========================================================
+   FORM
+   ======================================================== */
+.duForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+/* Date + clock sit side by side; they collapse on very narrow viewports so
+   neither control is squeezed below a usable tap target. */
+.duRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+@media (max-width: 380px) {
+    .duRow { grid-template-columns: 1fr; }
+}
+
+.duField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.duLabel {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.duLabelOptional {
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.duInput {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1e293b;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 44px;
+}
+.duInput:focus {
+    outline: none;
+    border-color: #1a5f51;
+    box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.12);
+}
+.duInput:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.duTextarea {
+    resize: vertical;
+    min-height: 88px;
+    line-height: 1.5;
+}
+
+/* Inline hint / live counter. */
+.duHint {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.duHintRow {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+.duHintRight {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Field-level validation message (client-side and server 422 both land here). */
+.duError {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #b42318;
+    line-height: 1.4;
+}
+
+/* Field turned invalid: red hairline instead of the neutral one. */
+.duInputInvalid,
+.duInputInvalid:focus {
+    border-color: #f5c6c4;
+    background: #fffafa;
+}
+.duInputInvalid:focus {
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12);
+}
+
+.duActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+/* ========================================================
+   BUTTONS
+   ======================================================== */
+.duBtnGhost {
+    width: 100%;
+    border: 2px solid #1a5f51;
+    background: #fff;
+    color: #1a5f51;
+    border-radius: 14px;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.2s;
+    min-height: 46px;
+}
+.duBtnGhost:hover:not(:disabled) { background: #f0fdf4; }
+.duBtnGhost:disabled {
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Primary action, matching .submitModalBtn in pembayaran.module.css. */
+.duBtnPrimary {
+    width: 100%;
+    background: #fbbf24;
+    color: #78350f;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.2s;
+    min-height: 46px;
+}
+.duBtnPrimary:hover:not(:disabled) { background: #f59e0b; }
+.duBtnPrimary:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.duBtnDangerGhost {
+    width: 100%;
+    border: 2px solid #f5c6c4;
+    background: #fff;
+    color: #b42318;
+    border-radius: 14px;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.2s;
+    min-height: 46px;
+}
+.duBtnDangerGhost:hover:not(:disabled) { background: #fde9e8; }
+.duBtnDangerGhost:disabled {
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* ========================================================
+   CONSULTATION CARD
+   ======================================================== */
+.duCard {
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Emphasised variant for the one open request. */
+.duCardActive {
+    background: #f0fdf4;
+    border-color: #a7dcc0;
+}
+
+.duCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.duCardTitle {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.duCardMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.45;
+}
+
+.duMetaRow {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+.duMetaKey {
+    color: #64748b;
+    font-weight: 600;
+    min-width: 92px;
+    flex-shrink: 0;
+}
+.duMetaValue {
+    color: #1e293b;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* The parent's own message and the admin's reply are quoted blocks. */
+.duQuote {
+    background: #fff;
+    border-left: 3px solid #a7dcc0;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.duQuoteLabel {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #146039;
+    margin-bottom: 4px;
+}
+/* Admin reply keeps its own accent so it is never mistaken for the request. */
+.duQuoteAdmin { border-left-color: #cbd5e1; }
+.duQuoteAdmin .duQuoteLabel { color: #475569; }
+
+/* ========================================================
+   STATUS BADGES
+   ======================================================== */
+.duBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+/* REQUESTED: amber — waiting on staff. */
+.duBadgeRequested {
+    background: #fff6e0;
+    color: #92600a;
+    border-color: #f6dfa4;
+}
+/* SCHEDULED: primary — confirmed by staff. */
+.duBadgeScheduled {
+    background: #e4f4eb;
+    color: #146039;
+    border-color: #a7dcc0;
+}
+/* COMPLETED: slate — closed after the meeting happened. */
+.duBadgeCompleted {
+    background: #eef2f7;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+/* CANCELLED: muted red — closed without a meeting. */
+.duBadgeCancelled {
+    background: #fde9e8;
+    color: #b42318;
+    border-color: #f5c6c4;
+}
+
+/* ========================================================
+   HISTORY
+   ======================================================== */
+.duHistory {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.duHistoryTitle {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin: 18px 0 10px 0;
+}
+
+/* Terminal rows are audit history: read-only, de-emphasised, no actions. */
+.duCardMuted {
+    background: #fff;
+    border-color: #e2e8f0;
+    padding: 12px 15px;
+    gap: 8px;
+}
+
+/* ========================================================
+   REQUEST SHEET (native <dialog>, per AdminReportModal)
+   ======================================================== */
+.duSheet {
+    border: none;
+    border-radius: 24px;
+    padding: 22px 20px 28px;
+    width: min(420px, calc(100vw - 24px));
+    max-height: 88vh;
+    overflow-y: auto;
+    color: #1e293b;
+}
+.duSheet::backdrop { background: rgba(15, 23, 42, 0.6); }
+
+.duSheetHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.duSheetTitle {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.duCloseBtn {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    color: #64748b;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+}
+.duCloseBtn:hover { background: #e2e8f0; color: #ef4444; }

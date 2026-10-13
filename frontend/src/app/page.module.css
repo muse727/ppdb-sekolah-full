@@ -29,10 +29,20 @@
 
 @media (max-width: 768px) { .navLinks { display: none; } }
 
-/* === HERO SECTION (IMAGE BANNER) === */
+/* === HERO SECTION (EMPTY STATE & LOADING FALLBACK) === */
+/* Slide aktif dirender oleh komponen HeroSlider (hero-slider.module.css);
+   kelas di bawah hanya untuk kerangka loading dan empty state bermerek
+   saat belum ada banner aktif dari CMS. */
 .heroSection {
-  width: 100%; min-height: 500px; background-size: cover; background-position: center; background-repeat: no-repeat; position: relative;
+  width: 100%;
+  /* Tinggi disamakan dengan HeroSlider -> pergantian keduanya tanpa layout shift. */
+  height: clamp(420px, 62vh, 720px);
+  min-height: 420px;
+  background-color: #0f3d2e;
+  position: relative;
 }
+
+@media (max-width: 640px) { .heroSection { height: 460px; } }
 
 .heroOverlay {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -64,20 +74,24 @@
 }
 .btnPill:hover { background-color: #134e40; transform: scale(1.05); }
 
-.skalaGrid { 
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; 
-  max-width: 1200px; margin: 0 auto;
+.skalaGrid {
+  /* Tepat dua kartu: SDIT & SMPIT. */
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
+  max-width: 900px; margin: 0 auto;
 }
 
 .skalaCard {
   border-radius: 32px; padding: 40px 30px; display: flex; flex-direction: column;
-  min-height: 400px; color: white; text-align: left; transition: transform 0.3s ease;
+  min-height: 380px; color: white; text-align: left; transition: transform 0.3s ease;
 }
 .skalaCard:hover { transform: translateY(-8px); }
 
+@media (prefers-reduced-motion: reduce) {
+  .skalaCard:hover { transform: none; }
+}
+
 .skalaGreen { background-color: #1a5f51; box-shadow: 0 20px 40px rgba(26, 95, 81, 0.3); }
 .skalaPurple { background-color: #93328e; box-shadow: 0 20px 40px rgba(147, 50, 142, 0.3); }
-.skalaOrange { background-color: #ea580c; box-shadow: 0 20px 40px rgba(234, 88, 12, 0.3); }
 
 /* PERBAIKAN 1: WADAH IKON BENAR-BENAR DI TENGAH RUANG KOSONG */
 .skalaIconWrapper {
@@ -92,6 +106,10 @@
   height: 100px;
   filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
   animation: floatGojek 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iconPublic { animation: none; }
 }
 
 /* PERBAIKAN 2: FONT ANGKA RAKSASA */
@@ -109,14 +127,6 @@
   font-size: 24px; /* Ukuran teks di sebelahnya tetap proporsional */
   font-weight: 800;
   letter-spacing: -0.5px;
-}
-
-.titleOnly {
-  font-size: 32px;
-  font-weight: 900;
-  margin: 0 0 10px 0;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
 }
 
 .skalaTextBottom p { font-size: 14.5px; margin: 0; line-height: 1.5; font-weight: 500; opacity: 0.9; }

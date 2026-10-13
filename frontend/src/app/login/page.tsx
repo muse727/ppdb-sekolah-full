@@ -137,7 +137,7 @@ export default function Login() {
               <p className={styles.mobileHeaderDesc}>Mari bergabung dengan Al-Mubarak</p>
             </div>
             
-            <h1 className={styles.title}>Buat Akun PPDB</h1>
+            <h1 className={styles.title}>Buat Akun SPMB</h1>
             
             <div className={styles.jalurToggleContainer}>
                 <button type="button" className={`${styles.jalurToggleBtn} ${regJalur === 'UMUM' ? styles.jalurActive : ''}`} onClick={() => { setRegJalur('UMUM'); setRegKredensial(''); }}>
@@ -205,10 +205,10 @@ export default function Login() {
             <div className={styles.mobileHeader}>
               <img src="/education.svg" alt="Education" className={styles.mobileIllustration} />
               <h2 className={styles.mobileHeaderTitle}>Selamat Datang!</h2>
-              <p className={styles.mobileHeaderDesc}>Silakan login ke portal PPDB</p>
+              <p className={styles.mobileHeaderDesc}>Silakan login ke portal SPMB</p>
             </div>
             
-            <h1 className={styles.title}>Login PPDB</h1>
+            <h1 className={styles.title}>Login SPMB</h1>
             <span className={styles.paragraph}>SDIT & SMPIT Al-Mubarak</span>
             
             <div className={styles.inputGroup}>
@@ -261,7 +261,7 @@ export default function Login() {
               <img src="/education.svg" alt="Education" className={styles.illustration} />
               <h1 className={styles.title} style={{ color: 'white' }}>Ahlan Wa Sahlan!</h1>
               <p className={styles.overlayParagraph}>Belum punya akun? Daftarkan putra/putri Anda sekarang.</p>
-              <button type="button" className={`${styles.button} ${styles.buttonGhost}`} onClick={() => setIsRightPanelActive(true)}>Buat Akun PPDB</button>
+              <button type="button" className={`${styles.button} ${styles.buttonGhost}`} onClick={() => setIsRightPanelActive(true)}>Buat Akun SPMB</button>
             </div>
           </div>
         </div>

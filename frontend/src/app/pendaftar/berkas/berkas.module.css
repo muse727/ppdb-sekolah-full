@@ -40,6 +40,8 @@
 
 .berkasUploaded { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #edf2f7; margin-top: auto;}
 .statusVerified { display: inline-flex; align-items: center; gap: 5px; background: #d1fae5; color: #065f46; padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; border: 1px solid #a7f3d0;}
+.statusPending { display: inline-flex; align-items: center; gap: 5px; background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; border: 1px solid #fde68a;}
+.statusRejected { display: inline-flex; align-items: center; gap: 5px; background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; border: 1px solid #fecaca;}
 .viewBtn { flex: 1; text-align: center; padding: 12px; background: #1a5f51; color: white; text-decoration: none; font-size: 12px; font-weight: 700; border-radius: 8px; display: block; transition: 0.2s;}
 .viewBtn:hover { background: #134e40; }
 .changeBtn { flex: 1; text-align: center; padding: 12px; background: white; color: #e53e3e; border: 1px solid #e53e3e; cursor: pointer; font-size: 12px; font-weight: 700; border-radius: 8px; display: block; transition: 0.2s;}

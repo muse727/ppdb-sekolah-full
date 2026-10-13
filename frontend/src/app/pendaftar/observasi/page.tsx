@@ -4,16 +4,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import libAxios from '@/lib/axios';
+import type { AuthenticatedUser } from '@/lib/domain';
 import styles from './tiket.module.css';
 
 export default function ObservasiOrtuPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<AuthenticatedUser | null>(null);
     const [jenjang, setJenjang] = useState<string>('');
 
     useEffect(() => {
         Promise.all([
-            libAxios.get('/api/user'),
+            libAxios.get<AuthenticatedUser>('/api/user'),
             libAxios.get('/api/payment/status').catch(() => ({ data: null }))
         ]).then(([userRes, paymentRes]) => {
             setUser(userRes.data);
@@ -30,9 +31,9 @@ export default function ObservasiOrtuPage() {
     return (
         <div className={styles.mobileContainer}>
             <div className={styles.headerMini}>
-                <div className={styles.backBtn} onClick={() => router.push('/pendaftar')}>
+                <button type="button" className={styles.backBtn} onClick={() => router.push('/pendaftar')}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                </div>
+                </button>
                 <div>
                     <h2 className={styles.headerTitle}>{isSMP ? 'Ujian CBT' : 'Jadwal Observasi'}</h2>
                     <p className={styles.headerSubtitle}>Langkah 4 Pendaftaran</p>
@@ -115,7 +116,7 @@ export default function ObservasiOrtuPage() {
                             <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </div>
                         <h2>Jadwal Belum Tersedia</h2>
-                        <p>Panitia PPDB sedang menyusun jadwal {isSMP ? 'ujian CBT' : 'observasi'} untuk Ananda. Silakan cek kembali halaman ini secara berkala.</p>
+                        <p>Panitia SPMB sedang menyusun jadwal {isSMP ? 'ujian CBT' : 'observasi'} untuk Ananda. Silakan cek kembali halaman ini secara berkala.</p>
                     </div>
                 )}
             </div>

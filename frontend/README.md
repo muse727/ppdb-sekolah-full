@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Backend API configuration
+
+Set `NEXT_PUBLIC_API_URL` to the public HTTPS origin of the Laravel API (no trailing slash) at **build time**. This is a public origin, not a secret. If omitted in production, requests use the same origin (`/`); configure a reverse proxy for `/api` and `/sanctum` in that case. Local development defaults to `http://localhost:8000`.
+
 ## Getting Started
 
 First, run the development server:

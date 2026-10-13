@@ -1,0 +1,194 @@
+/* src/components/hero-slider.module.css
+   Hero slider SPMB — tinggi penuh, mobile-first, identitas hijau Al-Mubarak. */
+
+.hero {
+  position: relative;
+  width: 100%;
+  /* Tinggi tetap per breakpoint -> tidak ada layout shift saat slide berganti. */
+  height: clamp(420px, 62vh, 720px);
+  overflow: hidden;
+  background-color: #0f3d2e;
+}
+
+@media (max-width: 640px) {
+  .hero { height: 460px; }
+}
+
+/* === TRACK & SLIDES === */
+.track {
+  display: flex;
+  height: 100%;
+  transition: transform 650ms ease;
+  will-change: transform;
+}
+
+.trackInstant { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .track { transition: none; }
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slideImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+}
+
+/* Overlay kontras supaya teks terbaca di atas foto apa pun. */
+.slideOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(15, 61, 46, 0.88) 0%,
+    rgba(15, 61, 46, 0.55) 45%,
+    rgba(15, 61, 46, 0.25) 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .slideOverlay {
+    background: linear-gradient(
+      to top,
+      rgba(15, 61, 46, 0.92) 0%,
+      rgba(15, 61, 46, 0.45) 60%,
+      rgba(15, 61, 46, 0.25) 100%
+    );
+  }
+}
+
+/* === KONTEN === */
+.slideContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8%;
+  max-width: 1280px;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .slideContent { justify-content: flex-end; padding: 0 6% 84px 6%; }
+}
+
+.slideTitle {
+  font-size: clamp(30px, 4.6vw, 54px);
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  margin: 0 0 18px 0;
+  max-width: 640px;
+  text-wrap: balance;
+}
+
+.slideDesc {
+  font-size: clamp(14px, 1.5vw, 17px);
+  color: #e2e8f0;
+  line-height: 1.65;
+  font-weight: 500;
+  margin: 0 0 34px 0;
+  max-width: 560px;
+}
+
+.slideCta {
+  align-self: flex-start;
+  background-color: #00aa5b;
+  color: #ffffff;
+  padding: 15px 34px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.slideCta:hover { background-color: #008c4a; }
+.slideCta:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .slideCta:hover { transform: translateY(-2px); }
+}
+
+/* === NAVIGASI PANAH === */
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background-color: rgba(8, 47, 34, 0.45);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.navBtn:hover { background-color: rgba(8, 47, 34, 0.75); }
+.navBtn:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.navPrev { left: 22px; }
+.navNext { right: 22px; }
+
+@media (max-width: 640px) {
+  .navBtn { width: 38px; height: 38px; top: auto; bottom: 84px; transform: none; }
+  .navPrev { left: auto; right: 74px; }
+  .navNext { right: 24px; }
+}
+
+/* === INDIKATOR DOT === */
+.dots {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background-color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.dotActive {
+  width: 26px;
+  background-color: #ffffff;
+}
+
+.dot:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}

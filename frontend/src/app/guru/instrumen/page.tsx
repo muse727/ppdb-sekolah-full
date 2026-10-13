@@ -4,21 +4,44 @@
 import { useState, useEffect } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import type { KategoriObservasi, KomponenObservasi } from '@/lib/domain';
 import styles from './instrumen.module.css';
 
+/**
+ * Modal form state. Ids are strings because the same shape represents both a
+ * blank "new" record (`''`) and an existing one; the backend accepts either.
+ */
+interface FormKategori {
+    id: string;
+    nama_kategori: string;
+    jenjang: 'SD' | 'SMP';
+    urutan: string;
+}
+
+interface FormKomponen {
+    id: string;
+    kategori_id: string;
+    kode: string;
+    keterampilan: string;
+    deskripsi: string;
+    petunjuk: string;
+    lampiran: string;
+    saran_jika_kurang: string;
+}
+
 export default function MasterInstrumenPage() {
-    const [kategoriList, setKategoriList] = useState<any[]>([]);
+    const [kategoriList, setKategoriList] = useState<KategoriObservasi[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [showKategoriModal, setShowKategoriModal] = useState(false);
-    const [formKategori, setFormKategori] = useState({ id: '', nama_kategori: '', jenjang: 'SD', urutan: '1' });
+    const [formKategori, setFormKategori] = useState<FormKategori>({ id: '', nama_kategori: '', jenjang: 'SD', urutan: '1' });
 
     const [showKomponenModal, setShowKomponenModal] = useState(false);
-    const [formKomponen, setFormKomponen] = useState({ id: '', kategori_id: '', kode: '', keterampilan: '', deskripsi: '', petunjuk: '', lampiran: '', saran_jika_kurang: '' });
+    const [formKomponen, setFormKomponen] = useState<FormKomponen>({ id: '', kategori_id: '', kode: '', keterampilan: '', deskripsi: '', petunjuk: '', lampiran: '', saran_jika_kurang: '' });
 
     const fetchInstrumen = async () => {
         try {
-            const res = await libAxios.get('/api/guru/instrumen/kategori?jenjang=SD');
+            const res = await libAxios.get<KategoriObservasi[]>('/api/guru/instrumen/kategori?jenjang=SD');
             setKategoriList(res.data);
         } catch (error) {
             console.error(error);
@@ -38,12 +61,12 @@ export default function MasterInstrumenPage() {
             setShowKategoriModal(false);
             setFormKategori({ id: '', nama_kategori: '', jenjang: 'SD', urutan: '1' });
             fetchInstrumen();
-        } catch (err) {
+        } catch {
             Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error');
         }
     };
 
-    const hapusKategori = async (id: string, nama: string) => {
+    const hapusKategori = async (id: string | number, nama: string) => {
         Swal.fire({
             title: `Hapus Kategori ${nama}?`,
             text: "Semua instrumen di dalamnya akan terhapus!",
@@ -66,12 +89,12 @@ export default function MasterInstrumenPage() {
             setShowKomponenModal(false);
             setFormKomponen({ id: '', kategori_id: '', kode: '', keterampilan: '', deskripsi: '', petunjuk: '', lampiran: '', saran_jika_kurang: '' });
             fetchInstrumen();
-        } catch (err) {
+        } catch {
             Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error');
         }
     };
 
-    const hapusKomponen = async (id: string, kode: string) => {
+    const hapusKomponen = async (id: string | number, kode: string) => {
         Swal.fire({
             title: `Hapus Instrumen ${kode}?`,
             icon: 'warning', showCancelButton: true, confirmButtonColor: '#e53e3e', confirmButtonText: 'Ya, Hapus!'
@@ -84,14 +107,14 @@ export default function MasterInstrumenPage() {
         });
     };
 
-    const openTambahSoal = (kategoriId: string) => {
-        setFormKomponen({ id: '', kategori_id: kategoriId, kode: '', keterampilan: '', deskripsi: '', petunjuk: '', lampiran: '', saran_jika_kurang: '' });
+    const openTambahSoal = (kategoriId: string | number) => {
+        setFormKomponen({ id: '', kategori_id: String(kategoriId), kode: '', keterampilan: '', deskripsi: '', petunjuk: '', lampiran: '', saran_jika_kurang: '' });
         setShowKomponenModal(true);
     };
 
-    const openEditSoal = (soal: any, kategoriId: string) => {
+    const openEditSoal = (soal: KomponenObservasi, kategoriId: string | number) => {
         setFormKomponen({ 
-            id: soal.id, kategori_id: kategoriId, kode: soal.kode, keterampilan: soal.keterampilan || '', deskripsi: soal.deskripsi, 
+            id: String(soal.id), kategori_id: String(kategoriId), kode: soal.kode, keterampilan: soal.keterampilan || '', deskripsi: soal.deskripsi, 
             petunjuk: soal.petunjuk || '', lampiran: soal.lampiran || '', saran_jika_kurang: soal.saran_jika_kurang || '' 
         });
         setShowKomponenModal(true);
@@ -131,7 +154,7 @@ export default function MasterInstrumenPage() {
                                 <p>Urutan Tampil: Ke-{kat.urutan}</p>
                             </div>
                             <div style={{display: 'flex', gap: '10px'}}>
-                                <button className={styles.addSoalBtn} onClick={() => { setFormKategori({ id: kat.id, nama_kategori: kat.nama_kategori, jenjang: kat.jenjang, urutan: kat.urutan }); setShowKategoriModal(true); }}>
+                                <button className={styles.addSoalBtn} onClick={() => { setFormKategori({ id: String(kat.id), nama_kategori: kat.nama_kategori, jenjang: kat.jenjang, urutan: String(kat.urutan) }); setShowKategoriModal(true); }}>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                     Edit
                                 </button>
@@ -160,7 +183,7 @@ export default function MasterInstrumenPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {kat.komponen.map((soal: any) => (
+                                            {kat.komponen.map((soal) => (
                                                 <tr key={soal.id}>
                                                     <td>
                                                         <span className={styles.soalKode}>{soal.kode}</span>

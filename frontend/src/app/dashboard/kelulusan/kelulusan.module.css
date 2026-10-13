@@ -1,5 +1,3 @@
-/* src/app/dashboard/kelulusan/kelulusan.module.css */
-
 .container { padding: 40px; width: 100%; max-width: 100%; margin: 0; font-family: 'Poppins', sans-serif; text-align: left;}
 .loading { padding: 50px; text-align: center; color: #1a5f51; font-weight: 800; }
 
@@ -8,72 +6,33 @@
 .titleArea h1 span { background: #e6f0ee; color: #134e40; padding: 4px 12px; border-radius: 8px; font-size: 16px; font-weight: 900;}
 .titleArea p { margin: 0; color: #718096; font-size: 15px; font-weight: 500; }
 
-/* KOTAK STATISTIK */
 .statCards { display: flex; gap: 15px; }
 .statBox { background: white; padding: 15px 25px; border-radius: 16px; border: 1px solid #edf2f7; box-shadow: 0 5px 15px rgba(0,0,0,0.02); text-align: center; min-width: 120px;}
 .statVal { font-size: 24px; font-weight: 900; line-height: 1;}
 .statLabel { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; margin-top: 5px; letter-spacing: 0.5px;}
 
-/* TAB JENJANG */
-.tabContainer { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px;}
-.tabBtn { padding: 10px 24px; border-radius: 12px; font-weight: 800; font-size: 14px; border: 1px solid #edf2f7; background: white; color: #a0aec0; cursor: pointer; transition: 0.2s; font-family: inherit; display: flex; align-items: center; gap: 8px;}
+.mainTabContainer { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px;}
+.mainTabBtn { padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 14px; border: none; background: transparent; color: #64748b; cursor: pointer; transition: 0.2s; font-family: inherit; display: flex; align-items: center; gap: 10px;}
+.mainTabBtn:hover { background: #f8fafc; color: #1e293b;}
+.mainTabActive { background: #1a5f51; color: white;}
+.mainTabActive:hover { background: #134e40; color: white;}
+
+.tabContainer { display: flex; gap: 15px; margin-bottom: 25px; }
+.tabBtn { padding: 10px 24px; border-radius: 12px; font-weight: 800; font-size: 13px; border: 1px solid #edf2f7; background: white; color: #a0aec0; cursor: pointer; transition: 0.2s; font-family: inherit;}
 .tabBtn:hover { background: #edf2f7; color: #4a5568;}
 .tabActive { background: #1a5f51; color: white; border-color: #1a5f51; box-shadow: 0 5px 15px rgba(26,95,81,0.2);}
-.tabActive:hover { background: #134e40; color: white;}
 
-/* KARTU UTAMA */
 .card { background: white; border-radius: 20px; border: 1px solid #edf2f7; box-shadow: 0 15px 40px rgba(0,0,0,0.03); overflow: hidden; width: 100%;}
 .toolbar { padding: 20px 25px; background: white; border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
 
-.searchWrapper { 
-    position: relative; 
-    width: 100%; 
-    max-width: 350px; 
-    display: flex;
-    align-items: center;
-}
-
-/* Bersihkan SVG agar warnanya abu-abu lembut elegan */
-.searchWrapper svg { 
-    position: absolute; 
-    left: 15px; 
-    top: 50%; 
-    transform: translateY(-50%); 
-    stroke: #a0aec0 !important; /* Paksa warna stroke ke soft gray */
-    pointer-events: none;
-}
-
-/* Kembalikan warna text input dan background ke standard Go Skool */
-.searchInput { 
-    width: 100%; 
-    padding: 12px 20px 12px 45px; 
-    border-radius: 10px; 
-    border: 2px solid #edf2f7; 
-    font-family: inherit; 
-    font-size: 13.5px; 
-    font-weight: 600;
-    outline: none; 
-    background: #f8fafc; /* Rona background abu-abu bersih */
-    color: #2d3748 !important; /* Text dalam kotak pencarian warna charcoal pekat */
-    transition: all 0.2s ease-in-out;
-}
-
-/* Efek saat admin fokus ngetik di input pencarian */
-.searchInput:focus { 
-    border-color: #1a5f51 !important; 
-    background: #ffffff; 
-    box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.08);
-}
-
-/* Sempurnakan warna teks placeholder */
-.searchInput::placeholder {
-    color: #cbd5e0;
-    font-weight: 500;
-}
+.searchWrapper { position: relative; width: 100%; max-width: 350px; display: flex; align-items: center;}
+.searchWrapper svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); stroke: #a0aec0 !important; pointer-events: none;}
+.searchInput { width: 100%; padding: 12px 20px 12px 45px; border-radius: 10px; border: 2px solid #edf2f7; font-family: inherit; font-size: 13.5px; font-weight: 600; outline: none; background: #f8fafc; color: #2d3748 !important; transition: 0.2s;}
+.searchInput:focus { border-color: #1a5f51 !important; background: #ffffff; box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.08);}
+.searchInput::placeholder { color: #cbd5e0; font-weight: 500;}
 
 .statusSelect { padding: 12px 15px; border-radius: 10px; border: 2px solid #edf2f7; font-family: inherit; font-size: 13px; font-weight: 700; color: #4a5568; outline: none; background: #f8fafc; cursor: pointer;}
 
-/* BULK ACTIONS */
 .bulkActions { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 6px 6px 6px 15px; border-radius: 12px; border: 1px solid #edf2f7;}
 .selectedCount { font-size: 12px; font-weight: 800; color: #4a5568; margin-right: 5px;}
 .btnAction { padding: 8px 15px; border-radius: 8px; font-weight: 800; font-size: 12px; border: none; cursor: pointer; color: white; transition: 0.2s; font-family: inherit;}
@@ -81,7 +40,6 @@
 .btnDanger { background: #ef4444; } .btnDanger:hover { background: #dc2626; }
 .btnNeutral { background: #cbd5e0; color: #4a5568;} .btnNeutral:hover { background: #94a3b8; color: white; }
 
-/* TABEL */
 .tableWrapper { width: 100%; overflow-x: auto; }
 .dataTable { width: 100%; border-collapse: collapse; }
 .dataTable th { text-align: left; padding: 18px 25px; background: #f8fafc; border-bottom: 2px solid #edf2f7; font-size: 12px; color: #a0aec0; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;}
@@ -94,13 +52,11 @@
 .studentName { font-weight: 800; color: #1a5f51; font-size: 15px; }
 .submitTime { font-size: 13px; color: #718096; font-weight: 500;}
 
-/* BADGES STATUS KELULUSAN */
 .badge { padding: 6px 15px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 1px; display: inline-block;}
-.badgeLulus { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0;}
+.badgeLunas { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0;}
 .badgeGagal { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;}
 .badgeBelum { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;}
 
-/* QUICK ACTIONS DALAM TABEL */
 .quickActionGroup { display: flex; gap: 8px; justify-content: flex-end;}
 .btnQuick { padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 11px; border: 1px solid transparent; cursor: pointer; font-family: inherit; transition: 0.2s; display: flex; align-items: center; gap: 5px;}
 .quickSuccess { background: white; border-color: #10b981; color: #10b981;} .quickSuccess:hover { background: #10b981; color: white;}
@@ -114,25 +70,166 @@
 .settingForm { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #cbd5e0;}
 .inputWrapperUnified { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 250px;}
 .inputWrapperUnified label { font-size: 13px; font-weight: 800; color: #1a5f51; }
-.datetimeInput { 
-    width: 100%;
-    padding: 12px 15px; 
-    border-radius: 10px; 
-    border: 2px solid #cbd5e0; /* Border sedikit lebih tegas */
-    font-family: inherit; 
-    font-size: 14px; 
-    font-weight: 600; 
-    color: #2d3748 !important; /* Paksa text warna gelap */
-    outline: none;
-    background-color: #ffffff !important; /* Paksa background jadi putih bersih */
-    color-scheme: light; /* Cegah browser maksa UI kalender jadi dark mode */
-    transition: all 0.2s ease-in-out;
-}
-
-.datetimeInput:focus { 
-    border-color: #1a5f51 !important; 
-    background-color: #ffffff !important;
-    box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1); /* Efek glow ijo khas Go Skool */
-}
+.datetimeInput { width: 100%; padding: 12px 15px; border-radius: 10px; border: 2px solid #cbd5e0; font-family: inherit; font-size: 14px; font-weight: 600; color: #2d3748 !important; outline: none; background-color: #ffffff !important; color-scheme: light; transition: 0.2s;}
+.datetimeInput:focus { border-color: #1a5f51 !important; box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1);}
 .btnSaveJadwal { background: #1a5f51; color: white; border: none; padding: 14px 25px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; transition: 0.2s;}
 .btnSaveJadwal:hover { background: #134e40; transform: translateY(-2px);}
+
+.suratInfoBox { background: #f0fdf4; border: 1px solid #a7f3d0; padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; color: #065f46; margin-bottom: 25px; flex-wrap: wrap; gap: 20px;}
+.suratInfoBox p { margin: 0; font-size: 13px; line-height: 1.6; font-weight: 500;}
+
+.previewActionGroup { display: flex; gap: 10px; flex-shrink: 0;}
+.btnPreview { background: white; border: 1px solid #059669; color: #059669; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;}
+.btnPreview:hover { background: #059669; color: white;}
+.btnPreviewDanger { border-color: #ef4444; color: #ef4444;}
+.btnPreviewDanger:hover { background: #ef4444; color: white;}
+
+.suratFormGrid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px;}
+.suratColLeft { display: flex; flex-direction: column; gap: 20px; }
+.suratColRight { display: flex; flex-direction: column; gap: 20px; }
+
+.inputGroup { display: flex; flex-direction: column; gap: 8px;}
+.inputGroup label { font-size: 13px; font-weight: 800; color: #4a5568;}
+.labelSuccess { color: #10b981 !important; }
+.labelDanger { color: #ef4444 !important; }
+
+/* Upload Box */
+.uploadBox { display: flex; align-items: center; gap: 10px; }
+.previewImg { width: 50px; height: 50px; border-radius: 8px; object-fit: contain; border: 1px solid #cbd5e1; background: white;}
+.placeholderImg { width: 50px; height: 50px; border-radius: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; display: flex; justify-content: center; align-items: center; font-size: 10px; color: #94a3b8; text-align: center;}
+
+.formInput { width: 100%; padding: 14px 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 13.5px; outline: none; background: #f8fafc; color: #1e293b; font-weight: 500; transition: 0.2s; box-sizing: border-box;}
+.formInput:focus { border-color: #1a5f51; background: white;}
+
+.textareaTall { min-height: 280px; resize: vertical; line-height: 1.6;}
+.textareaMedium { min-height: 120px; resize: vertical; line-height: 1.6;}
+
+.btnSaveSuratFull { background: #1a5f51; color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;}
+.btnSaveSuratFull:hover { background: #134e40; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(26,95,81,0.2);}
+
+/* === MODAL & PRATINJAU KERTAS A4 === */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px);
+    z-index: 1000; display: flex; justify-content: center; align-items: flex-start;
+    overflow-y: auto; padding: 40px 20px; box-sizing: border-box;
+}
+
+.previewWrapper { width: 100%; max-width: 800px; margin: auto; }
+
+.previewHeader {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+    background: white; padding: 15px 25px; border-radius: 12px;
+}
+.previewHeader h2 { margin: 0; font-size: 18px; color: #1e293b; font-weight: 800;}
+.closePreviewBtn {
+    background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 8px;
+    font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit;
+}
+.closePreviewBtn:hover { background: #dc2626; }
+
+/* KERTAS A4 (BEBAS BOCOR GELOMBANG) */
+.a4Paper {
+    background: white;
+    width: 100%;
+    min-height: 1050px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    font-family: 'Times New Roman', Times, serif;
+    color: #111;
+    position: relative;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+}
+
+.kopSurat { text-align: center; padding: 50px 50px 20px 50px; }
+.logoBox { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; height: 130px; }
+.logoBox img { max-height: 100%; max-width: 180px; object-fit: contain; }
+.logoPlaceholder {
+    width: 80px; height: 80px; border: 2px solid #1a5f51; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.schoolName {
+    font-family: 'Arial', sans-serif; font-size: 28px; font-weight: 900;
+    background: linear-gradient(180deg, #ea580c 0%, #fbbf24 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 10px 0; letter-spacing: 1px;
+}
+
+.suratTitle {
+    font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold;
+    text-decoration: underline; margin: 0 0 5px 0; color: #333;
+}
+.suratNo { font-size: 15px; margin: 0 0 20px 0; color: #333;}
+.bismillah { font-size: 16px; font-style: italic; margin: 0;}
+
+.suratBody { padding: 0 60px; font-size: 15px; line-height: 1.6; flex: 1; }
+
+/* TABEL IDENTITAS RAPI (ANTI PATAH) */
+.identityWrapper { display: flex; justify-content: center; margin: 20px 0; }
+.identityTable { width: auto; font-size: 15px; text-align: left; border-spacing: 0;}
+.identityTable td { padding: 4px 10px; vertical-align: top;}
+
+.statusText {
+    text-align: center; font-family: 'Arial', sans-serif; font-size: 20px;
+    font-weight: bold; margin: 30px 0; color: #111; letter-spacing: 2px;
+}
+.statusTextDanger { color: #ef4444; }
+
+.dynamicContent { white-space: pre-wrap; margin-bottom: 40px; text-align: justify;}
+
+.suratSignature {
+    padding: 0 60px 20px 60px; font-size: 15px;
+    display: flex; justify-content: flex-end; 
+}
+.signatureBlock { display: flex; flex-direction: column; align-items: flex-start; width: 220px; }
+.signatureBlock p { margin: 0 0 5px 0; }
+.ttdBox { height: 80px; width: 100%; display: flex; justify-content: flex-start; align-items: center; margin: 5px 0; }
+.ttdBox img { max-height: 100%; max-width: 100%; object-fit: contain;}
+
+/* GELOMBANG S-CURVE (BERBASIS VEKTOR SVG) */
+.suratFooter {
+    position: relative;
+    margin-top: auto;
+    width: 100%;
+    height: 160px; /* Diperbesar agar teks leluasa bernapas */
+    background-color: transparent;
+}
+
+.footerWave {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    overflow: hidden; /* Penjaga akhir biar ga bocor kayak piring */
+}
+
+.waveSvg { width: 100%; height: 100%; display: block; }
+
+.footerContent {
+    position: absolute; 
+    bottom: 0; left: 0;
+    z-index: 2; 
+    width: 100%;
+    padding: 0 60px 35px 60px; /* Padding bawah ekstra biar tulisan jauh dari ujung kertas */
+    display: flex; justify-content: space-between; align-items: flex-end; 
+    font-family: 'Arial', sans-serif; color: #4c1d95; box-sizing: border-box;
+}
+
+.footerContact { font-size: 11px; line-height: 1.6; text-align: left;}
+.footerMotto { font-size: 13px; font-style: italic; font-weight: bold; text-align: right;}
+
+@media (max-width: 1024px) {
+    .suratFormGrid { grid-template-columns: 1fr; }
+    .suratInfoBox { flex-direction: column; align-items: flex-start;}
+}
+@media (max-width: 768px) {
+    .a4Paper { min-height: 800px; }
+    .kopSurat { padding: 30px; }
+    .suratBody { padding: 0 30px; font-size: 14px;}
+    .suratSignature { padding: 0 30px 30px 30px; }
+    .footerContent { flex-direction: column; align-items: flex-start; gap: 10px; padding: 0 20px 20px 20px;}
+    .footerContact, .footerMotto { text-align: left; }
+}

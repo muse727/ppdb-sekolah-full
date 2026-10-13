@@ -1,0 +1,79 @@
+/* src/app/dashboard/penugasan-observasi/penugasan.module.css */
+
+.container { padding: 40px; width: 100%; max-width: 100%; margin: 0; font-family: 'Poppins', sans-serif; text-align: left; }
+.loading { padding: 50px; text-align: center; color: #1a5f51; font-weight: 800; }
+
+.header { margin-bottom: 30px; text-align: left; }
+.title h1 { font-size: 32px; font-weight: 900; color: #1a5f51; margin: 0 0 5px 0; }
+.title p { margin: 0; color: #718096; font-size: 15px; font-weight: 500; }
+
+.errorBanner { background: #fff5f5; border: 1px solid #feb2b2; color: #c53030; border-radius: 12px; padding: 14px 20px; font-size: 14px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.retryBtn { background: #e53e3e; color: white; border: none; padding: 8px 18px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.retryBtn:hover { background: #c53030; }
+
+.card { background: white; border-radius: 20px; border: 1px solid #edf2f7; box-shadow: 0 15px 40px rgba(26, 95, 81, 0.05); overflow: hidden; width: 100%; }
+
+.toolbar { padding: 20px 25px; background: white; border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
+.searchWrapper { position: relative; width: 100%; max-width: 400px; }
+.searchInput { width: 100%; padding: 12px 20px 12px 45px; border-radius: 12px; border: 2px solid #edf2f7; font-family: inherit; font-size: 14px; outline: none; background: #f8fafc; color: #2d3748; transition: 0.2s; box-sizing: border-box; }
+.searchInput:focus { border-color: #1a5f51; background: white; }
+.filterSelect { padding: 12px 16px; border-radius: 12px; border: 2px solid #edf2f7; font-family: inherit; font-size: 14px; outline: none; background: #f8fafc; color: #2d3748; cursor: pointer; }
+
+.tableWrapper { width: 100%; overflow-x: auto; }
+.dataTable { width: 100%; border-collapse: collapse; }
+.dataTable th { text-align: left; padding: 18px 25px; background: #f8fafc; border-bottom: 2px solid #edf2f7; font-size: 13px; color: #a0aec0; font-weight: 800; text-transform: uppercase; }
+.dataTable td { padding: 20px 25px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+.dataTable tr:hover { background: #f8fdfa; }
+
+.studentName { font-weight: 800; color: #1a5f51; font-size: 15px; }
+.subText { font-size: 12px; color: #718096; margin-top: 4px; }
+
+.badgeAktif { background: #e6fffa; color: #1a5f51; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; border: 1px solid #b2f5ea; display: inline-block; }
+.badgeBelum { background: #fffaf0; color: #975a16; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; border: 1px solid #fbd38d; display: inline-block; }
+
+.guruAktif { font-weight: 700; color: #2d3748; font-size: 14px; }
+.aksiCol { min-width: 260px; white-space: nowrap; }
+
+.btnAksi { padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; font-family: inherit; border: 2px solid transparent; margin-right: 6px; transition: 0.2s; }
+.btnAssign { background: #1a5f51; color: white; }
+.btnAssign:hover { background: #134e40; }
+.btnGanti { background: white; color: #1a5f51; border-color: #1a5f51; }
+.btnGanti:hover { background: #e6fffa; }
+.btnCabut { background: white; color: #e53e3e; border-color: #e53e3e; }
+.btnCabut:hover { background: #fff5f5; }
+.btnHistory { background: white; color: #4a5568; border-color: #cbd5e0; }
+.btnHistory:hover { background: #edf2f7; }
+.btnAksi:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.emptyState { padding: 60px 25px; text-align: center; color: #718096; font-weight: 600; }
+
+/* === MODAL === */
+.modalOverlay { position: fixed; inset: 0; background: rgba(26, 95, 81, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modalBox { background: white; border-radius: 20px; padding: 30px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.2); }
+.modalTitle { font-size: 20px; font-weight: 900; color: #1a5f51; margin: 0 0 6px 0; }
+.modalSub { font-size: 13px; color: #718096; margin: 0 0 20px 0; }
+.formGroup { margin-bottom: 18px; }
+.formLabel { display: block; fontSize: 14px; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+.formInput, .formSelect, .formTextarea { width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid #edf2f7; font-family: inherit; font-size: 14px; outline: none; background: #f8fafc; color: #2d3748; box-sizing: border-box; transition: 0.2s; }
+.formInput:focus, .formSelect:focus, .formTextarea:focus { border-color: #1a5f51; background: white; }
+.formTextarea { resize: vertical; min-height: 90px; }
+.formHint { font-size: 12px; color: #a0aec0; margin-top: 6px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; }
+.cancelBtn { padding: 12px 25px; background: white; border: 2px solid #cbd5e0; color: #4a5568; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: inherit; }
+.cancelBtn:hover { background: #edf2f7; }
+.saveBtn { padding: 12px 25px; background: #1a5f51; color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.saveBtn:hover { background: #134e40; }
+.saveBtnDanger { background: #e53e3e; }
+.saveBtnDanger:hover { background: #c53030; }
+
+/* === HISTORI === */
+.historyList { list-style: none; margin: 0; padding: 0; }
+.historyItem { border: 1px solid #edf2f7; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; background: #fafcfc; }
+.historyTop { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.historyGuru { font-weight: 800; color: #2d3748; font-size: 14px; }
+.historyMeta { font-size: 12px; color: #718096; margin-top: 6px; line-height: 1.6; }
+.historyReason { font-size: 12px; color: #c53030; margin-top: 4px; font-style: italic; }
+.statusChip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+.chipAktif { background: #e6fffa; color: #1a5f51; }
+.chipDiganti { background: #ebf8ff; color: #2b6cb0; }
+.chipDicabut { background: #fff5f5; color: #e53e3e; }

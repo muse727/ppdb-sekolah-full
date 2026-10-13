@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import { httpErrorMessage, type BiodataFormState, type BiodataRecord } from '@/lib/domain';
+import { JALUR_PENDAFTARAN_OPTIONS } from '@/lib/jalur-pendaftaran';
 import styles from './biodata.module.css';
 
 // =================================================================
@@ -103,13 +105,52 @@ const CustomSearchSelect = ({ options, value, onChange, placeholder, allowCustom
 };
 
 
+// =================================================================
+// 2b. VALIDASI FIELD IDENTITAS (konsisten dengan backend: digits:10/16)
+// =================================================================
+// Semua nomor identitas tetap string agar nol di depan tidak hilang.
+const DIGIT_FIELDS: Record<string, number> = { nisn: 10, nik_siswa: 16, no_kk: 16, nik_ibu: 16, nik_ayah: 16 };
+const FIELD_LABELS: Record<string, string> = { nisn: 'NISN', nik_siswa: 'NIK Siswa', no_kk: 'No. Kartu Keluarga', nik_ibu: 'NIK Ibu', nik_ayah: 'NIK Ayah' };
+const STEP_FIELDS: Record<number, string[]> = {
+    1: ['asal_sekolah', 'jalur_pendaftaran', 'nama_lengkap', 'nama_panggilan', 'jenis_kelamin', 'nisn', 'nik_siswa', 'no_kk', 'tempat_lahir', 'tanggal_lahir', 'anak_ke', 'status_peserta_didik'],
+    2: ['nama_ibu', 'nik_ibu', 'pendidikan_ibu', 'pekerjaan_ibu', 'penghasilan_ibu', 'nama_ayah', 'nik_ayah', 'pendidikan_ayah', 'pekerjaan_ayah', 'penghasilan_ayah'],
+    3: ['alamat_lengkap', 'kota', 'kecamatan', 'kelurahan', 'rt', 'rw', 'no_hp_ortu', 'email_siswa', 'nama_wali', 'no_hp_wali'],
+};
+const stepOf = (field: string): number | null => {
+    for (const [step, fields] of Object.entries(STEP_FIELDS)) if (fields.includes(field)) return Number(step);
+    return null;
+};
+// Validasi satu field digit: kosong boleh hanya jika tidak wajib; jika diisi
+// harus ASCII digit dan tepat sepanjang aturan backend.
+const validateDigitField = (name: string, raw: string, required: boolean): string | null => {
+    const value = raw.trim();
+    const label = FIELD_LABELS[name];
+    const length = DIGIT_FIELDS[name];
+    if (value === '') return required ? `${label} wajib diisi.` : null;
+    if (!/^[0-9]+$/.test(value)) return `${label} hanya boleh berisi angka.`;
+    if (value.length !== length) return `${label} harus tepat ${length} digit.`;
+    return null;
+};
+// Field digit yang wajib (mengikuti aturan form yang sudah ada).
+const REQUIRED_DIGIT_FIELDS = ['nik_siswa', 'no_kk', 'nik_ibu', 'nik_ayah'];
+const collectDigitErrors = (fields: string[], data: BiodataFormState): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    for (const name of fields) {
+        if (!(name in DIGIT_FIELDS)) continue;
+        const message = validateDigitField(name, data[name as keyof BiodataFormState] ?? '', REQUIRED_DIGIT_FIELDS.includes(name));
+        if (message) errors[name] = message;
+    }
+    return errors;
+};
+
 export default function BiodataPage() {
     const router = useRouter();
     const [currentTab, setCurrentTab] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const [isOtherChildOrder, setIsOtherChildOrder] = useState(false);
 
-    const [formData, setFormData] = useState<any>({
-        asal_sekolah: '', nama_lengkap: '', nama_panggilan: '', jenis_kelamin: '', 
+    const [formData, setFormData] = useState<BiodataFormState>({
+        asal_sekolah: '', jalur_pendaftaran: '', nama_lengkap: '', nama_panggilan: '', jenis_kelamin: '', 
         nisn: '', nik_siswa: '', no_kk: '', tempat_lahir: '', tanggal_lahir: '', anak_ke: '', status_peserta_didik: '',
         nama_ibu: '', nik_ibu: '', pendidikan_ibu: '', pekerjaan_ibu: '', penghasilan_ibu: '',
         nama_ayah: '', nik_ayah: '', pendidikan_ayah: '', pekerjaan_ayah: '', penghasilan_ayah: '',
@@ -117,11 +158,23 @@ export default function BiodataPage() {
         no_hp_ortu: '', email_siswa: '', nama_wali: '', no_hp_wali: ''
     });
 
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [apiError, setApiError] = useState('');
+
     useEffect(() => {
-        libAxios.get('/api/biodata').then(res => {
+        libAxios.get<BiodataRecord>('/api/biodata').then(res => {
             if(res.data) {
-                const safeData = { ...formData };
-                Object.keys(res.data).forEach(key => { safeData[key] = res.data[key] === null ? '' : res.data[key]; });
+                const safeData: BiodataFormState = { ...formData };
+                // Object.keys() widens to string[]; the row's own keys are the
+                // only ones iterated, so narrow to keyof BiodataRecord to index
+                // safely. Non-form columns (id, timestamps) ride along into the
+                // state as before — the backend saves only its own whitelist.
+                (Object.keys(res.data) as (keyof BiodataRecord)[]).forEach(key => {
+                    const value = res.data[key];
+                    safeData[key] = value === null || value === undefined ? '' : String(value);
+                });
+                safeData.asal_sekolah = safeData.asal_sekolah.toUpperCase();
+                setIsOtherChildOrder(safeData.anak_ke !== '' && !/^(?:[1-9]|10)$/.test(safeData.anak_ke));
                 setFormData(safeData);
             }
         }).catch(err => console.log(err)).finally(() => setIsLoading(false));
@@ -130,8 +183,8 @@ export default function BiodataPage() {
 
     // 3. FUNGSI HANDLE KHUSUS BUAT CUSTOM DROPDOWN
     const handleCustomChange = (value: string, name: string) => {
-        setFormData((prev: any) => {
-            const newData = { ...prev, [name]: value };
+        setFormData((prev) => {
+            const newData: BiodataFormState = { ...prev, [name]: value };
             
             // LOGIKA CASCADING: Kalau Kota ganti, Kecamatan & Kelurahan di-reset!
             if (name === 'kota') { newData.kecamatan = ''; newData.kelurahan = ''; }
@@ -143,24 +196,112 @@ export default function BiodataPage() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        // Error pada field yang sedang diperbaiki di-refresh / dihapus saat valid.
+        setFieldErrors(prev => {
+            const updated = { ...prev };
+            if (name in DIGIT_FIELDS) {
+                const message = validateDigitField(name, value, REQUIRED_DIGIT_FIELDS.includes(name));
+                if (message) updated[name] = message; else delete updated[name];
+            } else if (name in updated) {
+                delete updated[name];
+            }
+            return updated;
+        });
+    };
+
+    const handleSchoolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.currentTarget;
+        const value = input.value;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        setFormData(prev => ({ ...prev, asal_sekolah: value.toUpperCase() }));
+        // Uppercasing a controlled input must not move the caret when editing mid-text.
+        requestAnimationFrame(() => {
+            if (document.activeElement === input && start !== null && end !== null) {
+                input.setSelectionRange(value.slice(0, start).toUpperCase().length, value.slice(0, end).toUpperCase().length);
+            }
+        });
+    };
+
+    const handleChildOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setIsOtherChildOrder(value === 'LAINNYA');
+        setFormData(prev => ({ ...prev, anak_ke: value === 'LAINNYA' ? '' : value }));
     };
 
     const nextTab = () => {
         const form = document.getElementById('biodataForm') as HTMLFormElement;
         if (!form.checkValidity()) { form.reportValidity(); return; }
+        // Validasi digit (wajib + opsional yang terisi) untuk step aktif —
+        // sebelum request apa pun dikirim.
+        const digitErrors = collectDigitErrors(STEP_FIELDS[currentTab] ?? [], formData);
+        if (Object.keys(digitErrors).length > 0) {
+            setFieldErrors(prev => ({ ...prev, ...digitErrors }));
+            const first = document.querySelector<HTMLInputElement>(`[name="${Object.keys(digitErrors)[0]}"]`);
+            if (first) { first.focus(); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+        setFieldErrors({});
         setCurrentTab(prev => prev + 1); window.scrollTo(0, 0); 
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Validasi digit seluruh form sebelum submit (backend tetap sumber kebenaran).
+        const digitErrors = collectDigitErrors(
+            [...STEP_FIELDS[1], ...STEP_FIELDS[2], ...STEP_FIELDS[3]],
+            formData,
+        );
+        if (Object.keys(digitErrors).length > 0) {
+            setFieldErrors(digitErrors);
+            const failingStep = stepOf(Object.keys(digitErrors)[0]);
+            if (failingStep) setCurrentTab(failingStep);
+            const first = document.querySelector<HTMLInputElement>(`[name="${Object.keys(digitErrors)[0]}"]`);
+            if (first) { first.focus(); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            return;
+        }
+        setFieldErrors({});
+        setApiError('');
         Swal.fire({ title: 'Menyimpan Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
         try {
-            await libAxios.post('/api/biodata', formData);
+            await libAxios.post('/api/biodata', {
+                ...formData,
+                asal_sekolah: formData.asal_sekolah.trim().toUpperCase(),
+                nisn: formData.nisn.trim(),
+                nik_siswa: formData.nik_siswa.trim(),
+                no_kk: formData.no_kk.trim(),
+                nik_ibu: formData.nik_ibu.trim(),
+                nik_ayah: formData.nik_ayah.trim(),
+            });
             Swal.fire({ icon: 'success', title: 'Data Tersimpan!', text: 'Biodata berhasil dilengkapi.', confirmButtonColor: '#1a5f51' })
                 .then(() => router.push('/pendaftar'));
-        } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan sistem.', confirmButtonColor: '#1a5f51' });
+        } catch (error: unknown) {
+            // 422: petakan errors.<field> ke field terkait; input tidak dihapus.
+            const maybe = typeof error === 'object' && error !== null
+                ? (error as { response?: { status?: number; data?: { message?: unknown; errors?: Record<string, unknown> } } })
+                : null;
+            const serverErrors = maybe?.response?.data?.errors;
+            if (maybe?.response?.status === 422 && serverErrors && typeof serverErrors === 'object') {
+                const mapped: Record<string, string> = {};
+                for (const [key, value] of Object.entries(serverErrors)) {
+                    mapped[key] = Array.isArray(value) && typeof value[0] === 'string' ? value[0] : 'Nilai tidak valid.';
+                }
+                setFieldErrors(mapped);
+                const firstKey = Object.keys(mapped).find(key => stepOf(key) !== null) ?? Object.keys(mapped)[0];
+                if (firstKey) {
+                    const step = stepOf(firstKey);
+                    if (step) setCurrentTab(step);
+                    const el = document.querySelector<HTMLInputElement>(`[name="${firstKey}"]`);
+                    if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                }
+                Swal.close();
+                return;
+            }
+            const message = httpErrorMessage(error, 'Terjadi kesalahan sistem.');
+            setApiError(message);
+            Swal.fire({ icon: 'error', title: 'Gagal', text: message, confirmButtonColor: '#1a5f51' });
         }
     };
 
@@ -171,6 +312,11 @@ export default function BiodataPage() {
     const listKecamatan = formData.kota && dataWilayah[formData.kota] ? Object.keys(dataWilayah[formData.kota]) : [];
     const listKelurahan = formData.kota && formData.kecamatan && dataWilayah[formData.kota] && dataWilayah[formData.kota][formData.kecamatan] 
                             ? dataWilayah[formData.kota][formData.kecamatan] : [];
+
+    // Pesan error di bawah field (dari validasi step atau mapping 422 backend).
+    const fieldError = (name: string): React.ReactNode => fieldErrors[name]
+        ? <p role="alert" className={styles.fieldError}>{fieldErrors[name]}</p>
+        : null;
 
     return (
         <div className={styles.mobileContainer}>
@@ -195,28 +341,48 @@ export default function BiodataPage() {
             </div>
 
             <form id="biodataForm" className={styles.formCard} onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+                {apiError && <p role="alert" className={styles.apiError}>{apiError}</p>}
                 
                 {/* === TAB 1: IDENTITAS === */}
                 {currentTab === 1 && (
                     <>
                         <h3 className={styles.sectionTitle}>Identitas Calon Siswa</h3>
-                        <div className={styles.inputGroup}><label className={styles.label}>Asal Sekolah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="asal_sekolah" required value={formData.asal_sekolah} onChange={handleChange} /></div>
+                        <div className={styles.inputGroup}><label className={styles.label}>Asal Sekolah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="asal_sekolah" required value={formData.asal_sekolah} onChange={handleSchoolChange} /></div>
+                        <div className={styles.inputGroup}><label className={styles.label}>Jalur Pendaftaran <span className={styles.required}>*</span></label><select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="jalur_pendaftaran" required value={formData.jalur_pendaftaran} onChange={handleChange}>
+                            <option value="">Pilih Jalur Pendaftaran</option>
+                            {JALUR_PENDAFTARAN_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>{fieldError('jalur_pendaftaran')}</div>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Lengkap <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_lengkap" required value={formData.nama_lengkap} onChange={handleChange} /></div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                             <div className={styles.inputGroup}><label className={styles.label}>Nama Panggilan</label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_panggilan" value={formData.nama_panggilan} onChange={handleChange} /></div>
                             <div className={styles.inputGroup}><label className={styles.label}>Jenis Kelamin <span className={styles.required}>*</span></label><select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="jenis_kelamin" required value={formData.jenis_kelamin} onChange={handleChange}><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
                         </div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-                            <div className={styles.inputGroup}><label className={styles.label}>NISN <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="nisn" required value={formData.nisn} onChange={handleChange} /></div>
-                            <div className={styles.inputGroup}><label className={styles.label}>NIK Siswa <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="nik_siswa" required value={formData.nik_siswa} onChange={handleChange} /></div>
+                            <div className={styles.inputGroup}><label className={styles.label}>NISN (opsional)</label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nisn" value={formData.nisn} onChange={handleChange} />{fieldError('nisn')}</div>
+                            <div className={styles.inputGroup}><label className={styles.label}>NIK Siswa <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_siswa" required value={formData.nik_siswa} onChange={handleChange} />{fieldError('nik_siswa')}</div>
                         </div>
-                        <div className={styles.inputGroup}><label className={styles.label}>No. Kartu Keluarga <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="no_kk" required value={formData.no_kk} onChange={handleChange} /></div>
+                        <div className={styles.inputGroup}><label className={styles.label}>No. Kartu Keluarga <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="no_kk" required value={formData.no_kk} onChange={handleChange} />{fieldError('no_kk')}</div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                             <div className={styles.inputGroup}><label className={styles.label}>Tempat Lahir <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="tempat_lahir" required value={formData.tempat_lahir} onChange={handleChange} /></div>
                             <div className={styles.inputGroup}><label className={styles.label}>Tanggal Lahir <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="date" name="tanggal_lahir" required value={formData.tanggal_lahir} onChange={handleChange} /></div>
                         </div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-                            <div className={styles.inputGroup}><label className={styles.label}>Anak Ke- <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="anak_ke" required value={formData.anak_ke} onChange={handleChange} /></div>
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label} htmlFor="anak-ke">Anak Ke- <span className={styles.required}>*</span></label>
+                                <select id="anak-ke" className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} required value={isOtherChildOrder ? 'LAINNYA' : formData.anak_ke} onChange={handleChildOrderChange}>
+                                    <option value="">Pilih</option>
+                                    {Array.from({ length: 10 }, (_, index) => index + 1).map(order => (
+                                        <option key={order} value={String(order)}>Anak ke-{order}</option>
+                                    ))}
+                                    <option value="LAINNYA">Lainnya</option>
+                                </select>
+                                {isOtherChildOrder && (
+                                    <div style={{marginTop: '15px'}}>
+                                        <label className={styles.label} htmlFor="nomor-anak">Nomor Anak</label>
+                                        <input id="nomor-anak" className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="anak_ke" required min="1" step="1" value={formData.anak_ke} onChange={handleChange} />
+                                    </div>
+                                )}
+                            </div>
                             <div className={styles.inputGroup}><label className={styles.label}>Status Anak <span className={styles.required}>*</span></label><select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="status_peserta_didik" required value={formData.status_peserta_didik} onChange={handleChange}><option value="">Pilih</option><option value="Lengkap">Lengkap</option><option value="Yatim">Yatim</option><option value="Piatu">Piatu</option><option value="Yatim Piatu">Yatim Piatu</option></select></div>
                         </div>
                         <button type="button" className={styles.submitBtn} onClick={nextTab}>Selanjutnya</button>
@@ -228,7 +394,7 @@ export default function BiodataPage() {
                     <>
                         <h3 className={styles.sectionTitle} style={{color: '#d35400'}}>Data Ibu Kandung</h3>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Ibu <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_ibu" required value={formData.nama_ibu} onChange={handleChange} /></div>
-                        <div className={styles.inputGroup}><label className={styles.label}>NIK Ibu <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="nik_ibu" required value={formData.nik_ibu} onChange={handleChange} /></div>
+                        <div className={styles.inputGroup}><label className={styles.label}>NIK Ibu <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_ibu" required value={formData.nik_ibu} onChange={handleChange} />{fieldError('nik_ibu')}</div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Pend. Ibu <span className={styles.required}>*</span></label>
@@ -248,7 +414,7 @@ export default function BiodataPage() {
 
                         <h3 className={styles.sectionTitle} style={{marginTop: '25px', color: '#2980b9'}}>Data Ayah Kandung</h3>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Ayah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_ayah" required value={formData.nama_ayah} onChange={handleChange} /></div>
-                        <div className={styles.inputGroup}><label className={styles.label}>NIK Ayah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="number" name="nik_ayah" required value={formData.nik_ayah} onChange={handleChange} /></div>
+                        <div className={styles.inputGroup}><label className={styles.label}>NIK Ayah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_ayah" required value={formData.nik_ayah} onChange={handleChange} />{fieldError('nik_ayah')}</div>
                         <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Pend. Ayah <span className={styles.required}>*</span></label>

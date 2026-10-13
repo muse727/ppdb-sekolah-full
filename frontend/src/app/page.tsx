@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import libAxios from '@/lib/axios';
+import HeroSlider, { type HeroSlide } from '@/components/HeroSlider';
 import styles from './page.module.css';
 
 // --- CUSTOM HOOK UNTUK ANIMASI ANGKA JALAN ---
@@ -32,24 +33,30 @@ function useCountUp(end: number, duration: number = 2000) {
 
 export default function Home() {
   const router = useRouter();
-  
-  // State Kuota Asli
-  const [kuota, setKuota] = useState({
-    status: 'BUKA',
-    sd: { total: 100, sisa: 42 },
-    smp: { total: 50, sisa: 15 }
-  });
 
-  // Animasi Angka Berjalan (Counter)
-  const animatedSD = useCountUp(kuota.sd.sisa);
-  const animatedSMP = useCountUp(kuota.smp.sisa);
+  // Kuota berasal dari backend (/api/public/kuota). Tidak ada angka hardcoded.
+  type KuotaJenjang = { total: number; terpakai: number; sisa: number; tersedia: boolean };
+  const [kuota, setKuota] = useState<{
+    status: string;
+    sd: KuotaJenjang;
+    smp: KuotaJenjang;
+  } | null>(null);
 
-  const [bannerUrl, setBannerUrl] = useState('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop');
+  // Animasi Angka Berjalan (Counter) — 0 sampai data termuat.
+  const animatedSD  = useCountUp(kuota?.sd.sisa  ?? 0);
+  const animatedSMP = useCountUp(kuota?.smp.sisa ?? 0);
+
+  // Hero slides berasal dari CMS banner backend (null = belum termuat).
+  const [slides, setSlides] = useState<HeroSlide[] | null>(null);
 
   useEffect(() => {
     libAxios.get('/api/public/kuota')
       .then(res => setKuota(res.data))
-      .catch(() => console.log('Menggunakan data kuota statis.'));
+      .catch(() => setKuota(null)); // gagal -> tampilkan placeholder, bukan angka palsu
+
+    libAxios.get('/api/banners')
+      .then(res => setSlides(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setSlides([])); // gagal -> empty state, bukan konten palsu
   }, []);
 
   return (
@@ -72,20 +79,30 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* HERO SECTION (DYNAMIC BANNER) */}
-      <section className={styles.heroSection} style={{ backgroundImage: `url(${bannerUrl})` }}>
-        <div className={styles.heroOverlay}>
-          <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>Masa Depan Gemilang<br/>Dimulai dari Sini</h1>
-            <p className={styles.heroSubtitle}>
-              Portal resmi Penerimaan Peserta Didik Baru (PPDB) SDIT & SMPIT Al-Mubarak Tahun Ajaran 2026/2027.
-            </p>
-            <button onClick={() => router.push('/login')} className={styles.btnPrimaryLg}>
-              Daftar Sekarang
-            </button>
+      {/* HERO SECTION — data dari CMS banner backend.
+          slides === null: belum termuat (kerangka statis, tanpa layout shift).
+          slides === []: belum ada banner aktif (empty state bermerek,
+          tanpa gambar eksternal palsu). */}
+      {slides === null ? (
+        <section className={styles.heroSection} aria-busy="true" />
+      ) : slides.length === 0 ? (
+        <section className={styles.heroSection}>
+          <div className={styles.heroOverlay}>
+            <div className={styles.heroContent}>
+              <h1 className={styles.heroTitle}>Masa Depan Gemilang<br/>Dimulai dari Sini</h1>
+              <p className={styles.heroSubtitle}>
+
+                Portal resmi Penerimaan Murid Baru (SPMB) SDIT & SMPIT Al-Mubarak Tahun Ajaran 2026/2027.
+              </p>
+              <button onClick={() => router.push('/login')} className={styles.btnPrimaryLg}>
+                Daftar Sekarang
+              </button>
+            </div>
           </div>
-        </div>
       </section>
+      ) : (
+        <HeroSlider slides={slides} />
+      )}
 
       {/* INFO KUOTA SECTION (GOJEK "SKALA KAMI" STYLE) */}
       <section id="kuota" className={styles.skalaSection}>
@@ -95,45 +112,43 @@ export default function Home() {
         </div>
         
         <div className={styles.skalaGrid}>
-          {/* Kartu 1: SDIT (Ijo Al-Mubarak) */}
+          {/* Kartu 1: SDIT Al-Mubarak */}
           <div className={`${styles.skalaCard} ${styles.skalaGreen}`}>
             <div className={styles.skalaIconWrapper}>
-                <img src="/icon-sd.svg" alt="Ikon SD" className={styles.iconPublic} />
+                {/* Ilustrasi SVG lokal orisinal (public/icon-sd.svg). Next.js
+                    memaksa `unoptimized` untuk SVG pada loader bawaan, jadi
+                    <Image> hanya pass-through tanpa penghematan — <img> dengan
+                    sizing CSS (.iconPublic) adalah pola yang tepat di sini. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon-sd.svg" alt="Ilustrasi SDIT Al-Mubarak" className={styles.iconPublic} />
             </div>
             <div className={styles.skalaTextBottom}>
                 <h3 className={styles.animatedNumber}>{animatedSD} <span className={styles.normalText}>Kursi SDIT</span></h3>
-                <p>Sisa kuota pendaftaran reguler dari total {kuota.sd.total} kursi yang disediakan.</p>
+                <p>Sisa kuota pendaftaran reguler dari total {kuota?.sd.total ?? 0} kursi yang disediakan.</p>
             </div>
           </div>
 
-          {/* Kartu 2: SMPIT (Ungu Premium) */}
+          {/* Kartu 2: SMPIT Al-Mubarak */}
           <div className={`${styles.skalaCard} ${styles.skalaPurple}`}>
             <div className={styles.skalaIconWrapper}>
-                <img src="/icon-smp.svg" alt="Ikon SMP" className={styles.iconPublic} />
+                {/* Ilustrasi SVG lokal orisinal (public/icon-smp.svg), satu gaya
+                    dengan ikon SDIT — alasan <img> sama seperti kartu di atas. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon-smp.svg" alt="Ilustrasi SMPIT Al-Mubarak" className={styles.iconPublic} />
             </div>
             <div className={styles.skalaTextBottom}>
                 <h3 className={styles.animatedNumber}>{animatedSMP} <span className={styles.normalText}>Kursi SMPIT</span></h3>
-                <p>Sisa kuota pendaftaran reguler dari total {kuota.smp.total} kursi yang disediakan.</p>
+                <p>Sisa kuota pendaftaran reguler dari total {kuota?.smp.total ?? 0} kursi yang disediakan.</p>
             </div>
           </div>
 
-          {/* Kartu 3: Keunggulan (Orange Hangat) */}
-          <div className={`${styles.skalaCard} ${styles.skalaOrange}`}>
-            <div className={styles.skalaIconWrapper}>
-                <img src="/icon-prestasi.svg" alt="Ikon Prestasi" className={styles.iconPublic} />
-            </div>
-            <div className={styles.skalaTextBottom}>
-                <h3 className={styles.titleOnly}>Sekolah Prestasi</h3>
-                <p>Mencetak generasi Islami berakhlak mulia dengan fasilitas modern & terpadu.</p>
-            </div>
-          </div>
         </div>
       </section>
 
       {/* TATA CARA SECTION */}
       <section id="tatacara" className={styles.tataCaraSection}>
         <div className={styles.tataCaraHeader}>
-          <h2>Kami menghadirkan sistem PPDB yang<br/>mudah, transparan, dan terintegrasi</h2>
+          <h2>Kami menghadirkan sistem SPMB yang<br/>mudah, transparan, dan terintegrasi</h2>
         </div>
 
         <div className={styles.tataCaraGrid}>
@@ -149,7 +164,7 @@ export default function Home() {
               </div>
               <div className={styles.tcListItem}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                <span>Bayar Formulir (DOKU)</span>
+                <span>Bayar Formulir (Transfer Manual)</span>
               </div>
             </div>
             <div className={`${styles.tcBottom} ${styles.bottomGreen}`}>

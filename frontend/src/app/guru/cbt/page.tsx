@@ -4,23 +4,49 @@
 import { useState, useEffect } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import type { CbtQuestion, CbtSession, JenisSoal } from '@/lib/domain';
 import styles from './cbt.module.css';
 
+interface SesiForm {
+    id: number | '';
+    nama_ujian: string;
+    tanggal_ujian: string;
+    jam_mulai: string;
+    jam_selesai: string;
+    ruangan: string;
+    token: string;
+}
+
+interface SoalForm {
+    id: number | '';
+    jenis_soal: JenisSoal;
+    pertanyaan: string;
+    gambar: string;
+    opsi_a: string;
+    opsi_b: string;
+    opsi_c: string;
+    opsi_d: string;
+    kunci_jawaban: string;
+}
+
+const EMPTY_SESI_FORM: SesiForm = { id: '', nama_ujian: '', tanggal_ujian: '', jam_mulai: '', jam_selesai: '', ruangan: '', token: '' };
+const EMPTY_SOAL_FORM: SoalForm = { id: '', jenis_soal: 'PG', pertanyaan: '', gambar: '', opsi_a: '', opsi_b: '', opsi_c: '', opsi_d: '', kunci_jawaban: 'A' };
+
 export default function PengaturanCBTPage() {
-    const [sessions, setSessions] = useState<any[]>([]);
+    const [sessions, setSessions] = useState<CbtSession[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
-    const [activeSesi, setActiveSesi] = useState<any>(null);
-    const [questions, setQuestions] = useState<any[]>([]);
+    const [activeSesi, setActiveSesi] = useState<CbtSession | null>(null);
+    const [questions, setQuestions] = useState<CbtQuestion[]>([]);
     const [showSoalModal, setShowSoalModal] = useState(false);
 
-    const [form, setForm] = useState({ id: '', nama_ujian: '', tanggal_ujian: '', jam_mulai: '', jam_selesai: '', ruangan: '', token: '' });
-    const [formSoal, setFormSoal] = useState({ id: '', jenis_soal: 'PG', pertanyaan: '', gambar: '', opsi_a: '', opsi_b: '', opsi_c: '', opsi_d: '', kunci_jawaban: 'A' });
+    const [form, setForm] = useState<SesiForm>(EMPTY_SESI_FORM);
+    const [formSoal, setFormSoal] = useState<SoalForm>(EMPTY_SOAL_FORM);
 
     const fetchSessions = async () => {
         try {
-            const res = await libAxios.get('/api/guru/cbt-sessions');
+            const res = await libAxios.get<CbtSession[]>('/api/guru/cbt-sessions');
             setSessions(res.data);
         } catch (error) { console.error(error); } 
         finally { setIsLoading(false); }
@@ -28,14 +54,18 @@ export default function PengaturanCBTPage() {
 
     useEffect(() => { fetchSessions(); }, []);
 
-    const generateToken = () => {
-        const char = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let result = '';
-        for (let i = 0; i < 6; i++) result += char.charAt(Math.floor(Math.random() * char.length));
-        setForm({ ...form, token: result });
+    // P3-C: PIN is generated SERVER-side (CSPRNG). Math.random() was predictable.
+    const generateToken = async () => {
+        try {
+            const res = await libAxios.get<{ token: string }>('/api/guru/cbt-sessions/token');
+            setForm({ ...form, token: res.data.token });
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Gagal', 'Tidak dapat membuat token. Silakan coba lagi.', 'error');
+        }
     };
 
-    const handleEdit = (sesi: any) => {
+    const handleEdit = (sesi: CbtSession) => {
         setForm({ id: sesi.id, nama_ujian: sesi.nama_ujian, tanggal_ujian: sesi.tanggal_ujian, jam_mulai: sesi.jam_mulai, jam_selesai: sesi.jam_selesai, ruangan: sesi.ruangan, token: sesi.token });
         setShowModal(true);
     };
@@ -47,7 +77,7 @@ export default function PengaturanCBTPage() {
             await libAxios.post('/api/guru/cbt-sessions', form);
             Swal.fire('Berhasil', 'Sesi ujian telah dijadwalkan.', 'success');
             setShowModal(false); fetchSessions();
-        } catch (error) { Swal.fire('Gagal', 'Cek kembali inputan Anda.', 'error'); }
+        } catch { Swal.fire('Gagal', 'Cek kembali inputan Anda.', 'error'); }
     };
 
     const handleDeleteSesi = async (id: number, nama: string) => {
@@ -58,33 +88,33 @@ export default function PengaturanCBTPage() {
                     await libAxios.delete(`/api/guru/cbt-sessions/${id}`);
                     Swal.fire('Terhapus!', 'Sesi ujian dihapus.', 'success');
                     fetchSessions();
-                } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error'); }
+                } catch { Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error'); }
             }
         });
     };
 
-    const openBankSoal = async (sesi: any) => {
+    const openBankSoal = async (sesi: CbtSession) => {
         setActiveSesi(sesi);
         fetchQuestions(sesi.id);
     };
 
     const fetchQuestions = async (sesiId: number) => {
         try {
-            const res = await libAxios.get(`/api/guru/cbt-sessions/${sesiId}/questions`);
+            const res = await libAxios.get<CbtQuestion[]>(`/api/guru/cbt-sessions/${sesiId}/questions`);
             setQuestions(res.data);
         } catch (error) { console.error(error); }
     };
 
     // FIX: KOMPRES GAMBAR LEBIH AMAN (Pakai prev state)
-    const handleUploadGambarSoal = (e: any) => {
-        const file = e.target.files[0];
+    const handleUploadGambarSoal = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = (event) => {
+        reader.onload = () => {
             const img = new Image();
-            img.src = event.target?.result as string;
+            img.src = String(reader.result);
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
@@ -110,23 +140,25 @@ export default function PengaturanCBTPage() {
 
     const handleSubmitSoal = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!activeSesi) return;
         Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
             await libAxios.post(`/api/guru/cbt-sessions/${activeSesi.id}/questions`, formSoal);
             Swal.fire('Berhasil', 'Soal disimpan.', 'success');
             setShowSoalModal(false);
             fetchQuestions(activeSesi.id);
-        } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
+        } catch { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
     };
 
     const handleDeleteSoal = async (id: number) => {
+        if (!activeSesi) return;
         Swal.fire({ title: `Hapus Soal?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#e53e3e', confirmButtonText: 'Ya, Hapus!'
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     await libAxios.delete(`/api/guru/cbt-questions/${id}`);
                     fetchQuestions(activeSesi.id);
-                } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
+                } catch { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
             }
         });
     };
@@ -146,7 +178,7 @@ export default function PengaturanCBTPage() {
                         <p>Total: {questions.length} Soal Tersimpan</p>
                     </div>
                     <button className={styles.addBtn} onClick={() => {
-                        setFormSoal({ id: '', jenis_soal: 'PG', pertanyaan: '', gambar: '', opsi_a: '', opsi_b: '', opsi_c: '', opsi_d: '', kunci_jawaban: 'A' });
+                        setFormSoal(EMPTY_SOAL_FORM);
                         setShowSoalModal(true);
                     }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -166,10 +198,28 @@ export default function PengaturanCBTPage() {
                                         <span className={soal.jenis_soal === 'PG' ? styles.badgePG : styles.badgeEsai}>{soal.jenis_soal === 'PG' ? 'Pilihan Ganda' : 'Esai'}</span>
                                     </div>
                                     <div className={styles.soalActions}>
-                                        <button className={styles.editBtnSmall} onClick={() => { setFormSoal(soal); setShowSoalModal(true); }}>Edit</button>
+                                        <button className={styles.editBtnSmall} onClick={() => { setFormSoal({
+                                            id: soal.id,
+                                            jenis_soal: soal.jenis_soal,
+                                            pertanyaan: soal.pertanyaan ?? '',
+                                            gambar: soal.gambar ?? '',
+                                            opsi_a: soal.opsi_a ?? '',
+                                            opsi_b: soal.opsi_b ?? '',
+                                            opsi_c: soal.opsi_c ?? '',
+                                            opsi_d: soal.opsi_d ?? '',
+                                            kunci_jawaban: soal.kunci_jawaban ?? 'A'
+                                        }); setShowSoalModal(true); }}>Edit</button>
                                         <button className={styles.deleteBtnSmall} onClick={() => handleDeleteSoal(soal.id)}>Hapus</button>
                                     </div>
                                 </div>
+                                {/* P4-A.3 Group B — `soal.gambar` is an inline base64 data URI
+                                    (set by handleUploadGambarSoal via canvas.toDataURL). Next.js
+                                    forces `unoptimized` for data:/blob: sources, so <Image> would
+                                    render the identical payload. This file also relies on the DOM
+                                    `new Image()` constructor for upload preloading/compression, so
+                                    importing next/image as `Image` here is unsafe — kept as <img>.
+                                    Inline maxHeight sizing is unchanged. */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 {soal.gambar && <img src={soal.gambar} alt="Preview Soal" style={{maxHeight: '150px', borderRadius: '10px', marginBottom: '15px'}} />}
                                 <p className={styles.soalText}>{soal.pertanyaan}</p>
                                 
@@ -193,7 +243,7 @@ export default function PengaturanCBTPage() {
                             <form onSubmit={handleSubmitSoal}>
                                 <div className={styles.formGroup}>
                                     <label>Jenis Pertanyaan</label>
-                                    <select className={styles.formInput} value={formSoal.jenis_soal} onChange={(e) => setFormSoal({...formSoal, jenis_soal: e.target.value})}>
+                                    <select className={styles.formInput} value={formSoal.jenis_soal} onChange={(e) => setFormSoal({...formSoal, jenis_soal: e.target.value as JenisSoal})}>
                                         <option value="PG">Pilihan Ganda (Auto-Koreksi)</option>
                                         <option value="ESAI">Esai (Koreksi Manual)</option>
                                     </select>
@@ -205,6 +255,11 @@ export default function PengaturanCBTPage() {
                                 <div className={styles.formGroup}>
                                     <label>Gambar Tambahan (Opsional)</label>
                                     <input type="file" accept="image/*" className={styles.formInput} onChange={handleUploadGambarSoal} />
+                                    {/* P4-A.3 Group B — inline base64 data URI (see the preview
+                                        above); <Image> would pass it through unoptimized, and this
+                                        file depends on the DOM `new Image()` constructor. Kept as
+                                        <img>; inline maxHeight sizing unchanged. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     {formSoal.gambar && <img src={formSoal.gambar} alt="Preview" style={{maxHeight: '100px', marginTop: '10px', borderRadius: '10px'}} />}
                                 </div>
 
@@ -244,7 +299,7 @@ export default function PengaturanCBTPage() {
                     <h1>Manajemen CBT (SMP)</h1>
                     <p>Atur jadwal ujian akademik, ruangan, dan token akses siswa.</p>
                 </div>
-                <button className={styles.addBtn} onClick={() => { setForm({ id: '', nama_ujian: '', tanggal_ujian: '', jam_mulai: '', jam_selesai: '', ruangan: '', token: '' }); setShowModal(true); }}>
+                <button className={styles.addBtn} onClick={() => { setForm(EMPTY_SESI_FORM); setShowModal(true); }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Buat Sesi Ujian
                 </button>
             </div>

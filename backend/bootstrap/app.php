@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // === AKTIFKAN SANCTUM SPA AUTH (COOKIE) DI SINI ===
         $middleware->statefulApi();
 
+        // === API IS JSON-FIRST: guests must get HTTP 401, never a redirect ===
+        // Laravel's default is `->redirectGuestsTo(fn () => route('login'))`,
+        // but this SPA has no named `login` route (the login page lives in the
+        // Next.js frontend). Returning null for API requests makes the auth
+        // middleware render a controlled JSON 401 instead of throwing
+        // RouteNotFoundException. This does NOT disable Sanctum/session/CSRF.
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/login');
+
         // === DAFTARKAN ALIAS MIDDLEWARE ROLE DI SINI ===
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,

@@ -65,6 +65,17 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // P3-C: dedicated channel for the dev-only `log` mailer so emailed
+        // credentials (e.g. SMP token codes) remain inspectable even when
+        // LOG_LEVEL=error. Not a production path — production uses a real
+        // mail transport.
+        'mail' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mail.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

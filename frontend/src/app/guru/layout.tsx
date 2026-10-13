@@ -13,11 +13,14 @@ export default function GuruLayout({ children }: { children: React.ReactNode }) 
         router.push('/login');
     };
 
-    // Menyembunyikan sidebar/navbar saat berada di layar ujian observasi
+    // Menyembunyikan sidebar/navbar saat berada di layar ujian observasi,
+    // dan pada dokumen cetak hasil observasi — dokumen resmi harus tampil
+    // (dan tercetak) tanpa chrome aplikasi (sidebar/navbar).
     const isObservasiPage = pathname.includes('/guru/observasi');
+    const isCetakPage = pathname.includes('/guru/rekapan/cetak');
 
-    if (isObservasiPage) {
-        return <>{children}</>; 
+    if (isObservasiPage || isCetakPage) {
+        return <>{children}</>;
     }
 
     // Menu lengkap termasuk Manajemen dan Hasil CBT
@@ -43,7 +46,7 @@ export default function GuruLayout({ children }: { children: React.ReactNode }) 
             <aside className={styles.sidebar}>
                 <div className={styles.brand}>
                     <h2>Tim Penilai</h2>
-                    <p>Go Skool PPDB</p>
+                    <p>Go Skool SPMB</p>
                 </div>
                 
                 <nav className={styles.navMenu}>

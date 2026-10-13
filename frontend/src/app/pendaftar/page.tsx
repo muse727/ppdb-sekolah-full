@@ -128,7 +128,7 @@ export default function DashboardPendaftar() {
                     <div onClick={handleLogout} style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700}}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Keluar
                     </div>
-                    <div style={{background: 'rgba(255,255,255,0.15)', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 800}}>PPDB 2026/2027</div>
+                    <div style={{background: 'rgba(255,255,255,0.15)', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: 800}}>SPMB 2026/2027</div>
                 </div>
                 <div className={styles.headerTitle}>
                     <p>Selamat Datang, Wali Dari</p>
@@ -195,7 +195,7 @@ export default function DashboardPendaftar() {
 
             <div className={styles.bottomNav}>
                 <div className={`${styles.navItem} ${styles.navItemActive}`}><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10l9-7z"></path></svg> Beranda</div>
-                <div className={styles.navQrBtn} onClick={() => Swal.fire('Bantuan', 'Hubungi Admin PPDB via WhatsApp', 'question')}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
+                <div className={styles.navQrBtn} onClick={() => Swal.fire('Bantuan', 'Hubungi Admin SPMB via WhatsApp', 'question')}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
                 <div className={styles.navItem} onClick={() => Swal.fire('Info', 'Belum ada notifikasi baru.', 'info')}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> Notif</div>
             </div>
         </div>

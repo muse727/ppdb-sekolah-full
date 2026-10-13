@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
+         cacheDirectory=".phpunit.cache"
 >
+    <!--
+        P4-D.1 - DATABASE CONTAINMENT
+
+        The bootstrap attribute above is load-bearing for safety, not merely for
+        autoloading. tests/bootstrap.php pins the DB_* variables into $_SERVER
+        BEFORE any Laravel bootstrap, and because Laravel's Dotenv repository is
+        immutable (ImmutableWriter::write() refuses to overwrite a key that is
+        already defined), no env file can redirect the suite afterwards.
+
+        Do NOT simplify bootstrap back to vendor/autoload.php. The <env> entries
+        below are applied by PHPUnit's PhpHandler::handleEnvVariables(), which
+        writes putenv() and $_ENV only and never touches $_SERVER. Dotenv's
+        reader chain is [ServerConstAdapter, EnvConstAdapter], so $_SERVER is
+        read FIRST: an exported DB_DATABASE overrides force="true" here.
+        Verified with DB_DATABASE=ppdb_sekolah exported - Env::get() returned the
+        production name.
+
+        The bootstrap also hard-fails when .env.testing is missing. That file is
+        gitignored, so its absence used to fall back to .env, which points at the
+        production database ppdb_sekolah that RefreshDatabase (`migrate:fresh`)
+        would drop.
+    -->
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
@@ -18,14 +41,18 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_KEY" value="base64:MWQxMTIzM2Q0NTU2Nzc4OGFiY2RlZjAxMjM0NTY3ODk="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
+        <!-- Defence in depth only; the authoritative pin is tests/bootstrap.php,
+             which writes $_SERVER and therefore beats these values. -->
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_DATABASE" value="ppdb_sekolah_test" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <env name="DB_SOCKET" value="" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

@@ -90,6 +90,19 @@
 .reviewOptionCorrect { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 2px solid #38a169; background: #f0fff4; position: relative;}
 .reviewOptionWrong { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 2px solid #e53e3e; background: #fff5f5; position: relative;}
 
+/*
+ * P4-B — neutral highlight for "the option this student picked".
+ *
+ * `.reviewOptionCorrect` / `.reviewOptionWrong` above are intentionally NOT used
+ * on the student recap screen any more: green/red would reveal which option was
+ * right, i.e. leak `kunci_jawaban` to the test-taker. This class marks the
+ * student's own choice using the app's brand colour, which carries no
+ * correctness meaning.
+ */
+.reviewOptionChosen { display: flex; align-items: center; padding: 15px; border-radius: 12px; border: 2px solid #1a5f51; background: #e6f0ee; position: relative;}
+.reviewOptionChosen .reviewOptionLetter { background: #1a5f51; border-color: #1a5f51; color: white; }
+.reviewOptionChosen .reviewOptionText { color: #134e40; font-weight: 700; }
+
 .reviewOptionLetter { width: 30px; height: 30px; border-radius: 6px; background: white; border: 1px solid #cbd5e0; display: flex; justify-content: center; align-items: center; font-weight: 800; color: #4a5568; margin-right: 15px; font-size: 13px;}
 .reviewOptionCorrect .reviewOptionLetter { background: #38a169; border-color: #38a169; color: white; }
 .reviewOptionWrong .reviewOptionLetter { background: #e53e3e; border-color: #e53e3e; color: white; }

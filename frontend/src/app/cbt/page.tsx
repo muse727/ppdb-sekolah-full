@@ -1,31 +1,75 @@
 // src/app/cbt/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
 import styles from './ujian.module.css';
 
+import { isAxiosError } from 'axios';
+
+interface Question {
+    id: number;
+    jenis_soal: 'PG' | 'ESAI';
+    pertanyaan: string;
+    gambar: string | null;
+    opsi_a: string | null;
+    opsi_b: string | null;
+    opsi_c: string | null;
+    opsi_d: string | null;
+}
+
+interface LoginResponse {
+    student_name: string;
+    attempt_token: string;
+    expires_at: string;
+    questions: Question[];
+}
+
+/**
+ * P4-B — the post-submit review screen is built entirely from data the student
+ * already legitimately holds: the `questions` handed out at login plus the
+ * student's own `answers`.
+ *
+ * This deliberately does NOT model the old `pembahasan` payload. That payload
+ * carried `kunci_jawaban` (the answer key) straight to the student's browser,
+ * and the server no longer returns it at all — so the previous review list was
+ * dead code that rendered nothing. The review is now a recap of the student's
+ * own responses, which is what the surrounding copy always claimed it was
+ * ("Berikut adalah rekap jawaban Anda").
+ */
+interface ReviewQuestion extends Question {
+    jawaban_siswa?: string;
+}
+
+interface SubmitResponse {
+    skor: number;
+    benar: number;
+    salah: number;
+}
+
 export default function StudentCBTPage() {
     const [token, setToken] = useState('');
-    const [namaSiswa, setNamaSiswa] = useState('');
+    const [studentName, setStudentName] = useState('');
+    const [attemptToken, setAttemptToken] = useState('');
     
     const [isStarted, setIsStarted] = useState(false);
-    const [sessionData, setSessionData] = useState<any>(null);
-    const [questions, setQuestions] = useState<any[]>([]);
+    const [questions, setQuestions] = useState<Question[]>([]);
     
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [answers, setAnswers] = useState<any>({});
+    const [answers, setAnswers] = useState<Record<number, string>>({});
     
     const examRef = useRef<HTMLDivElement>(null);
 
     const [cheatCount, setCheatCount] = useState(0);
     const [timeLeft, setTimeLeft] = useState(0); 
-    const timerRef = useRef<any>(null);
+    const expiresAtRef = useRef(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const submittedRef = useRef(false);
 
     // STATE UNTUK LAYAR REVIEW HASIL
     const [showReview, setShowReview] = useState(false);
-    const [reviewData, setReviewData] = useState<any>(null);
+    const [reviewData, setReviewData] = useState<SubmitResponse | null>(null);
 
     useEffect(() => {
         if (!isStarted || showReview) return; // Matikan anti-nyontek kalau udah di layar review
@@ -41,7 +85,7 @@ export default function StudentCBTPage() {
                 .then(() => document.documentElement.requestFullscreen().catch(console.log));
             }
         };
-        const preventDefault = (e: any) => e.preventDefault();
+        const preventDefault = (e: Event) => e.preventDefault();
         
         window.addEventListener('blur', handleBlur);
         document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -56,18 +100,6 @@ export default function StudentCBTPage() {
         };
     }, [isStarted, showReview]);
 
-    useEffect(() => {
-        if (isStarted && !showReview && timeLeft > 0) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) { clearInterval(timerRef.current); handleSubmitUjian(); return 0; }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-        return () => clearInterval(timerRef.current);
-    }, [isStarted, showReview, timeLeft]);
-
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
@@ -78,16 +110,13 @@ export default function StudentCBTPage() {
         e.preventDefault();
         Swal.fire({ title: 'Menyiapkan Soal...', didOpen: () => Swal.showLoading() });
         try {
-            const res = await libAxios.post('/api/cbt/login', { token, nama_siswa: namaSiswa });
-            const session = res.data.session;
+            const res = await libAxios.post<LoginResponse>('/api/cbt/login', { token });
+            setStudentName(res.data.student_name);
+            setAttemptToken(res.data.attempt_token);
             
-            const start = new Date(`2000-01-01T${session.jam_mulai}`);
-            const end = new Date(`2000-01-01T${session.jam_selesai}`);
-            const durasiDetik = (end.getTime() - start.getTime()) / 1000;
-            
-            setSessionData(session);
             setQuestions(res.data.questions);
-            setTimeLeft(durasiDetik > 0 ? durasiDetik : 3600); 
+            expiresAtRef.current = new Date(res.data.expires_at).getTime();
+            setTimeLeft(Math.max(0, Math.ceil((expiresAtRef.current - Date.now()) / 1000)));
 
             Swal.fire({ title: 'Siap Memulai?', text: 'Waktu akan berjalan dan browser akan masuk mode layar penuh.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Mulai Ujian', confirmButtonColor: '#1a5f51' })
             .then((result) => {
@@ -95,20 +124,21 @@ export default function StudentCBTPage() {
                     document.documentElement.requestFullscreen().then(() => setIsStarted(true)).catch(() => Swal.fire('Error', 'Gagal masuk fullscreen', 'error'));
                 }
             });
-        } catch (error: any) {
-            Swal.fire('Gagal Masuk', error.response?.data?.message || 'Token tidak valid', 'error');
+        } catch (error) {
+            Swal.fire('Gagal Masuk', isAxiosError<{ message?: string }>(error) ? error.response?.data?.message || 'Token tidak valid' : 'Token tidak valid', 'error');
         }
     };
 
     const handleAnswer = (opsi: string) => { setAnswers({ ...answers, [questions[currentIndex].id]: opsi }); };
     const handleTextAnswer = (text: string) => { setAnswers({ ...answers, [questions[currentIndex].id]: text }); };
 
-    const handleSubmitUjian = async () => {
+    const handleSubmitUjian = useCallback(async () => {
+        if (submittedRef.current) return;
+        submittedRef.current = true;
         Swal.fire({ title: 'Mengoreksi Jawaban...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-            const res = await libAxios.post('/api/cbt/submit', {
-                session_id: sessionData.id,
-                nama_siswa: namaSiswa,
+            const res = await libAxios.post<SubmitResponse>('/api/cbt/submit', {
+                attempt_token: attemptToken,
                 jawaban: answers,
                 pelanggaran: cheatCount
             });
@@ -119,10 +149,33 @@ export default function StudentCBTPage() {
             setReviewData(res.data);
             setShowReview(true);
             Swal.close();
-        } catch (error) {
+        } catch {
+            submittedRef.current = false;
             Swal.fire('Gagal Menyimpan', 'Terjadi kesalahan sistem, lapor ke pengawas!', 'error');
         }
-    };
+    }, [attemptToken, answers, cheatCount]);
+
+    useEffect(() => {
+        if (!isStarted || showReview) return;
+        // Send before the server deadline so network latency does not make an
+        // otherwise timely attempt arrive after the authoritative expiry.
+        if (timeLeft <= 5) {
+            const timeout = setTimeout(() => { void handleSubmitUjian(); }, 0);
+            return () => clearTimeout(timeout);
+        }
+        timerRef.current = setInterval(() => setTimeLeft(Math.max(0, Math.ceil((expiresAtRef.current - Date.now()) / 1000))), 1000);
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [isStarted, showReview, timeLeft, handleSubmitUjian]);
+
+    /**
+     * P4-B: recap data is joined from state the student already legitimately
+     * holds — the questions delivered at login and the student's own answers.
+     * No field from a server "explanation" payload is used, because none is sent.
+     */
+    const reviewQuestions: ReviewQuestion[] = useMemo(
+        () => questions.map((soal) => ({ ...soal, jawaban_siswa: answers[soal.id] })),
+        [questions, answers]
+    );
 
     // ==========================================
     // TAMPILAN LAYAR REVIEW HASIL (KAYA GOOGLE FORM)
@@ -133,29 +186,47 @@ export default function StudentCBTPage() {
                 <div className={styles.reviewHeader}>
                     <div className={styles.scoreCard}>
                         <h2>Skor Akhir Pilihan Ganda</h2>
-                        <div className={styles.scoreNumber}>{reviewData.skor.toFixed(0)}</div>
+                        <div className={styles.scoreNumber}>{Number(reviewData.skor).toFixed(0)}</div>
                         <div className={styles.scoreStats}>
-                            <span className={styles.statBenar}>✓ Benar: {reviewData.benar}</span>
-                            <span className={styles.statSalah}>✖ Salah: {reviewData.salah}</span>
+                            <span className={styles.statBenar} style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Benar: {reviewData.benar}</span>
+                            <span className={styles.statSalah} style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Salah: {reviewData.salah}</span>
                         </div>
                     </div>
-                    <p className={styles.reviewThanks}>Ujian telah selesai. Terima kasih, <strong>{namaSiswa}</strong>. Berikut adalah rekap jawaban Anda.</p>
+                    <p className={styles.reviewThanks}>Ujian telah selesai. Terima kasih, <strong>{studentName}</strong>. Berikut adalah rekap jawaban Anda.</p>
                 </div>
 
+                {/*
+                 * P4-B: the recap is derived locally from `questions` (already
+                 * sent to the student at login) and `answers` (the student's own
+                 * input). Nothing here reads an answer key — the server returns
+                 * only the aggregate score, so per-question correctness is never
+                 * disclosed to the student.
+                 *
+                 * Styling therefore stays neutral: `cardCorrect`/`cardWrong` and
+                 * `reviewOptionCorrect`/`reviewOptionWrong` are deliberately not
+                 * applied, because green/red would leak which options were right.
+                 * The only highlighted option is the one the student selected.
+                 */}
                 <div className={styles.reviewList}>
-                    {reviewData.pembahasan.map((soal: any, idx: number) => (
-                        <div key={soal.id} className={`${styles.reviewCard} ${soal.jenis_soal === 'PG' ? (soal.is_correct ? styles.cardCorrect : styles.cardWrong) : styles.cardNeutral}`}>
+                    {reviewQuestions.map((soal, idx: number) => (
+                        <div key={soal.id} className={`${styles.reviewCard} ${soal.jenis_soal === 'PG' ? '' : styles.cardNeutral}`}>
                             <div className={styles.reviewSoalHeader}>
                                 <span className={styles.questionNumber}>Soal No. {idx + 1}</span>
                                 {soal.jenis_soal === 'PG' ? (
-                                    soal.is_correct ? 
-                                    <span className={styles.badgeBenar}>Benar</span> : 
-                                    <span className={styles.badgeSalah}>Salah</span>
+                                    soal.jawaban_siswa ?
+                                    <span className={styles.badgeEsai}>Dijawab</span> :
+                                    <span className={styles.badgeSalah}>Tidak Dijawab</span>
                                 ) : (
                                     <span className={styles.badgeEsai}>Menunggu Koreksi Guru</span>
                                 )}
                             </div>
                             
+                            {/* P4-A.3 Group B — `soal.gambar` is an inline base64 data URI
+                                produced by canvas.toDataURL() at upload time. Next.js forces
+                                `unoptimized` for data:/blob: sources, so <Image> renders the
+                                identical payload with no compression benefit. Kept as <img> to
+                                preserve exact rendering semantics. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             {soal.gambar && <img src={soal.gambar} alt="Soal" className={styles.soalImgReview} />}
                             <div className={styles.questionText}>{soal.pertanyaan}</div>
 
@@ -163,15 +234,10 @@ export default function StudentCBTPage() {
                                 <div className={styles.reviewOptionsList}>
                                     {['A', 'B', 'C', 'D'].map((opsi) => {
                                         const isStudentAnswer = soal.jawaban_siswa === opsi;
-                                        const isCorrectAnswer = soal.kunci_jawaban === opsi;
-                                        const keyOpsi = `opsi_${opsi.toLowerCase()}`;
-                                        
-                                        let optionClass = styles.reviewOption;
-                                        if (isCorrectAnswer) optionClass = styles.reviewOptionCorrect;
-                                        else if (isStudentAnswer && !isCorrectAnswer) optionClass = styles.reviewOptionWrong;
+                                        const keyOpsi = `opsi_${opsi.toLowerCase()}` as keyof Question;
 
                                         return (
-                                            <div key={opsi} className={optionClass}>
+                                            <div key={opsi} className={isStudentAnswer ? styles.reviewOptionChosen : styles.reviewOption}>
                                                 <div className={styles.reviewOptionLetter}>{opsi}</div>
                                                 <div className={styles.reviewOptionText}>{soal[keyOpsi]}</div>
                                                 {isStudentAnswer && <span className={styles.yourAnswerBadge}>Jawaban Anda</span>}
@@ -208,9 +274,8 @@ export default function StudentCBTPage() {
                 <div className={styles.loginCard}>
                     <div className={styles.logoBox}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1a5f51" strokeWidth="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
                     <h1>Portal Ujian CBT</h1>
-                    <p>Masukkan token dan nama Anda dengan benar.</p>
+                    <p>Masukkan token ujian. Login ke akun pendaftar terlebih dahulu.</p>
                     <form onSubmit={handleLogin}>
-                        <input type="text" className={styles.formInput} placeholder="NAMA LENGKAP" value={namaSiswa} onChange={(e) => setNamaSiswa(e.target.value)} required />
                         <input type="text" className={styles.tokenInput} placeholder="TOKEN UJIAN" value={token} onChange={(e) => setToken(e.target.value.toUpperCase())} maxLength={6} required />
                         <button type="submit" className={styles.loginBtn}>MASUK UJIAN</button>
                     </form>
@@ -227,7 +292,7 @@ export default function StudentCBTPage() {
     return (
         <div className={styles.examContainer} ref={examRef}>
             <div className={styles.examHeader}>
-                <div className={styles.studentInfo}><span className={styles.badgeSiswa}>Peserta: {namaSiswa}</span></div>
+                <div className={styles.studentInfo}><span className={styles.badgeSiswa}>Peserta: {studentName}</span></div>
                 {cheatCount > 0 && <div className={styles.cheatWarning}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Pelanggaran: {cheatCount}x</div>}
                 <div className={styles.timerBox}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Sisa Waktu: {formatTime(timeLeft)}</div>
             </div>
@@ -238,6 +303,9 @@ export default function StudentCBTPage() {
                     
                     {currentQ?.gambar && (
                         <div className={styles.imageWrapper}>
+                            {/* P4-A.3 Group B — inline base64 data URI (see the review
+                                screen above); <Image> would pass it through unoptimized. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={currentQ.gambar} alt="Gambar Soal" className={styles.soalImg} />
                         </div>
                     )}

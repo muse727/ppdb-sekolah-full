@@ -80,7 +80,31 @@
 
 /* SETTING KHUSUS WAKTU DIPRINT DI KERTAS FISIK */
 @media print {
-    @page { size: A4; margin: 10mm; }
-    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .printContainer { padding: 0; } /* Hilangin padding web pas masuk mode kertas */
+    @page { size: A4; margin: 12mm; }
+        
+    :global(html), :global(body) {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        /* Paksa warna latar tabel/section ikut tercetak (Chrome membuang
+           background secara default saat print). */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .printContainer {
+        max-width: 100%;   /* isi penuh area cetak A4 */
+        width: 100%;
+        margin: 0;
+        padding: 0;        /* padding web dihilangkan di mode kertas */
+    }
+
+    /* Pemenggalan halaman yang rapi: jangan potong baris tabel, jangan
+       pisahkan judul section dari tabelnya, dan jaga blok tanda tangan. */
+    .printContainer table { page-break-inside: auto; }
+    .printContainer tr { page-break-inside: avoid; page-break-after: auto; }
+    .printContainer thead { display: table-header-group; } /* ulangi header tabel di tiap halaman */
+    .sectionTitle { page-break-after: avoid; }
+    .signatureSection { page-break-inside: avoid; }
+    .headerKop { page-break-inside: avoid; page-break-after: avoid; }
 }

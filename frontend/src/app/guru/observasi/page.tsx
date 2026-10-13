@@ -6,26 +6,59 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import Swal from 'sweetalert2';
 import libAxios from '@/lib/axios';
+import type { AntreanObservasi, KategoriObservasi, KomponenObservasi } from '@/lib/domain';
+import { beginObservasiIdempotentOp, clearObservasiIdempotentOp } from '@/lib/observasiIdempotency';
+import { handleObservasiSubmitError } from '@/lib/observasiSubmitErrors';
 import styles from './observasi.module.css';
 
-const INSTRUMEN_MOCK = [
-    { id: 1, kategori: 'Setup', kode: 'K1', keterampilan: 'Belum Ada', title: 'Soal Kosong', petunjuk: '', lampiran: '', saran: '' },
-];
+// Jawaban observasi per komponen — bentuk yang dikirim sebagai jawaban_json.
+interface ObservasiAnswer {
+    jawaban: string;
+    skor: number;
+    catatan: string;
+    kategori: string | null;
+    keterampilan: string | null;
+}
+
+// Soal "flatten" untuk kartu penilaian (dari komponen instrumen).
+interface FlatSoal {
+    id: number;
+    kategori: string;
+    kode: string;
+    keterampilan: string | null;
+    title: string | null;
+    petunjuk: string | null;
+    lampiran: string | null;
+    saran: string | null;
+}
+
+// E.12D — INSTRUMEN_MOCK DIHAPUS. Instrumen observasi SD mengacu pada kode
+// yang tercetak pada instrumen FISIK (kertas); arena ini hanya merekam hasil
+// berdasarkan instrumen yang benar-benar terdaftar. Sebelumnya, jika API gagal
+// atau data kosong, arena memakai satu soal contoh ("Soal Kosong", kode K1)
+// dan guru BISA menyelesaikan tes palsu atas nama calon murid nyata —
+// hasilnya tersimpan ke database, terhitung dalam skor, muncul di rekapan,
+// dan tercetak di PDF resmi. Sekarang: data kosong → tampilan kosong yang
+// jelas; API gagal → pesan error yang jelas. Tidak ada hasil observasi
+// sintetis yang bisa tersimpan.
 
 export default function ObservasiPage() {
     const router = useRouter();
     
-    const [students, setStudents] = useState<any[]>([]);
-    const [questions, setQuestions] = useState<any[]>([]);
+    const [students, setStudents] = useState<AntreanObservasi[]>([]);
+    const [questions, setQuestions] = useState<FlatSoal[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    // E.12D: dibedakan eksplisit — "API gagal" vs "belum ada instrumen".
+    // Keduanya menampilkan pesan berbeda dan keduanya memblokir mulai tes.
+    const [loadError, setLoadError] = useState<string | null>(null);
     
     const [filterStatus, setFilterStatus] = useState('BELUM'); 
     const [searchTerm, setSearchTerm] = useState('');
 
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [selectedStudent, setSelectedStudent] = useState<AntreanObservasi | null>(null);
     const [isStarted, setIsStarted] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [answers, setAnswers] = useState<any>({});
+    const [answers, setAnswers] = useState<Record<string, ObservasiAnswer>>({});
     const [catatan, setCatatan] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     
@@ -33,45 +66,61 @@ export default function ObservasiPage() {
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [transitionText, setTransitionText] = useState('Melanjutkan!');
 
-    const introRef = useRef(null);
-    const cardRef = useRef(null);
-    const swipeRef = useRef(null);
+    const introRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const swipeRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchData = async () => {
+            // E.12D: try/catch di setiap request secara terpisah — kegagalan
+            // salah satu API tidak lagi disamarkan menjadi "data kosong"
+            // (dulu: .catch(() => ({ data: [] })) membuat error jaringan
+            // tampak seperti "tidak ada antrean/instrumen").
             try {
-                const resSiswa = await libAxios.get('/api/guru/antrean-observasi').catch(() => ({ data: [] }));
-                const validStudents = Array.isArray(resSiswa.data) ? resSiswa.data : (resSiswa.data?.data || []);
-                setStudents(validStudents);
-
-                const resInstrumen = await libAxios.get('/api/guru/instrumen/kategori').catch(() => ({ data: [] }));
-                const validInstrumen = Array.isArray(resInstrumen.data) ? resInstrumen.data : (resInstrumen.data?.data || []);
-                
-                let flatSoal: any[] = [];
-                if (validInstrumen.length > 0) {
-                    validInstrumen.forEach((kat: any) => {
-                        if(kat.komponen && Array.isArray(kat.komponen)) {
-                            kat.komponen.forEach((komp: any) => {
-                                flatSoal.push({
-                                    id: komp.id,
-                                    kategori: kat.nama_kategori,
-                                    kode: komp.kode,
-                                    keterampilan: komp.keterampilan,
-                                    title: komp.deskripsi,
-                                    petunjuk: komp.petunjuk,
-                                    lampiran: komp.lampiran,
-                                    saran: komp.saran_jika_kurang
-                                });
-                            });
-                        }
-                    });
-                }
-                setQuestions(flatSoal.length > 0 ? flatSoal : INSTRUMEN_MOCK);
-            } catch (error) {
-                setQuestions(INSTRUMEN_MOCK); setStudents([]); 
-            } finally {
+                const resSiswa = await libAxios.get<AntreanObservasi[]>('/api/guru/antrean-observasi');
+                setStudents(Array.isArray(resSiswa.data) ? resSiswa.data : []);
+            } catch {
+                setLoadError('Gagal memuat antrean calon murid. Periksa koneksi lalu muat ulang halaman.');
                 setIsLoadingData(false);
+                return;
             }
+
+            try {
+                // E.12D: instrumen observasi adalah instrumen SD (fisik,
+                // berkode). Filter jenjang eksplisit agar arena observasi
+                // tidak pernah memuat — apalagi menilai dengan — komponen
+                // jenjang lain. Alur CBT SMP terpisah dan tidak tersentuh.
+                const resInstrumen = await libAxios.get<KategoriObservasi[]>('/api/guru/instrumen/kategori?jenjang=SD');
+                const validInstrumen: KategoriObservasi[] = Array.isArray(resInstrumen.data) ? resInstrumen.data : [];
+
+                const flatSoal: FlatSoal[] = [];
+                validInstrumen.forEach((kat: KategoriObservasi) => {
+                    if (kat.komponen && Array.isArray(kat.komponen)) {
+                        kat.komponen.forEach((komp: KomponenObservasi) => {
+                            flatSoal.push({
+                                id: komp.id,
+                                kategori: kat.nama_kategori,
+                                kode: komp.kode,
+                                keterampilan: komp.keterampilan,
+                                title: komp.deskripsi,
+                                petunjuk: komp.petunjuk,
+                                lampiran: komp.lampiran,
+                                saran: komp.saran_jika_kurang
+                            });
+                        });
+                    }
+                });
+                // E.12D: instrumen kosong → questions kosong (bukan mock). UI
+                // di bawah menampilkan pesan "belum ada instrumen" dan tidak
+                // memungkinkan memulai tes atas calon murid nyata.
+                setQuestions(flatSoal);
+            } catch {
+                setLoadError('Gagal memuat data instrumen observasi SD. Periksa koneksi lalu muat ulang halaman.');
+                setIsLoadingData(false);
+                return;
+            }
+
+            setIsLoadingData(false);
         };
         fetchData();
     }, []);
@@ -99,13 +148,23 @@ export default function ObservasiPage() {
     };
 
     const toggleMic = () => {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        // Web Speech API — tidak ada di semua TS DOM lib; batasi di satu helper.
+        type SpeechRecognitionLike = {
+            lang: string; interimResults: boolean;
+            onstart: (() => void) | null;
+            onresult: ((event: { results: { transcript: string }[][] }) => void) | null;
+            onerror: (() => void) | null;
+            onend: (() => void) | null;
+            start: () => void;
+        };
+        const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+        const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition;
         if (!SpeechRecognition) { Swal.fire('Oops!', 'Gunakan Chrome/Edge.', 'info'); return; }
         if (isRecording) { setIsRecording(false); return; }
         const recognition = new SpeechRecognition();
         recognition.lang = 'id-ID'; recognition.interimResults = false;
         recognition.onstart = () => setIsRecording(true);
-        recognition.onresult = (e: any) => setCatatan((prev) => prev ? prev + ' ' + e.results[0][0].transcript : e.results[0][0].transcript);
+        recognition.onresult = (e) => setCatatan((prev) => prev ? prev + ' ' + e.results[0][0].transcript : e.results[0][0].transcript);
         recognition.onerror = () => setIsRecording(false);
         recognition.onend = () => setIsRecording(false);
         recognition.start();
@@ -120,7 +179,7 @@ export default function ObservasiPage() {
         else if (value === 'TIDAK KONSISTEN') skor = 1;
         else skor = 0;
         
-        setAnswers((prev: any) => ({ 
+        setAnswers((prev) => ({ 
             ...prev, 
             [currentSoal.kode]: { 
                 jawaban: value, 
@@ -163,7 +222,21 @@ export default function ObservasiPage() {
         }
     };
 
-    const selectStudent = (siswa: any) => triggerGameTransition(() => setSelectedStudent(siswa), siswa.name);
+    const selectStudent = (siswa: AntreanObservasi) => {
+        // E.12D: tanpa instrumen terdaftar tidak ada tes yang sah untuk
+        // dimulai — kode instrumen fisik SD harus sudah terdaftar dulu di
+        // halaman Instrumen. Blokir di sini, bukan membiarkan sesi kosong.
+        if (questions.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Belum Ada Instrumen',
+                text: 'Instrumen observasi SD belum terdaftar di aplikasi. Daftarkan kode instrumen fisik terlebih dahulu melalui menu Instrumen sebelum memulai tes.',
+                confirmButtonColor: '#1a5f51',
+            });
+            return;
+        }
+        triggerGameTransition(() => setSelectedStudent(siswa), siswa.name);
+    };
 
     const submitFinal = () => {
         Swal.fire({ title: 'Kirim Penilaian?', text: 'Data akan disimpan ke database', icon: 'question', showCancelButton: true, confirmButtonColor: '#1a5f51', confirmButtonText: 'Ya, Kirim!'
@@ -171,14 +244,48 @@ export default function ObservasiPage() {
             if (result.isConfirmed) {
                 Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 try {
-                    await libAxios.post('/api/guru/observasi/submit', { user_id: selectedStudent.id, jawaban_json: answers });
+                    if (!selectedStudent) return;
+                    // E.12G Phase 4 — idempotent submit: key persisted BEFORE the
+                    // request; a refresh mid-flight retries with the SAME key so
+                    // the server replays the stored response instead of double-
+                    // writing the hasil or double-bumping the version.
+                    const payload = { user_id: selectedStudent.id, jawaban_json: answers };
+                    const idemKey = beginObservasiIdempotentOp('observasi_submit', selectedStudent.id, payload);
+                    const resp = await libAxios.post('/api/guru/observasi/submit', payload, {
+                        headers: { 'Idempotency-Key': idemKey },
+                    });
+                    clearObservasiIdempotentOp('observasi_submit', selectedStudent.id);
                     Swal.fire('Berhasil!', 'Penilaian tersimpan.', 'success').then(() => window.location.reload());
-                } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan.', 'error'); }
+                } catch (err: unknown) {
+                    handleObservasiSubmitError(err);
+                }
             }
         });
     };
 
     if (isLoadingData) return <div style={{ height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', color: '#1a5f51', fontWeight: 'bold', position: 'fixed', top: 0, left: 0, zIndex: 900 }}>Menyiapkan Arena Tes...</div>;
+
+    // E.12D: kegagalan API ditampilkan eksplisit — tidak pernah disamarkan
+    // menjadi "data kosong" yang bisa disalahartikan guru.
+    if (loadError) return (
+        <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', color: '#c53030', fontWeight: 'bold', position: 'fixed', top: 0, left: 0, zIndex: 900, gap: '16px', padding: '24px', textAlign: 'center' }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c53030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <h2 style={{ margin: 0 }}>Gagal Memuat Data</h2>
+            <p style={{ color: '#4a5568', fontWeight: 'normal', maxWidth: '480px', margin: 0 }}>{loadError}</p>
+            <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', backgroundColor: '#1a5f51', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Muat Ulang</button>
+        </div>
+    );
+
+    // E.12D: instrumen kosong → tampilan kosong yang jelas + tombol ke
+    // halaman Instrumen. Tidak ada tes palsu yang bisa dimulai.
+    if (questions.length === 0) return (
+        <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', color: '#1a5f51', position: 'fixed', top: 0, left: 0, zIndex: 900, gap: '16px', padding: '24px', textAlign: 'center' }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1a5f51" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <h2 style={{ margin: 0 }}>Belum Ada Instrumen Observasi</h2>
+            <p style={{ color: '#4a5568', maxWidth: '480px', margin: 0 }}>Instrumen observasi SD (berdasarkan kode yang tercetak pada instrumen fisik) belum terdaftar di aplikasi. Silakan daftarkan kategori dan komponen instrumen terlebih dahulu.</p>
+            <button onClick={() => router.push('/guru/instrumen')} style={{ padding: '12px 24px', backgroundColor: '#1a5f51', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Buka Halaman Instrumen</button>
+        </div>
+    );
 
     const currentSoal = questions[currentIndex];
     const progress = questions.length > 0 ? ((currentIndex + 1) / questions.length) * 100 : 0;
@@ -298,7 +405,7 @@ export default function ObservasiPage() {
                                     <span className={styles.sumKode}>{soal.kode}</span>
                                     <div>
                                         <h4>{soal.keterampilan || soal.title}</h4>
-                                        {answers[soal.kode]?.catatan && <p className={styles.sumNote}>Catatan: "{answers[soal.kode].catatan}"</p>}
+                                        {answers[soal.kode]?.catatan && <p className={styles.sumNote}>Catatan: &quot;{answers[soal.kode].catatan}&quot;</p>}
                                     </div>
                                 </div>
                                 <div className={styles.sumRight}>

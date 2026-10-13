@@ -103,3 +103,78 @@
 .radioLabel input { display: none; }
 .radioActiveSuccess { border-color: #10b981; background: #f0fdf4; color: #059669; }
 .radioActiveDanger { border-color: #ef4444; background: #fef2f2; color: #dc2626; }
+
+/* === HORIZONTAL ACTION GROUP (JALUR INTERNAL) === */
+/* PART J: on desktop all three actions share ONE row. `nowrap` is what stops
+   the group from folding into two lines; when the table genuinely cannot fit
+   the available width, the scroll container (overflowX:auto on the wrapper)
+   scrolls sideways instead of stacking the buttons. */
+.actionGroup {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.4;
+  /* Identical height across all three buttons regardless of label length,
+     and flex:0 0 auto so they never shrink (which would force a wrap). */
+  height: 26px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+
+/* Keep the AKSI column wide enough for its three inline buttons so the
+   browser is not tempted to squeeze (and therefore wrap) them. */
+.aksiCol {
+  min-width: 240px;
+  white-space: nowrap;
+}
+
+.actionBtnNeutral {
+  background-color: #f7fafc;
+  color: #4a5568;
+  border-color: #e2e8f0;
+}
+.actionBtnNeutral:hover { background-color: #edf2f7; border-color: #cbd5e0; }
+
+.actionBtnSecondary {
+  background-color: #1a5f51;
+  color: white;
+  border-color: #1a5f51;
+}
+.actionBtnSecondary:hover { background-color: #134e40; border-color: #134e40; }
+
+.actionBtnDestructive {
+  background-color: transparent;
+  color: #e53e3e;
+  border-color: #e53e3e;
+}
+.actionBtnDestructive:hover { background-color: #fff5f5; }
+
+.usedBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}

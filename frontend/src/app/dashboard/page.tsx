@@ -6,20 +6,20 @@ import libAxios from '@/lib/axios'; // Pastikan path ini benar sesuai file axios
 import styles from './dashboard.module.css';
 
 export default function DashboardHome() {
-  const [currentDate, setCurrentDate] = useState('');
+  const [currentDate] = useState(() =>
+    new Date().toLocaleDateString('id-ID', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })
+  );
   const [userName, setUserName] = useState('Admin');
 
   useEffect(() => {
-    // 1. Setup Tanggal
-    const options: Intl.DateTimeFormatOptions = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
-    setCurrentDate(new Date().toLocaleDateString('id-ID', options));
-
-    // 2. Ambil data user dari API Laravel
+    let active = true;
+    // Ambil data user dari API Laravel
     libAxios.get('/api/user')
       .then((res) => {
-        setUserName(res.data.name);
+        if (active) setUserName(res.data.name);
       })
       .catch((err) => console.error("Gagal ambil data user", err));
+    return () => { active = false; };
   }, []);
 
   return (
@@ -151,7 +151,7 @@ export default function DashboardHome() {
             <img src={`https://ui-avatars.com/api/?name=${userName}&background=1a5f51&color=fff`} alt="Avatar" className={styles.avatar} />
             <div>
               <h3 className={styles.profileName}>{userName}</h3>
-              <p className={styles.profileRole}>Admin PPDB</p>
+              <p className={styles.profileRole}>Admin SPMB</p>
             </div>
           </div>
 

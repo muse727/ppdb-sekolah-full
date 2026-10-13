@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -72,7 +72,10 @@ return [
 
         'log' => [
             'transport' => 'log',
-            'channel' => env('MAIL_LOG_CHANNEL'),
+            // P3-C: dedicated channel so dev mail (incl. SMP token codes) is
+            // visible even when LOG_LEVEL=error. `log` mailer is dev-only —
+            // production must use a real transport (SMTP/SES/etc.).
+            'channel' => env('MAIL_LOG_CHANNEL', 'mail'),
         ],
 
         'array' => [
@@ -83,7 +86,6 @@ return [
             'transport' => 'failover',
             'mailers' => [
                 'smtp',
-                'log',
             ],
             'retry_after' => 60,
         ],

@@ -4,23 +4,24 @@
 import { useState, useEffect } from 'react';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import type { CbtQuestion, CbtResult } from '@/lib/domain';
 import styles from './hasil.module.css';
 
 export default function RekapanCBTPage() {
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<CbtResult[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterSesi, setFilterSesi] = useState('SEMUA');
 
     // State untuk Modal Koreksi Esai
     const [showKoreksiModal, setShowKoreksiModal] = useState(false);
-    const [activeResult, setActiveResult] = useState<any>(null);
-    const [esaiQuestions, setEsaiQuestions] = useState<any[]>([]);
+    const [activeResult, setActiveResult] = useState<CbtResult | null>(null);
+    const [esaiQuestions, setEsaiQuestions] = useState<CbtQuestion[]>([]);
     const [skorEsaiInput, setSkorEsaiInput] = useState<number | string>(0);
 
     const fetchResults = async () => {
         try {
-            const res = await libAxios.get('/api/guru/cbt-results');
+            const res = await libAxios.get<CbtResult[]>('/api/guru/cbt-results');
             setResults(res.data);
         } catch (error) { console.error(error); } 
         finally { setIsLoading(false); }
@@ -42,8 +43,8 @@ export default function RekapanCBTPage() {
         const csvRows = [headers.join(',')];
 
         filteredResults.forEach(r => {
-            const finalScore = r.is_koreksi_esai ? ((parseFloat(r.skor) + parseFloat(r.skor_esai)) / 2).toFixed(1) : parseFloat(r.skor).toFixed(1);
-            const row = [ `"${r.nama_siswa}"`, `"${new Date(r.created_at).toLocaleString('id-ID')}"`, `"${r.nama_ujian}"`, parseFloat(r.skor).toFixed(1), r.is_koreksi_esai ? r.skor_esai : '0', finalScore, r.jumlah_pelanggaran ];
+            const finalScore = r.is_koreksi_esai ? ((r.skor + r.skor_esai) / 2).toFixed(1) : r.skor.toFixed(1);
+            const row = [ `"${r.nama_siswa}"`, `"${new Date(r.created_at).toLocaleString('id-ID')}"`, `"${r.nama_ujian}"`, r.skor.toFixed(1), r.is_koreksi_esai ? r.skor_esai : '0', finalScore, r.jumlah_pelanggaran ];
             csvRows.push(row.join(','));
         });
 
@@ -56,12 +57,12 @@ export default function RekapanCBTPage() {
     };
 
     // === FITUR BUKA KOREKSI ESAI ===
-    const openKoreksiEsai = async (hasil: any) => {
+    const openKoreksiEsai = async (hasil: CbtResult) => {
         Swal.fire({ title: 'Menyiapkan Lembar Jawaban...', didOpen: () => Swal.showLoading() });
         try {
             // Ambil semua soal dari sesi ini
-            const res = await libAxios.get(`/api/guru/cbt-sessions/${hasil.cbt_session_id}/questions`);
-            const soalEsai = res.data.filter((q: any) => q.jenis_soal === 'ESAI');
+            const res = await libAxios.get<CbtQuestion[]>(`/api/guru/cbt-sessions/${hasil.cbt_session_id}/questions`);
+            const soalEsai = res.data.filter(q => q.jenis_soal === 'ESAI');
             
             setEsaiQuestions(soalEsai);
             setActiveResult(hasil);
@@ -73,19 +74,23 @@ export default function RekapanCBTPage() {
                 setShowKoreksiModal(true);
                 Swal.close();
             }
-        } catch (error) { Swal.fire('Gagal', 'Terjadi kesalahan sistem', 'error'); }
+        } catch { Swal.fire('Gagal', 'Terjadi kesalahan sistem', 'error'); }
     };
 
     // === FITUR SIMPAN NILAI ESAI ===
     const submitKoreksi = async (e: React.FormEvent) => {
         e.preventDefault();
+        // The form only renders inside the `showKoreksiModal && activeResult`
+        // guard, so this is unreachable in practice; keep it defensive so a
+        // stray submit can't build a /cbt-results/null/esai URL.
+        if (!activeResult) return;
         Swal.fire({ title: 'Menyimpan Nilai...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
             await libAxios.post(`/api/guru/cbt-results/${activeResult.id}/esai`, { skor_esai: skorEsaiInput });
             Swal.fire('Berhasil', 'Nilai esai tersimpan dan nilai akhir telah diupdate.', 'success');
             setShowKoreksiModal(false);
             fetchResults();
-        } catch (error) { Swal.fire('Gagal', 'Cek koneksi Anda', 'error'); }
+        } catch { Swal.fire('Gagal', 'Cek koneksi Anda', 'error'); }
     };
 
     if (isLoading) return <div className={styles.loading}>Memuat Hasil Ujian...</div>;
@@ -136,8 +141,8 @@ export default function RekapanCBTPage() {
                             </thead>
                             <tbody>
                                 {filteredResults.map((hasil) => {
-                                    const skorPG = parseFloat(hasil.skor);
-                                    const skorEsai = parseFloat(hasil.skor_esai || 0);
+                                    const skorPG = hasil.skor;
+                                    const skorEsai = hasil.skor_esai;
                                     // Hitung Rata-rata PG & Esai (Atau bisa disesuaikan kalau bobotnya beda)
                                     const nilaiAkhir = hasil.is_koreksi_esai ? ((skorPG + skorEsai) / 2).toFixed(1) : skorPG.toFixed(1);
 
@@ -146,7 +151,7 @@ export default function RekapanCBTPage() {
                                             <td>
                                                 <div className={styles.studentName}>{hasil.nama_siswa}</div>
                                                 <div className={styles.submitTime}>{new Date(hasil.created_at).toLocaleString('id-ID')}</div>
-                                                {hasil.jumlah_pelanggaran > 0 && <span className={styles.badgeCheatTable}>⚠️ {hasil.jumlah_pelanggaran} Pelanggaran</span>}
+                                                {hasil.jumlah_pelanggaran > 0 && <span className={styles.badgeCheatTable} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>{hasil.jumlah_pelanggaran} Pelanggaran</span>}
                                             </td>
                                             <td>
                                                 <div className={styles.sessionName}>{hasil.nama_ujian}</div>
@@ -184,20 +189,25 @@ export default function RekapanCBTPage() {
                         </div>
                         
                         <div className={styles.esaiListContainer}>
-                            {esaiQuestions.map((q, idx) => (
-                                <div key={q.id} className={styles.esaiBox}>
-                                    <div className={styles.esaiQuestion}>
-                                        <span className={styles.qNum}>Soal {idx + 1}</span>
-                                        <p>{q.pertanyaan}</p>
-                                    </div>
-                                    <div className={styles.esaiAnswer}>
-                                        <strong>Jawaban Siswa:</strong>
-                                        <div className={styles.answerText}>
-                                            {activeResult.jawaban_json[q.id] ? activeResult.jawaban_json[q.id] : <em style={{color: '#a0aec0'}}>Tidak ada jawaban yang diisi.</em>}
+                            {esaiQuestions.map((q, idx) => {
+                                // jawaban_json is nullable (decoded server-side),
+                                // so index it once through an optional chain.
+                                const jawaban = activeResult.jawaban_json?.[q.id];
+                                return (
+                                    <div key={q.id} className={styles.esaiBox}>
+                                        <div className={styles.esaiQuestion}>
+                                            <span className={styles.qNum}>Soal {idx + 1}</span>
+                                            <p>{q.pertanyaan}</p>
+                                        </div>
+                                        <div className={styles.esaiAnswer}>
+                                            <strong>Jawaban Siswa:</strong>
+                                            <div className={styles.answerText}>
+                                                {jawaban ? jawaban : <em style={{color: '#a0aec0'}}>Tidak ada jawaban yang diisi.</em>}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <form onSubmit={submitKoreksi} className={styles.formPenilaian}>

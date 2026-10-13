@@ -8,7 +8,7 @@ import styles from './pengumuman.module.css';
 
 export default function PengumumanPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<{ name: string } | null>(null);
     const [jenjang, setJenjang] = useState<string>('');
     
     // State Countdown Terproteksi Server
@@ -18,10 +18,12 @@ export default function PengumumanPage() {
     const [statusSecured, setStatusSecured] = useState('BELUM');
 
     useEffect(() => {
+        let active = true;
         Promise.all([
             libAxios.get('/api/user'),
             libAxios.get('/api/payment/status').catch(() => ({ data: null }))
         ]).then(async ([userRes, paymentRes]) => {
+            if (!active) return;
             setUser(userRes.data);
             const userJenjang = paymentRes.data?.payment?.jenjang || 'SD';
             setJenjang(userJenjang);
@@ -29,6 +31,7 @@ export default function PengumumanPage() {
             // Mengambil waktu rilis mutlak dan status kelulusan terenkripsi dari server
             try {
                 const resJadwal = await libAxios.get(`/api/pengumuman/waktu-rilis/${userJenjang}`);
+                if (!active) return;
                 if (resJadwal.data && resJadwal.data.waktu) {
                     setWaktuTarget(new Date(resJadwal.data.waktu).getTime());
                     setStatusSecured(resJadwal.data.secured_status);
@@ -36,24 +39,27 @@ export default function PengumumanPage() {
                     setWaktuTarget(null);
                     setStatusSecured('BELUM');
                 }
-            } catch (err) {
+            } catch {
+                if (!active) return;
                 setWaktuTarget(null);
                 setStatusSecured('BELUM');
             }
 
         }).catch(() => {
-            router.push('/login');
+            if (active) router.push('/login');
         });
+        return () => { active = false; };
     }, [router]);
 
     // Engine Perhitungan Hitung Mundur
     useEffect(() => {
         if (!waktuTarget) return;
 
+        let active = true;
         const cekAwal = new Date().getTime();
         if (waktuTarget - cekAwal <= 0) {
-            setIsTimeLeftUp(true);
-            return; 
+            const timeout = setTimeout(() => setIsTimeLeftUp(true), 0);
+            return () => clearTimeout(timeout);
         }
 
         const interval = setInterval(() => {
@@ -65,8 +71,8 @@ export default function PengumumanPage() {
                 clearInterval(interval);
                 
                 libAxios.get(`/api/pengumuman/waktu-rilis/${jenjang}`)
-                    .then(res => setStatusSecured(res.data.secured_status))
-                    .catch(() => setStatusSecured('BELUM'));
+                    .then(res => { if (active) setStatusSecured(res.data.secured_status); })
+                    .catch(() => { if (active) setStatusSecured('BELUM'); });
             } else {
                 const days = Math.floor(selisih / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((selisih % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -76,7 +82,7 @@ export default function PengumumanPage() {
             }
         }, 1000);
 
-        return () => clearInterval(interval);
+        return () => { active = false; clearInterval(interval); };
     }, [waktuTarget, jenjang]);
 
     if (!user) return <div className={styles.loading}>Memuat Lembar Pengumuman...</div>;
@@ -92,7 +98,7 @@ export default function PengumumanPage() {
 
             <div className={styles.headerTitle}>
                 <h1>Pengumuman Hasil Seleksi</h1>
-                <p>Penerimaan Peserta Didik Baru Terintegrasi Sistem</p>
+                <p>Penerimaan Murid Baru Terintegrasi Sistem</p>
             </div>
 
             {/* INTERFACE 1: JADWAL BELUM DI-SET OLEH PANITIA */}
@@ -102,7 +108,7 @@ export default function PengumumanPage() {
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     </div>
                     <h2>Bismillah, Menunggu Ketetapan</h2>
-                    <p>Panitia PPDB Al-Mubarak sedang merangkum hasil penilaian lembar observasi dan tes akademik Ananda. Mari kita iringi proses ini dengan doa.</p>
+                    <p>Panitia SPMB Al-Mubarak sedang merangkum hasil penilaian lembar observasi dan tes akademik Ananda. Mari kita iringi proses ini dengan doa.</p>
                 </div>
             )}
 
@@ -155,8 +161,8 @@ export default function PengumumanPage() {
                     <div className={styles.failedIcon}>
                         <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                     </div>
-                    <h2>Qadarullah Wamaa Syaa'a Fa'ala</h2>
-                    <p>Assalamu'alaikum Ayah/Bunda, panitia PPDB mengumumkan bahwa Ananda <strong>{user.name}</strong> belum dapat bergabung dengan {isSMP ? 'SMPIT' : 'SDIT'} Al-Mubarak karena keterbatasan kuota.</p>
+                    <h2>Qadarullah Wamaa Syaa&apos;a Fa&apos;ala</h2>
+                    <p>Assalamu&apos;alaikum Ayah/Bunda, panitia SPMB mengumumkan bahwa Ananda <strong>{user.name}</strong> belum dapat bergabung dengan {isSMP ? 'SMPIT' : 'SDIT'} Al-Mubarak karena keterbatasan kuota.</p>
                     <p style={{ marginTop: '15px', fontSize: '12.5px', color: '#7f1d1d' }}>Pilihan Allah senantiasa menyimpan hikmah yang jauh lebih indah. Jazakumullah Khairan Katsiran atas kepercayaan Ayah/Bunda.</p>
                 </div>
             )}
@@ -201,7 +207,7 @@ export default function PengumumanPage() {
                     {/* TOMBOL DIPISAH KE BAWAH BIAR JELAS (WARNA PUTIH) */}
                     <div className={styles.actionWrapperBottom}>
                         <button className={styles.continueDaftarUlangBtn} onClick={() => router.push('/pendaftar/daftar-ulang')}>
-                            Selesaikan Daftar Ulang →
+                            Selesaikan Daftar Ulang <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
                     </div>
                 </>

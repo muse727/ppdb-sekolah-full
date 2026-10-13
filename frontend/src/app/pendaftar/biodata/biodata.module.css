@@ -94,6 +94,17 @@
     color: #1a5f51; 
 }
 
+/* PESAN ERROR VALIDASI (step & mapping 422 backend) */
+.fieldError {
+    margin: 0; margin-left: 5px;
+    font-size: 11px; font-weight: 600; color: #e53e3e;
+}
+.apiError {
+    margin: 0 0 15px 0; padding: 10px 12px;
+    border-radius: 10px; background: #fdecea; color: #9b2925;
+    font-size: 13px; font-weight: 600;
+}
+
 /* KHUSUS SELECT (DROPDOWN) */
 .selectField {
     appearance: none;

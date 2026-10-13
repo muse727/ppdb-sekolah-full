@@ -17,7 +17,6 @@ return new class extends Migration
         $table->string('invoice_number')->unique();
         $table->string('jenjang'); // SD / SMP
         $table->integer('amount');
-        $table->string('payment_url')->nullable(); // Link dari DOKU
         $table->string('status')->default('PENDING'); // PENDING, SUCCESS, FAILED
         $table->timestamps();
     });
