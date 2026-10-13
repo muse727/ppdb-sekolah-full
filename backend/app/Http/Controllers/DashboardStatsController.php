@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Payment;
 use App\Models\Berkas;
-use App\Models\Biodata;
 use App\Models\PpdbCapacity;
 use App\Models\PpdbSeatAllocation;
 use App\Models\DaftarUlang\DuInvoice;
+use App\Models\CbtSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +20,6 @@ class DashboardStatsController extends Controller
         $today = Carbon::today();
 
         // 1. Pendaftar SD & SMP
-        // Hitung calon siswa (role orang_tua) berdasarkan jenjang di payment / user
         $pendaftarSdTotal = User::where('role', 'orang_tua')
             ->where(function($q) {
                 $q->where('jenjang', 'SD')
@@ -63,7 +62,6 @@ class DashboardStatsController extends Controller
         $allocatedSd = PpdbSeatAllocation::where('jenjang', 'SD')->where('status', 'ALLOCATED')->count();
         $allocatedSmp = PpdbSeatAllocation::where('jenjang', 'SMP')->where('status', 'ALLOCATED')->count();
 
-        // Fallback jika belum ada alokasi kursi resmi
         if ($allocatedSd === 0 && $pendaftarSdTotal > 0) {
             $allocatedSd = Payment::ppdb()->where('jenjang', 'SD')->where('status', 'SUCCESS')->count();
         }
@@ -78,14 +76,12 @@ class DashboardStatsController extends Controller
         $persenTerisi = $totalQuota > 0 ? round(($totalTerisi / $totalQuota) * 100) : 0;
 
         // 4. Status Pemberkasan
-        $totalBerkas = Berkas::count();
         $verifBerkas = Berkas::whereNotNull('kartu_keluarga')
             ->whereNotNull('akte_kelahiran')
             ->count();
         
         $totalParents = User::where('role', 'orang_tua')->count();
         $menungguBerkas = max(0, $totalParents - $verifBerkas);
-        $invalidBerkas = 0; // default safe
 
         $pctVerif = $totalParents > 0 ? round(($verifBerkas / $totalParents) * 100) : 0;
         $pctMenunggu = $totalParents > 0 ? round(($menungguBerkas / $totalParents) * 100) : 0;
@@ -112,6 +108,59 @@ class DashboardStatsController extends Controller
                     'status' => $p->status,
                 ];
             });
+
+        // 6. JADWAL TERDEKAT REALTIME DARI DATABASE
+        $jadwalList = collect();
+
+        // 6a. Jadwal Observasi dari Calon Siswa
+        $observasiSchedules = User::where('role', 'orang_tua')
+            ->whereNotNull('jadwal_observasi')
+            ->where('jadwal_observasi', '>=', $today->format('Y-m-d'))
+            ->orderBy('jadwal_observasi', 'asc')
+            ->orderBy('jam_observasi', 'asc')
+            ->limit(5)
+            ->get();
+
+        foreach ($observasiSchedules as $obs) {
+            $timeLabel = $obs->jam_observasi ? date('H:i A', strtotime($obs->jam_observasi)) : '08:00 AM';
+            $tglLabel = Carbon::parse($obs->jadwal_observasi)->locale('id')->isoFormat('D MMM');
+            $ruang = $obs->ruang_observasi ? "Ruang {$obs->ruang_observasi}" : 'Ruang Observasi';
+
+            $jadwalList->push([
+                'id' => 'obs-' . $obs->id,
+                'time' => $timeLabel,
+                'date' => $obs->jadwal_observasi,
+                'date_label' => $tglLabel,
+                'title' => "Observasi: {$obs->name}",
+                'desc' => "{$ruang} • {$obs->jenjang}",
+                'dot_color' => '#1a5f51',
+            ]);
+        }
+
+        // 6b. Jadwal Sesi CBT
+        $cbtSessions = CbtSession::where('tanggal_ujian', '>=', $today->format('Y-m-d'))
+            ->orderBy('tanggal_ujian', 'asc')
+            ->orderBy('jam_mulai', 'asc')
+            ->limit(5)
+            ->get();
+
+        foreach ($cbtSessions as $cbt) {
+            $timeLabel = $cbt->jam_mulai ? date('H:i A', strtotime($cbt->jam_mulai)) : '08:00 AM';
+            $tglLabel = Carbon::parse($cbt->tanggal_ujian)->locale('id')->isoFormat('D MMM');
+
+            $jadwalList->push([
+                'id' => 'cbt-' . $cbt->id,
+                'time' => $timeLabel,
+                'date' => $cbt->tanggal_ujian,
+                'date_label' => $tglLabel,
+                'title' => "Ujian CBT: {$cbt->nama_ujian}",
+                'desc' => "{$cbt->ruangan} • Token: {$cbt->token}",
+                'dot_color' => '#4c51bf',
+            ]);
+        }
+
+        // Urutkan jadwal berdasarkan tanggal dan waktu
+        $jadwalList = $jadwalList->sortBy(fn($item) => $item['date'] . ' ' . $item['time'])->values()->take(5);
 
         return response()->json([
             'stats' => [
@@ -142,6 +191,7 @@ class DashboardStatsController extends Controller
                 'total_berkas' => $verifBerkas,
             ],
             'pending_payments' => $pendingPayments,
+            'jadwal_terdekat' => $jadwalList,
         ]);
     }
 }

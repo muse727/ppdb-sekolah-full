@@ -37,6 +37,15 @@ interface DashboardStatsData {
     created_at: string;
     status: string;
   }>;
+  jadwal_terdekat?: Array<{
+    id: string;
+    time: string;
+    date: string;
+    date_label: string;
+    title: string;
+    desc: string;
+    dot_color: string;
+  }>;
 }
 
 export default function DashboardHome() {
@@ -53,8 +62,7 @@ export default function DashboardHome() {
   // Generate 7 hari dalam minggu berjalan (Senin - Minggu)
   const currentWeekDays = useMemo(() => {
     const curr = new Date(selectedDate);
-    const dayOfWeek = curr.getDay(); // 0 is Sunday, 1 is Monday...
-    // Mengatur agar Senin = indeks 0
+    const dayOfWeek = curr.getDay();
     const distanceToMonday = (dayOfWeek + 6) % 7;
     const monday = new Date(curr);
     monday.setDate(curr.getDate() - distanceToMonday);
@@ -100,7 +108,6 @@ export default function DashboardHome() {
 
   useEffect(() => {
     fetchDashboardData();
-    // Auto-refresh interval setiap 30 detik untuk realtime dashboard
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -204,6 +211,7 @@ export default function DashboardHome() {
   const totalBerkasVerif = statsData?.pemberkasan.total_berkas ?? 0;
 
   const pendingPayments = statsData?.pending_payments ?? [];
+  const jadwalTerdekat = statsData?.jadwal_terdekat ?? [];
 
   return (
     <div className={styles.dashboardGrid}>
@@ -342,7 +350,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* 4. SECTION BARU: ACCEPT PEMBAYARAN PERTAMA (VERIFIKASI AWAL) */}
+        {/* 4. SECTION: VERIFIKASI PEMBAYARAN PERTAMA */}
         <div className={styles.paymentSection}>
           <div className={styles.cardHeader} style={{ marginBottom: '12px' }}>
             <div>
@@ -515,38 +523,31 @@ export default function DashboardHome() {
             </div>
           </div>
 
-          {/* 3. AGENDA TERDEKAT */}
+          {/* 3. JADWAL TERDEKAT REALTIME */}
           <div className={styles.agendaList}>
             <div className={styles.cardTitle} style={{ marginTop: '10px' }}>
               JADWAL TERDEKAT
             </div>
 
-            <div className={styles.agendaItem}>
-              <div className={styles.agendaTime}>08:00 AM</div>
-              <div className={styles.agendaContent}>
-                <div className={styles.agendaDot} style={{ backgroundColor: '#4c51bf' }}></div>
-                <h4 className={styles.agendaTitle}>Observasi Calon Siswa SD</h4>
-                <p className={styles.agendaDesc}>Ruang Kelas 1A & 1B</p>
+            {jadwalTerdekat.length === 0 ? (
+              <div style={{ padding: '15px 0', fontSize: '12px', color: '#a0aec0', textAlign: 'center' }}>
+                Belum ada jadwal observasi atau ujian terdekat.
               </div>
-            </div>
-
-            <div className={styles.agendaItem}>
-              <div className={styles.agendaTime}>10:30 AM</div>
-              <div className={styles.agendaContent}>
-                <div className={styles.agendaDot} style={{ backgroundColor: '#1a5f51' }}></div>
-                <h4 className={styles.agendaTitle}>Wawancara Orang Tua</h4>
-                <p className={styles.agendaDesc}>Bersama Kepala Sekolah SDIT</p>
-              </div>
-            </div>
-
-            <div className={styles.agendaItem}>
-              <div className={styles.agendaTime}>14:00 PM</div>
-              <div className={styles.agendaContent} style={{ borderLeft: 'none' }}>
-                <div className={styles.agendaDot} style={{ backgroundColor: '#ed8936' }}></div>
-                <h4 className={styles.agendaTitle}>Rekap Pendaftar Harian</h4>
-                <p className={styles.agendaDesc}>Laporan ke Yayasan</p>
-              </div>
-            </div>
+            ) : (
+              jadwalTerdekat.map((item, index) => {
+                const isLast = index === jadwalTerdekat.length - 1;
+                return (
+                  <div key={item.id} className={styles.agendaItem}>
+                    <div className={styles.agendaTime}>{item.time}</div>
+                    <div className={styles.agendaContent} style={isLast ? { borderLeft: 'none' } : {}}>
+                      <div className={styles.agendaDot} style={{ backgroundColor: item.dot_color }}></div>
+                      <h4 className={styles.agendaTitle}>{item.title}</h4>
+                      <p className={styles.agendaDesc}>{item.desc}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
