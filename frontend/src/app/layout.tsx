@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "SPMB SDIT & SMPIT Al-Mubarak",
   description:
     "Portal resmi Penerimaan Murid Baru (SPMB) SDIT & SMPIT Al-Mubarak Tahun Ajaran 2026/2027.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
