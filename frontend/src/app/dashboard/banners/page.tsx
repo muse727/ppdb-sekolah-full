@@ -231,20 +231,33 @@ export default function BannersPage() {
 
       {showForm && (
         <div className={styles.formCard}>
-          <h2>{editing ? 'Edit Banner' : 'Banner Baru'}</h2>
+          <div className={styles.formHeader}>
+            <div>
+              <h2>{editing ? 'Edit Banner Hero' : 'Tambah Banner Hero Baru'}</h2>
+              <p>Isi informasi detail slide hero yang akan ditampilkan di landing page SPMB.</p>
+            </div>
+            <button className={styles.btnSecondary} onClick={closeForm} disabled={saving}>
+              Tutup Form
+            </button>
+          </div>
+
+          <div className={styles.formSectionTitle}>Informasi Utama</div>
           <div className={styles.formGrid}>
             <div className={styles.fieldFull}>
-              <label className={styles.label} htmlFor="banner-title">Judul <small>(maks 120 karakter)</small></label>
-              <input id="banner-title" className={styles.input} maxLength={120}
+              <label className={styles.label} htmlFor="banner-title">Judul Banner <small>(maks 120 karakter)</small></label>
+              <input id="banner-title" className={styles.input} maxLength={120} placeholder="Contoh: Penerimaan Santri Baru SIT Al-Mubarak"
                 value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             </div>
 
             <div className={styles.fieldFull}>
-              <label className={styles.label} htmlFor="banner-desc">Deskripsi <small>(opsional, maks 500 karakter)</small></label>
-              <textarea id="banner-desc" className={styles.textarea} maxLength={500}
+              <label className={styles.label} htmlFor="banner-desc">Deskripsi Singkat <small>(opsional, maks 500 karakter)</small></label>
+              <textarea id="banner-desc" className={styles.textarea} maxLength={500} placeholder="Tuliskan keterangan pendukung banner di sini..."
                 value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
+          </div>
 
+          <div className={styles.formSectionTitle}>Tombol Aksi (Call To Action)</div>
+          <div className={styles.formGrid}>
             <div>
               <label className={styles.label} htmlFor="banner-cta-text">Teks Tombol CTA <small>(opsional)</small></label>
               <input id="banner-cta-text" className={styles.input} maxLength={60} placeholder="Contoh: Daftar Sekarang"
@@ -252,21 +265,30 @@ export default function BannersPage() {
             </div>
 
             <div>
-              <label className={styles.label} htmlFor="banner-cta-url">URL CTA <small>(https://… atau path internal /…)</small></label>
+              <label className={styles.label} htmlFor="banner-cta-url">URL Tujuan CTA <small>(https://... atau internal /login)</small></label>
               <input id="banner-cta-url" className={styles.input} maxLength={255} placeholder="/login"
                 value={form.cta_url} onChange={e => setForm(f => ({ ...f, cta_url: e.target.value }))} />
             </div>
+          </div>
 
+          <div className={styles.formSectionTitle}>Pengaturan Tayang & Urutan</div>
+          <div className={styles.formGrid}>
             <div>
-              <label className={styles.label} htmlFor="banner-order">Urutan <small>(0 = paling awal)</small></label>
+              <label className={styles.label} htmlFor="banner-order">Urutan Tampil <small>(0 = slide paling awal)</small></label>
               <input id="banner-order" className={styles.input} type="number" min={0} max={65535}
                 value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))} />
             </div>
 
-            <div className={styles.checkboxRow}>
-              <input id="banner-active" type="checkbox" checked={form.is_active}
-                onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-              <span>Aktif (tampil di landing page)</span>
+            <div>
+              <label className={styles.label}>Status Visibilitas</label>
+              <label className={styles.checkboxCard} htmlFor="banner-active">
+                <input id="banner-active" type="checkbox" checked={form.is_active}
+                  onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
+                <div className={styles.checkboxInfo}>
+                  <strong>Aktifkan Slide</strong>
+                  <span>Slide akan tayang di landing page jika dalam jadwal aktif</span>
+                </div>
+              </label>
             </div>
 
             <div>
@@ -276,14 +298,17 @@ export default function BannersPage() {
             </div>
 
             <div>
-              <label className={styles.label} htmlFor="banner-ends">Berakhir <small>(opsional)</small></label>
+              <label className={styles.label} htmlFor="banner-ends">Selesai Tayang <small>(opsional)</small></label>
               <input id="banner-ends" className={styles.input} type="datetime-local"
                 value={form.ends_at} onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} />
             </div>
+          </div>
 
+          <div className={styles.formSectionTitle}>Media Banner & Pratinjau</div>
+          <div className={styles.formGrid}>
             <div className={styles.fieldFull}>
               <label className={styles.label} htmlFor="banner-media">
-                Media Banner (Gambar / Video) {editing && <small>(kosongkan bila tidak ingin diganti)</small>}
+                File Media (Gambar atau Video) {editing && <small>(kosongkan bila tidak ingin diganti)</small>}
               </label>
               <div className={styles.uploadArea}>
                 <input
@@ -298,46 +323,55 @@ export default function BannersPage() {
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><path d="m14 8 4 4"/></svg>
                   </div>
                   <div className={styles.uploadText}>
-                    <strong>{imageFile ? imageFile.name : 'Pilih file media atau klik di sini'}</strong>
-                    <span>Format didukung: JPG, PNG, WEBP, MP4, atau WEBM (maks. 25 MB).</span>
+                    <strong>{imageFile ? imageFile.name : 'Pilih file gambar atau video (Klik / Drag & Drop)'}</strong>
+                    <span>Format didukung: JPG, PNG, WEBP, MP4, atau WEBM (maksimal 25 MB).</span>
                   </div>
                 </div>
               </div>
 
-              <div className={styles.previewBox} aria-label="Pratinjau tampilan banner">
-                {previewMediaSrc ? (
-                  <>
-                    {isVideoPreview ? (
-                      <video
-                        src={previewMediaSrc}
-                        className={styles.previewMedia}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                      />
-                    ) : (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={previewMediaSrc} alt="Pratinjau banner" className={styles.previewMedia} />
-                    )}
-                    <div className={styles.previewOverlay}>
-                      <h3>{form.title || 'Judul banner'}</h3>
-                      {form.description && <p>{form.description}</p>}
-                      {form.cta_text && form.cta_url && <span className={styles.previewCta}>{form.cta_text}</span>}
+              <div className={styles.previewSection}>
+                <div className={styles.previewHeader}>
+                  <span>Simulasi Tampilan di Hero Landing Page</span>
+                  <small>Rasio aspek responsif dengan lapisan gradien</small>
+                </div>
+                <div className={styles.previewBox} aria-label="Pratinjau tampilan banner">
+                  {previewMediaSrc ? (
+                    <>
+                      {isVideoPreview ? (
+                        <video
+                          src={previewMediaSrc}
+                          className={styles.previewMedia}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={previewMediaSrc} alt="Pratinjau banner" className={styles.previewMedia} />
+                      )}
+                      <div className={styles.previewOverlay}>
+                        <h3>{form.title || 'Judul banner'}</h3>
+                        {form.description && <p>{form.description}</p>}
+                        {form.cta_text && form.cta_url && <span className={styles.previewCta}>{form.cta_text}</span>}
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.previewEmpty}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      <span>Pratinjau visual akan muncul otomatis saat media dipilih</span>
                     </div>
-                  </>
-                ) : (
-                  <div className={styles.previewEmpty}>Pratinjau akan tampil setelah file gambar/video dipilih</div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           <div className={styles.formActions}>
-            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Menyimpan…' : editing ? 'Simpan Perubahan' : 'Publikasikan Banner'}
-            </button>
             <button className={styles.btnSecondary} onClick={closeForm} disabled={saving}>Batal</button>
+            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : 'Publikasikan Banner'}
+            </button>
           </div>
         </div>
       )}
