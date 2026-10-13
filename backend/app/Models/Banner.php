@@ -18,6 +18,7 @@ class Banner extends Model
     protected $fillable = [
         'title',
         'description',
+        'media_type',
         'image_path',
         'cta_text',
         'cta_url',
@@ -64,6 +65,11 @@ class Banner extends Model
     public function imageUrl(): string
     {
         return '/api/banners/' . $this->id . '/image';
+    }
+
+    public function isVideo(): bool
+    {
+        return $this->media_type === 'video';
     }
 
     /** Hapus file gambar yang tersimpan (dipakai saat ganti/hapus banner). */

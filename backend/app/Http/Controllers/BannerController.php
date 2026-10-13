@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class BannerController extends Controller
 {
-    public const MAX_KB = 3072;   // 3 MB per gambar banner
-    public const MAX_PX = 4000;   // sisi maksimal — foto hero 1920x1080 wajar
+    public const MAX_KB = 25600;  // 25 MB (gambar atau video)
+    public const MAX_PX = 4000;   // sisi maksimal untuk gambar
 
     // ── Publik (read-only) ──────────────────────────────────────────────
 
@@ -41,6 +41,7 @@ class BannerController extends Controller
                 'id'          => $b->id,
                 'title'       => $b->title,
                 'description' => $b->description,
+                'media_type'  => $b->media_type ?? 'image',
                 'image_url'   => $b->imageUrl(),
                 'cta_text'    => $b->cta_text,
                 'cta_url'     => $b->cta_url,
@@ -72,6 +73,7 @@ class BannerController extends Controller
                 'id'          => $b->id,
                 'title'       => $b->title,
                 'description' => $b->description,
+                'media_type'  => $b->media_type ?? 'image',
                 'image_url'   => '/api/admin/banners/' . $b->id . '/image',
                 'has_image'   => $b->image_path !== null,
                 'cta_text'    => $b->cta_text,
@@ -91,17 +93,18 @@ class BannerController extends Controller
         return $this->streamImage($banner, publicCache: false);
     }
 
-    /** POST /api/admin/banners — multipart (metadata + file gambar). */
+    /** POST /api/admin/banners — multipart (metadata + file gambar/video). */
     public function store(Request $request)
     {
         $data = $this->validated($request, imageRequired: true);
 
-        [$path, $bytesOk] = $this->storeImage($request->file('image'));
+        [$path, $mediaType, $bytesOk] = $this->storeMedia($request->file('image'));
         abort_unless($bytesOk, 422, $path); // $path membawa pesan error saat gagal
 
-        $banner = DB::transaction(function () use ($data, $path, $request) {
+        $banner = DB::transaction(function () use ($data, $path, $mediaType, $request) {
             return Banner::create([
                 ...$data,
+                'media_type' => $mediaType,
                 'image_path' => $path,
                 'created_by' => $request->user()->id,
             ]);
@@ -114,23 +117,25 @@ class BannerController extends Controller
         ], 201);
     }
 
-    /** POST /api/admin/banners/{id} — multipart; gambar opsional (ganti). */
+    /** POST /api/admin/banners/{id} — multipart; media opsional (ganti). */
     public function update(Request $request, Banner $banner)
     {
         $data = $this->validated($request, imageRequired: false);
 
         $newPath = null;
+        $mediaType = null;
         if ($request->hasFile('image')) {
-            [$newPath, $ok] = $this->storeImage($request->file('image'));
+            [$newPath, $mediaType, $ok] = $this->storeMedia($request->file('image'));
             abort_unless($ok, 422, $newPath);
         }
 
         $oldPath = $banner->image_path;
 
-        DB::transaction(function () use ($banner, $data, $newPath) {
+        DB::transaction(function () use ($banner, $data, $newPath, $mediaType) {
             $banner->fill($data);
             if ($newPath !== null) {
                 $banner->image_path = $newPath;
+                $banner->media_type = $mediaType;
             }
             $banner->save();
         });
@@ -203,8 +208,8 @@ class BannerController extends Controller
                 . '|file|max:' . self::MAX_KB,
         ], [
             'title.required'      => 'Judul banner wajib diisi.',
-            'image.required'      => 'Gambar banner wajib dipilih.',
-            'image.max'           => 'Ukuran gambar melebihi batas maksimal 3 MB.',
+            'image.required'      => 'File banner (gambar atau video) wajib dipilih.',
+            'image.max'           => 'Ukuran file melebihi batas maksimal 25 MB.',
             'cta_url.regex'       => 'URL CTA harus berupa tautan http/https atau path internal (diawali /).',
             'ends_at.after_or_equal' => 'Periode berakhir tidak boleh sebelum periode mulai.',
         ]);
@@ -223,22 +228,38 @@ class BannerController extends Controller
     }
 
     /**
-     * Validasi konten + simpan gambar. Return [path|null, ok].
+     * Validasi konten + simpan media (gambar atau video). Return [path|null, media_type, ok].
      * Saat gagal, elemen pertama berisi pesan error untuk abort 422.
      */
-    private function storeImage($upload): array
+    private function storeMedia($upload): array
     {
         $bytes = (string) $upload->get();
+        $mime = $upload->getClientMimeType() ?: $upload->getMimeType();
 
-        // Batas byte sudah dicek rule max:; di sini konten yang diverifikasi.
-        $error = DocumentValidation::check($bytes);
-        if ($error !== null) {
-            return [$error, false];
+        // 1. Cek Magic bytes untuk Video MP4 / WebM
+        $isMp4 = (strlen($bytes) >= 12 && substr($bytes, 4, 4) === 'ftyp');
+        $isWebm = (str_starts_with($bytes, "\x1A\x45\xDF\xA3"));
+
+        if ($isMp4 || $isWebm) {
+            $ext = $isMp4 ? 'mp4' : 'webm';
+            $path = $upload->store('banners', 'private');
+            return [$path, 'video', true];
         }
 
-        $mime = DocumentValidation::sniffMime($bytes);
-        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
-            return ['Gambar banner harus berformat JPG atau PNG.', false];
+        // 2. Validasi untuk Gambar (JPG / PNG / WEBP)
+        $error = DocumentValidation::check($bytes);
+        if ($error !== null) {
+            // DocumentValidation default hanya JPG/PNG/PDF. Cek apakah WebP
+            if (str_starts_with($bytes, 'RIFF') && substr($bytes, 8, 4) === 'WEBP') {
+                $path = $upload->store('banners', 'private');
+                return [$path, 'image', true];
+            }
+            return ['Format file harus berupa gambar (JPG, PNG, WEBP) atau video (MP4, WEBM).', false];
+        }
+
+        $imgMime = DocumentValidation::sniffMime($bytes);
+        if (!in_array($imgMime, ['image/jpeg', 'image/png'], true)) {
+            return ['Format file harus berupa gambar (JPG, PNG, WEBP) atau video (MP4, WEBM).', false];
         }
 
         // Batas resolusi: cegah gambar absurd besar memenuhi disk.
@@ -251,29 +272,34 @@ class BannerController extends Controller
             $upload,
             'banners',
             'private',
-            DocumentValidation::extensionFor($mime)
+            DocumentValidation::extensionFor($imgMime)
         );
 
-        return [$path, true];
+        return [$path, 'image', true];
     }
 
-    /** Stream gambar dari disk privat dengan mime dari ekstensi yang kita simpan. */
+    /** Stream gambar atau video dari disk privat. */
     private function streamImage(Banner $banner, bool $publicCache = true)
     {
         $path = $banner->image_path;
         abort_unless($path && Storage::disk('private')->exists($path), 404);
 
-        $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'mp4'   => 'video/mp4',
+            'webm'  => 'video/webm',
             'png'   => 'image/png',
+            'webp'  => 'image/webp',
             default => 'image/jpeg',
         };
 
         return Storage::disk('private')->response($path, null, [
-            'Content-Type'        => $mime,
+            'Content-Type'           => $mime,
             'X-Content-Type-Options' => 'nosniff',
-            'Content-Disposition' => 'inline',
-            // Gambar ber-hash unik per unggahan → cache panjang aman untuk publik.
-            'Cache-Control'       => $publicCache ? 'public, max-age=86400' : 'private, no-store',
+            'Content-Disposition'    => 'inline',
+            'Accept-Ranges'          => 'bytes',
+            // Ber-hash unik per unggahan → cache publik aman.
+            'Cache-Control'          => $publicCache ? 'public, max-age=86400' : 'private, no-store',
         ]);
     }
 }

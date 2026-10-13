@@ -22,6 +22,7 @@ export interface HeroSlide {
   id: number;
   title: string;
   description: string | null;
+  media_type?: 'image' | 'video';
   image_url: string;
   cta_text: string | null;
   cta_url: string | null;
@@ -139,17 +140,28 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               aria-roledescription="slide"
               aria-label={`Slide ${((i - 1 + count) % count) + 1} dari ${count}`}
             >
-              {/* Gambar milik backend (privat, hash name); eslint pass-through
-                  mengikuti pola <img> aset lokal di page.tsx. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`${apiBase}${slide.image_url}`}
-                alt=""
-                aria-hidden="true"
-                className={styles.slideImage}
-                loading={i === 1 || count === 1 ? 'eager' : 'lazy'}
-                draggable={false}
-              />
+              {/* Dukungan Video / Gambar */}
+              {slide.media_type === 'video' ? (
+                <video
+                  src={`${apiBase}${slide.image_url}`}
+                  className={styles.slideImage}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              ) : (
+                /* Gambar milik backend (privat, hash name) */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={`${apiBase}${slide.image_url}`}
+                  alt=""
+                  aria-hidden="true"
+                  className={styles.slideImage}
+                  loading={i === 1 || count === 1 ? 'eager' : 'lazy'}
+                  draggable={false}
+                />
+              )}
               <div className={styles.slideOverlay} />
               <div className={styles.slideContent}>
                 <h1 className={styles.slideTitle}>{slide.title}</h1>

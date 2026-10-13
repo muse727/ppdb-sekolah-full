@@ -49,12 +49,72 @@
 
 .fileHint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
 
+/* Custom upload area */
+.uploadArea {
+  position: relative;
+  margin-top: 6px;
+}
+.fileInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.uploadBox {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+}
+.fileInput:hover + .uploadBox,
+.fileInput:focus + .uploadBox {
+  border-color: #00aa5b;
+  background-color: #f0fdf4;
+}
+.uploadIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #e2e8f0;
+  color: #1a5f51;
+  flex-shrink: 0;
+}
+.uploadText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.uploadText strong {
+  font-size: 14px;
+  color: #1e293b;
+}
+.uploadText span {
+  font-size: 12px;
+  color: #64748b;
+}
+
 /* Preview sebelum publish */
 .previewBox {
   margin-top: 14px; border-radius: 14px; overflow: hidden; position: relative;
   aspect-ratio: 16 / 6; background-color: #0f3d2e; border: 1px solid #e2e8f0;
 }
-.previewBox img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.previewMedia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .previewOverlay {
   position: absolute; inset: 0;
   background: linear-gradient(to right, rgba(15,61,46,0.85) 0%, rgba(15,61,46,0.45) 55%, rgba(15,61,46,0.2) 100%);
@@ -95,10 +155,25 @@
 .orderBtn:hover:not(:disabled) { background: #e2e8f0; }
 .orderBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.thumb { width: 120px; height: 68px; border-radius: 10px; overflow: hidden; background: #0f3d2e; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb { width: 120px; height: 68px; border-radius: 10px; overflow: hidden; background: #0f3d2e; flex-shrink: 0; }
+.thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.info h3 { font-size: 15px; font-weight: 800; color: #1e293b; margin: 0 0 4px 0; }
+.titleWithBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.titleWithBadge h3 { font-size: 15px; font-weight: 800; color: #1e293b; margin: 0; }
+.typeBadge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.typeImage { background: #f1f5f9; color: #475569; }
+.typeVideo { background: #fef3c7; color: #b45309; }
+
 .info p { font-size: 12.5px; color: #64748b; margin: 0 0 6px 0; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 

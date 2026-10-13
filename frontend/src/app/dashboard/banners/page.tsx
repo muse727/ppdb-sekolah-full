@@ -16,6 +16,7 @@ interface AdminBanner {
   id: number;
   title: string;
   description: string | null;
+  media_type: 'image' | 'video';
   image_url: string;
   has_image: boolean;
   cta_text: string | null;
@@ -129,7 +130,7 @@ export default function BannersPage() {
 
   const handleSubmit = async () => {
     if (!editing && !imageFile) {
-      Swal.fire({ icon: 'warning', title: 'Gambar wajib', text: 'Pilih gambar banner terlebih dahulu.', confirmButtonColor: '#1a5f51' });
+      Swal.fire({ icon: 'warning', title: 'Media wajib', text: 'Pilih file gambar atau video banner terlebih dahulu.', confirmButtonColor: '#1a5f51' });
       return;
     }
     setSaving(true);
@@ -211,7 +212,10 @@ export default function BannersPage() {
     }
   };
 
-  const previewImageSrc = previewSrc ?? (editing?.has_image ? `${apiBase}${editing.image_url}` : null);
+  const previewMediaSrc = previewSrc ?? (editing?.has_image ? `${apiBase}${editing.image_url}` : null);
+  const isVideoPreview = imageFile
+    ? (imageFile.type.startsWith('video/') || imageFile.name.match(/\.(mp4|webm)$/i))
+    : (editing?.media_type === 'video');
 
   return (
     <div className={styles.container}>
@@ -278,18 +282,44 @@ export default function BannersPage() {
             </div>
 
             <div className={styles.fieldFull}>
-              <label className={styles.label} htmlFor="banner-image">
-                Gambar Banner {editing && <small>(kosongkan bila tidak diganti)</small>}
+              <label className={styles.label} htmlFor="banner-media">
+                Media Banner (Gambar / Video) {editing && <small>(kosongkan bila tidak ingin diganti)</small>}
               </label>
-              <input id="banner-image" className={styles.input} type="file" accept="image/jpeg,image/png"
-                onChange={e => setImageFile(e.target.files?.[0] ?? null)} />
-              <div className={styles.fileHint}>JPG atau PNG, maksimal 3 MB, resolusi hingga 4000×4000 piksel. Rekomendasi rasio lebar (mis. 1920×800).</div>
+              <div className={styles.uploadArea}>
+                <input
+                  id="banner-media"
+                  className={styles.fileInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                  onChange={e => setImageFile(e.target.files?.[0] ?? null)}
+                />
+                <div className={styles.uploadBox}>
+                  <div className={styles.uploadIcon}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><path d="m14 8 4 4"/></svg>
+                  </div>
+                  <div className={styles.uploadText}>
+                    <strong>{imageFile ? imageFile.name : 'Pilih file media atau klik di sini'}</strong>
+                    <span>Format didukung: JPG, PNG, WEBP, MP4, atau WEBM (maks. 25 MB).</span>
+                  </div>
+                </div>
+              </div>
 
               <div className={styles.previewBox} aria-label="Pratinjau tampilan banner">
-                {previewImageSrc ? (
+                {previewMediaSrc ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={previewImageSrc} alt="Pratinjau gambar banner" />
+                    {isVideoPreview ? (
+                      <video
+                        src={previewMediaSrc}
+                        className={styles.previewMedia}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={previewMediaSrc} alt="Pratinjau banner" className={styles.previewMedia} />
+                    )}
                     <div className={styles.previewOverlay}>
                       <h3>{form.title || 'Judul banner'}</h3>
                       {form.description && <p>{form.description}</p>}
@@ -297,7 +327,7 @@ export default function BannersPage() {
                     </div>
                   </>
                 ) : (
-                  <div className={styles.previewEmpty}>Pratinjau akan tampil setelah gambar dipilih</div>
+                  <div className={styles.previewEmpty}>Pratinjau akan tampil setelah file gambar/video dipilih</div>
                 )}
               </div>
             </div>
@@ -330,13 +360,22 @@ export default function BannersPage() {
 
               <div className={styles.thumb}>
                 {banner.has_image && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={`${apiBase}${banner.image_url}`} alt={`Gambar ${banner.title}`} loading="lazy" />
+                  banner.media_type === 'video' ? (
+                    <video src={`${apiBase}${banner.image_url}`} muted loop autoPlay playsInline />
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={`${apiBase}${banner.image_url}`} alt={`Banner ${banner.title}`} loading="lazy" />
+                  )
                 )}
               </div>
 
               <div className={styles.info}>
-                <h3>{banner.title}</h3>
+                <div className={styles.titleWithBadge}>
+                  <h3>{banner.title}</h3>
+                  <span className={`${styles.typeBadge} ${banner.media_type === 'video' ? styles.typeVideo : styles.typeImage}`}>
+                    {banner.media_type === 'video' ? '🎬 Video' : '🖼️ Gambar'}
+                  </span>
+                </div>
                 {banner.description && <p>{banner.description}</p>}
                 <div className={styles.badgeRow}>
                   <span className={`${styles.badge} ${banner.is_active ? styles.badgeOn : styles.badgeOff}`}>
