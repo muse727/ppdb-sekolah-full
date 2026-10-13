@@ -235,28 +235,89 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className={styles.darkFooter}>
+      <footer id="bantuan" className={styles.darkFooter}>
         <div className={styles.footerGrid}>
-          <div>
-            <div className={styles.footerBrand}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
-              Al-Mubarak
+          {/* Kolom 1: Profil Yayasan */}
+          <div className={styles.footerCol}>
+            <a href="https://sitalmubarak.com" className={styles.footerBrandLink}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-yayasan.png" alt="Logo Yayasan Wakfiah Al Mubarak" className={styles.footerLogoImg} />
+              <span>Yayasan Wakfiah Al Mubarak</span>
+            </a>
+            <p className={styles.footerDesc}>
+              Yayasan Wakfiah Al Mubarak berkomitmen memberikan pendidikan Islami yang berkualitas, 
+              mengintegrasikan iman, ilmu, dan akhlak untuk membentuk generasi Rabbani yang unggul 
+              dalam prestasi dan karakter.
+            </p>
+            <div className={styles.socialIcons}>
+              <a href="https://tiktok.com/@sit_almubarak" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/tiktok.svg" alt="TikTok" width={26} height={26} />
+              </a>
+              <a href="https://wa.me/6289517036100" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/whatsapp.svg" alt="WhatsApp" width={26} height={26} />
+              </a>
+              <a href="https://instagram.com/sit_almubarak" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/instagram.svg" alt="Instagram" width={26} height={26} />
+              </a>
+              <a href="https://youtube.com/@sitalmubarak" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/youtube.svg" alt="YouTube" width={26} height={26} />
+              </a>
             </div>
-            <p className={styles.footerDesc}>Lembaga pendidikan Islam terpadu yang berdedikasi mencetak generasi rabbani yang berakhlak mulia.</p>
           </div>
-          <div>
-            <h4>Informasi</h4>
-            <a href="#">Tentang Yayasan</a>
-            <a href="#">Fasilitas Sekolah</a>
+
+          {/* Kolom 2: Unit Pendidikan & Tautan */}
+          <div className={styles.footerCol}>
+            <h4>Unit Pendidikan</h4>
+            <div className={styles.footerLinkList}>
+              <a href="https://sitalmubarak.com/unit-pendidikan/lpq" target="_blank" rel="noopener noreferrer">LPQ Al Mubarak</a>
+              <a href="https://sitalmubarak.com/unit-pendidikan/sdit" target="_blank" rel="noopener noreferrer">SDIT Al Mubarak</a>
+              <a href="https://sitalmubarak.com/unit-pendidikan/smpit" target="_blank" rel="noopener noreferrer">SMPIT Al Mubarak</a>
+              <a href="https://sitalmubarak.com/tentang-kami" target="_blank" rel="noopener noreferrer">Profil Yayasan</a>
+              <a href="https://spmb.sitalmubarak.com">Portal SPMB</a>
+            </div>
           </div>
-          <div>
-            <h4>Pusat Bantuan</h4>
-            <a href="#">Panduan Sistem</a>
-            <a href="#">Hubungi Admin</a>
+
+          {/* Kolom 3: Kontak & Lokasi */}
+          <div className={styles.footerCol}>
+            <h4>Kontak & Lokasi</h4>
+            <div className={styles.mapContainer}>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.5613623479285!2d106.86617317499024!3d-6.189402293798193!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f4f691e3f223%3A0x930d0bc5725c01a2!2sSDIT%20Al%20Mubarak!5e0!3m2!1sid!2sid!4v1760161170957!5m2!1sid!2sid"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Lokasi Yayasan Wakfiah Al Mubarak"
+              />
+            </div>
+            <div className={styles.contactInfo}>
+              <p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/location.svg" alt="Alamat" width={16} height={16} />
+                <span>Jl. Pramuka Sari III No.24, RT.1/RW.8, Rawasari, Kec. Cemp. Putih, Kota Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10570</span>
+              </p>
+              <p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/phone.svg" alt="Telepon" width={16} height={16} />
+                <a href="tel:+6289517036100">+62 89-5170-36100</a>
+              </p>
+              <p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/mail.svg" alt="Email" width={16} height={16} />
+                <a href="mailto:almubaraksit@gmail.com">almubaraksit@gmail.com</a>
+              </p>
+            </div>
           </div>
         </div>
+
         <div className={styles.footerBottom}>
-          <p>© 2026 Yayasan Pendidikan Islam Al-Mubarak. Seluruh hak cipta dilindungi.</p>
+          <p>© 2026 Yayasan Wakfiah Al Mubarak. All rights reserved.</p>
         </div>
       </footer>
     </main>

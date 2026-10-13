@@ -275,18 +275,162 @@
 .btnActionGreen { background-color: #00aa5b; color: white; padding: 14px 30px; border-radius: 30px; font-size: 15px; font-weight: 800; border: none; cursor: pointer; transition: 0.2s; }
 .btnActionGreen:hover { background-color: #008c4a; transform: scale(1.05); }
 
-/* === FOOTER === */
-.darkFooter { background-color: #082f22; padding: 60px 5% 30px 5%; color: white; border-top: 1px solid rgba(255,255,255,0.05);}
-.footerGrid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 50px; margin-bottom: 60px;}
+/* === FOOTER ELEGAN (SINKRON DENGAN WEBSITE YAYASAN) === */
+.darkFooter {
+  background-color: #082f22;
+  padding: 70px 5% 30px 5%;
+  color: white;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-.footerBrand { display: flex; align-items: center; font-size: 24px; font-weight: 900; margin-bottom: 15px; }
-.footerDesc { font-size: 13px; color: #94a3b8; line-height: 1.6; max-width: 350px;}
+.footerGrid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1.6fr;
+  gap: 48px;
+  max-width: 1280px;
+  margin: 0 auto 50px auto;
+}
 
-.footerGrid h4 { font-size: 16px; font-weight: 800; margin: 0 0 20px 0; }
-.footerGrid a { display: block; color: #94a3b8; text-decoration: none; font-size: 14px; margin-bottom: 12px; font-weight: 500; transition: 0.2s;}
-.footerGrid a:hover { color: white; }
+.footerCol {
+  display: flex;
+  flex-direction: column;
+}
 
-.footerBottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; text-align: center; }
-.footerBottom p { font-size: 12px; color: #64748b; margin: 0;}
+.footerBrandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  letter-spacing: -0.3px;
+}
 
-@media (max-width: 900px) { .footerGrid { grid-template-columns: 1fr; gap: 40px; } }
+.footerLogoImg {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.footerDesc {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0 0 20px 0;
+  max-width: 440px;
+}
+
+.socialIcons {
+  display: flex;
+  gap: 14px;
+}
+
+.socialIcons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.socialIcons a:hover {
+  background: #00aa5b;
+  border-color: #00aa5b;
+  transform: translateY(-3px);
+}
+
+.footerCol h4 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.2px;
+}
+
+.footerLinkList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footerLinkList a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.footerLinkList a:hover {
+  color: #34d399;
+  transform: translateX(4px);
+}
+
+.mapContainer {
+  width: 100%;
+  height: 150px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contactInfo p {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.contactInfo img {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.contactInfo a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.contactInfo a:hover {
+  color: #34d399;
+}
+
+.footerBottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 25px;
+  text-align: center;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footerBottom p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+}
