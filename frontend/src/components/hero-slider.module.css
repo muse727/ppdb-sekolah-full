@@ -4,14 +4,14 @@
 .hero {
   position: relative;
   width: 100%;
-  /* Tinggi tetap per breakpoint -> tidak ada layout shift saat slide berganti. */
-  height: clamp(420px, 62vh, 720px);
+  /* Tinggi penuh & elegan -> menyatu dengan transparent navbar di atasnya. */
+  height: clamp(580px, 88vh, 920px);
   overflow: hidden;
   background-color: #0f3d2e;
 }
 
 @media (max-width: 640px) {
-  .hero { height: 460px; }
+  .hero { height: clamp(540px, 82vh, 680px); }
 }
 
 /* === TRACK & SLIDES === */
@@ -45,26 +45,34 @@
   user-select: none;
 }
 
-/* Overlay kontras supaya teks terbaca di atas foto apa pun. */
+/* Overlay kontras supaya teks dan navbar transparan terbaca di atas foto apa pun. */
 .slideOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(15, 61, 46, 0.88) 0%,
-    rgba(15, 61, 46, 0.55) 45%,
-    rgba(15, 61, 46, 0.25) 100%
-  );
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(8, 34, 25, 0.65) 0%,
+      rgba(8, 34, 25, 0.15) 22%,
+      rgba(8, 34, 25, 0.25) 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(15, 61, 46, 0.88) 0%,
+      rgba(15, 61, 46, 0.52) 48%,
+      rgba(15, 61, 46, 0.22) 100%
+    );
 }
 
 @media (max-width: 640px) {
   .slideOverlay {
-    background: linear-gradient(
-      to top,
-      rgba(15, 61, 46, 0.92) 0%,
-      rgba(15, 61, 46, 0.45) 60%,
-      rgba(15, 61, 46, 0.25) 100%
-    );
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(8, 34, 25, 0.68) 0%,
+        rgba(8, 34, 25, 0.15) 25%,
+        rgba(15, 61, 46, 0.92) 100%
+      );
   }
 }
 
@@ -75,7 +83,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 8%;
+  padding: 64px 8% 0 8%;
   max-width: 1280px;
   color: #ffffff;
 }

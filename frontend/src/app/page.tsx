@@ -48,6 +48,16 @@ export default function Home() {
 
   // Hero slides berasal dari CMS banner backend (null = belum termuat).
   const [slides, setSlides] = useState<HeroSlide[] | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 36);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     libAxios.get('/api/public/kuota')
@@ -62,22 +72,26 @@ export default function Home() {
   return (
     <main className={styles.mainContainer}>
       {/* NAVBAR */}
-      <nav className={styles.navbar}>
-        <div className={styles.navBrand}>
-          <div className={styles.logoCircle}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+      <header className={`${styles.navbarWrapper} ${scrolled ? styles.navbarWrapperScrolled : ''}`}>
+        <nav className={`${styles.navbar} ${scrolled ? styles.navbarPill : ''}`}>
+          <a href="#" className={styles.navBrand} aria-label="Beranda SPMB SIT Al-Mubarak">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-sit-almubarak.png"
+              alt="Logo SIT Al-Mubarak SDIT - SMPIT"
+              className={styles.brandLogo}
+            />
+          </a>
+          <div className={styles.navLinks}>
+            <a href="#kuota">Kuota</a>
+            <a href="#tatacara">Tata Cara</a>
+            <a href="#bantuan">Bantuan</a>
           </div>
-          <span className={styles.brandText}>Al-Mubarak</span>
-        </div>
-        <div className={styles.navLinks}>
-          <a href="#kuota">Kuota</a>
-          <a href="#tatacara">Tata Cara</a>
-          <a href="#bantuan">Bantuan</a>
-        </div>
-        <button onClick={() => router.push('/login')} className={styles.btnLogin}>
-          Masuk Akun
-        </button>
-      </nav>
+          <button onClick={() => router.push('/login')} className={styles.btnLogin}>
+            Masuk Akun
+          </button>
+        </nav>
+      </header>
 
       {/* HERO SECTION — data dari CMS banner backend.
           slides === null: belum termuat (kerangka statis, tanpa layout shift).

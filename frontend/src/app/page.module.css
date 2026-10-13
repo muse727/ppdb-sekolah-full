@@ -7,27 +7,136 @@
   overflow-x: hidden;
 }
 
-/* === NAVBAR === */
-.navbar {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 15px 5%; background-color: #0f3d2e; position: sticky; top: 0; z-index: 50; border-bottom: 1px solid rgba(255,255,255,0.05);
+/* === NAVBAR WRAPPER & TRANSFORMASI PILL === */
+.navbarWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: 18px 5%;
+  pointer-events: none;
+  transition: padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.navBrand { display: flex; align-items: center; gap: 10px; }
-.logoCircle { color: #00aa5b; display: flex; justify-content: center; align-items: center; }
-.brandText { color: white; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;}
+.navbarWrapperScrolled {
+  padding: 12px 20px;
+}
 
-.navLinks { display: flex; gap: 30px; }
-.navLinks a { color: #94a3b8; text-decoration: none; font-weight: 600; font-size: 14px; transition: 0.2s;}
-.navLinks a:hover { color: white; }
+/* Base Navbar (Menyatu Transparan di Atas Hero) */
+.navbar {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 1320px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 28px;
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Floating Pill Putih saat Scroll */
+.navbarPill {
+  max-width: 980px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(15, 61, 46, 0.1);
+  box-shadow: 0 12px 36px -4px rgba(15, 61, 46, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 8px 24px;
+}
+
+.navBrand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+.navBrand:hover { transform: scale(1.02); }
+
+.brandLogo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: filter 0.35s ease, height 0.35s ease;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+.navbarPill .brandLogo {
+  height: 44px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.navLinks {
+  display: flex;
+  gap: 32px;
+}
+
+.navLinks a {
+  color: #f1f5f9;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14.5px;
+  transition: color 0.2s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.navLinks a:hover { color: #34d399; }
+
+.navbarPill .navLinks a {
+  color: #1e293b;
+  text-shadow: none;
+}
+.navbarPill .navLinks a:hover {
+  color: #00aa5b;
+}
 
 .btnLogin {
-  background-color: transparent; color: white; padding: 10px 24px; border-radius: 30px;
-  font-weight: 700; font-size: 14px; border: 2px solid white; cursor: pointer; transition: 0.2s;
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 9px 24px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
-.btnLogin:hover { background-color: white; color: #0f3d2e; }
+.btnLogin:hover {
+  background-color: #ffffff;
+  color: #0f3d2e;
+  border-color: #ffffff;
+}
 
-@media (max-width: 768px) { .navLinks { display: none; } }
+.navbarPill .btnLogin {
+  background-color: #00aa5b;
+  color: #ffffff;
+  border: 1.5px solid #00aa5b;
+  box-shadow: 0 4px 14px rgba(0, 170, 91, 0.3);
+}
+.navbarPill .btnLogin:hover {
+  background-color: #008c4a;
+  border-color: #008c4a;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .navLinks { display: none; }
+  .navbarWrapper { padding: 12px 16px; }
+  .navbarWrapperScrolled { padding: 8px 12px; }
+  .navbar { padding: 8px 16px; }
+  .navbarPill { padding: 6px 14px; }
+  .brandLogo { height: 40px; }
+  .navbarPill .brandLogo { height: 36px; }
+  .btnLogin { padding: 7px 16px; font-size: 13px; }
+}
 
 /* === HERO SECTION (EMPTY STATE & LOADING FALLBACK) === */
 /* Slide aktif dirender oleh komponen HeroSlider (hero-slider.module.css);
@@ -35,14 +144,14 @@
    saat belum ada banner aktif dari CMS. */
 .heroSection {
   width: 100%;
-  /* Tinggi disamakan dengan HeroSlider -> pergantian keduanya tanpa layout shift. */
-  height: clamp(420px, 62vh, 720px);
-  min-height: 420px;
+  /* Tinggi disamakan dengan HeroSlider -> clamp(580px, 88vh, 920px) */
+  height: clamp(580px, 88vh, 920px);
+  min-height: 580px;
   background-color: #0f3d2e;
   position: relative;
 }
 
-@media (max-width: 640px) { .heroSection { height: 460px; } }
+@media (max-width: 640px) { .heroSection { height: clamp(540px, 82vh, 680px); min-height: 540px; } }
 
 .heroOverlay {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
