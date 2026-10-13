@@ -33,7 +33,7 @@ const SLIDE_MS = 650;
 
 export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const router = useRouter();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 
   const reducedMotion = useMemo(
     () => typeof window !== 'undefined'

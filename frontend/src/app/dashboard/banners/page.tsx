@@ -55,7 +55,7 @@ function toIso(local: string): string | null {
 }
 
 export default function BannersPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 
   const [banners, setBanners] = useState<AdminBanner[]>([]);
   const [loading, setLoading] = useState(true);
