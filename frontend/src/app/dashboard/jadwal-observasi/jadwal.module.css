@@ -61,3 +61,90 @@
 .tabBtn:hover { background: #edf2f7; color: #4a5568;}
 .tabActive { background: #1a5f51; color: white; border-color: #1a5f51; box-shadow: 0 5px 15px rgba(26,95,81,0.2);}
 .tabActive:hover { background: #134e40; color: white;}
+
+/* === PRESET SLOTS & TIME PICKER (ANTI INPUT MANUAL) === */
+.presetList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.presetBtn {
+  background: white;
+  border: 1.5px solid #cbd5e0;
+  color: #4a5568;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.presetBtn:hover {
+  border-color: #1a5f51;
+  color: #1a5f51;
+  background: #f0fdf4;
+}
+.presetBtnActive {
+  background: #1a5f51;
+  border-color: #1a5f51;
+  color: white;
+  box-shadow: 0 2px 6px rgba(26, 95, 81, 0.25);
+}
+.presetBtnActive:hover {
+  background: #134e40;
+  color: white;
+}
+
+.timePickerContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 12px;
+  border: 2px solid #cbd5e0;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+.timePickerContainer:focus-within {
+  border-color: #1a5f51;
+}
+.timeInput {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d3748;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+.timeInput:focus {
+  border-color: #1a5f51;
+  background: white;
+}
+.timeSeparator {
+  font-weight: 800;
+  color: #718096;
+  font-size: 13px;
+}
+.timeZoneBadge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: #1a5f51;
+  background: #e6f0ee;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.timePreview {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #718096;
+}
+.timePreview strong {
+  color: #1a5f51;
+}

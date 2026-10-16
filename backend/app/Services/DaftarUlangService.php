@@ -69,6 +69,16 @@ class DaftarUlangService
         });
     }
 
+    public function activeInvoice(int $authenticatedUserId): ?DaftarUlangInvoice
+    {
+        return DB::transaction(function () use ($authenticatedUserId) {
+            $this->eligibleLocked($authenticatedUserId);
+            return DaftarUlangInvoice::where('user_id', $authenticatedUserId)
+                ->latest('id')
+                ->first()?->load('payment');
+        });
+    }
+
     public function invoice(int $authenticatedUserId, int $invoiceId): DaftarUlangInvoice
     {
         return DB::transaction(function () use ($authenticatedUserId, $invoiceId) {

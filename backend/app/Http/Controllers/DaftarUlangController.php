@@ -38,6 +38,12 @@ class DaftarUlangController extends Controller
         return response()->json($service->createInvoice($request->user()->id))->header('Cache-Control', 'private, no-store');
     }
 
+    public function activeInvoice(Request $request, DaftarUlangService $service)
+    {
+        $this->fields($request, []);
+        return response()->json($service->activeInvoice($request->user()->id))->header('Cache-Control', 'private, no-store');
+    }
+
     public function invoice(Request $request, int $id, DaftarUlangService $service)
     {
         $this->fields($request, []);
@@ -187,7 +193,7 @@ class DaftarUlangController extends Controller
 
     public function updateDefault(Request $request, string $jenjang, DaftarUlangPricingService $service)
     {
-        abort_unless($request->user()->role === 'super_admin', 403);
+        abort_unless(in_array($request->user()->role, ['admin', 'super_admin'], true), 403);
         $this->fields($request, ['items', 'discount_nominal']);
         $data = $request->validate(['items' => 'required|array', 'discount_nominal' => 'required|integer']);
         return response()->json($service->updateDefault($request->user()->id, $jenjang, $data['items'], $data['discount_nominal']));
@@ -196,12 +202,22 @@ class DaftarUlangController extends Controller
     public function individual(Request $request, int $userId)
     {
         abort_unless(in_array($request->user()->role, ['admin', 'super_admin'], true), 403);
-        return response()->json(DaftarUlangIndividualPricing::where('user_id', $userId)->with('revision')->first());
+        $user = User::findOrFail($userId);
+        $individual = DaftarUlangIndividualPricing::where('user_id', $userId)->with('revision')->first();
+        $defaultPricingId = DB::table('du_default_pricings')->where('jenjang', $user->jenjang)->value('pricing_revision_id');
+        $defaultRevision = $defaultPricingId ? DaftarUlangPricingRevision::find($defaultPricingId) : null;
+
+        return response()->json([
+            'individual' => $individual,
+            'default_pricing' => $defaultRevision,
+            'jenjang' => $user->jenjang,
+            'student_name' => $user->name,
+        ]);
     }
 
     public function updateIndividual(Request $request, int $userId, DaftarUlangPricingService $service)
     {
-        abort_unless($request->user()->role === 'super_admin', 403);
+        abort_unless(in_array($request->user()->role, ['admin', 'super_admin'], true), 403);
         $this->fields($request, ['items', 'discount_nominal', 'mode', 'active']);
         $data = $request->validate(['items' => 'sometimes|required|array', 'discount_nominal' => 'sometimes|required|integer',
             'mode' => 'sometimes|required|in:DEFAULT,CUSTOM', 'active' => 'sometimes|required|boolean']);

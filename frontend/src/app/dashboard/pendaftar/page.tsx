@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
 import type { AdminPendaftar } from '@/lib/domain';
@@ -17,13 +18,22 @@ const STEP_NAMES = [
 ];
 
 export default function MasterPendaftar() {
+    const searchParams = useSearchParams();
+    const queryParam = searchParams.get('q') ?? '';
+
     const [pendaftar, setPendaftar] = useState<AdminPendaftar[]>([]);
     const [loading, setLoading] = useState(true);
     
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(queryParam);
     const [filterStatus, setFilterStatus] = useState('Semua');
     const [jalurFilter, setJalurFilter] = useState('');
     const [jenjangFilter, setJenjangFilter] = useState('SEMUA'); 
+
+    useEffect(() => {
+        if (queryParam) {
+            setSearchTerm(queryParam);
+        }
+    }, [queryParam]); 
 
     const [selectedUser, setSelectedUser] = useState<AdminPendaftar | null>(null);
     const [activeTab, setActiveTab] = useState<number>(1);

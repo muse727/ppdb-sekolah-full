@@ -88,7 +88,7 @@ class SmpEmailTokenService
      * @throws \Throwable if the mail transport fails (the caller must NOT
      *                    report success in that case — no fake delivery).
      */
-    public function issueAndSend(string $email, string $nama): SmpEmailToken
+    public function issueAndSend(string $email, string $nama, ?string $gender = null): SmpEmailToken
     {
         $email = strtolower(trim($email));
         $lock  = $this->emailLock($email);
@@ -117,12 +117,13 @@ class SmpEmailTokenService
             $issuedAt = now();
 
             $row = SmpEmailToken::create([
-                'token_digest' => $digest,
-                'email'        => $email,
-                'nama'         => trim($nama),
-                'jenjang'      => 'SMP',
-                'issued_at'    => $issuedAt,
-                'expires_at'   => $issuedAt->copy()->addHours(self::TTL_HOURS),
+                'token_digest'  => $digest,
+                'email'         => $email,
+                'nama'          => trim($nama),
+                'jenjang'       => 'SMP',
+                'jenis_kelamin' => $gender ? strtoupper($gender) : null,
+                'issued_at'     => $issuedAt,
+                'expires_at'    => $issuedAt->copy()->addHours(self::TTL_HOURS),
             ]);
 
             // Delivery boundary: the raw secret exists ONLY inside this email.

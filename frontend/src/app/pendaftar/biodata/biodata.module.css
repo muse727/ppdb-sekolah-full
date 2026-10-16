@@ -13,7 +13,7 @@
 /* HEADER MINI */
 .headerMini {
     background: linear-gradient(135deg, #1a5f51 0%, #227b69 100%);
-    padding: 25px 20px 60px 20px; color: white;
+    padding: calc(25px + env(safe-area-inset-top, 0px)) 20px 60px 20px; color: white;
     border-radius: 0 0 24px 24px;
     display: flex; align-items: center; gap: 15px;
 }
@@ -72,6 +72,8 @@
 
 .inputField {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: 15px 15px 15px 45px;
     border-radius: 14px;
     border: 2px solid #edf2f7;
@@ -80,6 +82,18 @@
     outline: none; transition: all 0.3s ease;
     font-family: inherit;
     box-sizing: border-box;
+}
+
+input[type="date"].inputField {
+    min-height: 52px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.compactGridTwo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
 .inputField::placeholder { color: #cbd5e0; font-weight: 500;}
@@ -112,6 +126,41 @@
     background-repeat: no-repeat;
     background-position: right 15px top 50%;
     background-size: 12px auto;
+}
+
+/* RESPONSIVE FORM GRID */
+.twoColGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.subTwoColGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.addressRowGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    z-index: 1;
+}
+
+@media (max-width: 640px) {
+    .twoColGrid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .subTwoColGrid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .addressRowGrid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
 }
 
 /* TOMBOL SUBMIT */

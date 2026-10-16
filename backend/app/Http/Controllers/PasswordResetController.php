@@ -92,6 +92,15 @@ class PasswordResetController extends Controller
             'password' => 'required|string|min:8|max:100|confirmed',
         ]);
 
+        $ipKey = 'reset-password|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($ipKey, 10)) {
+            $seconds = RateLimiter::availableIn($ipKey);
+            return response()->json([
+                'message' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+            ], 429);
+        }
+        RateLimiter::hit($ipKey, 60);
+
         $status = Password::broker('users')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {

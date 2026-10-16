@@ -71,10 +71,10 @@ export default function BannersPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await libAxios.get('/api/admin/banners');
+      const res = await libAxios.get('/api/admin/banners?target=landing');
       setBanners(res.data);
     } catch {
-      Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat memuat daftar banner.', confirmButtonColor: '#1a5f51' });
+      Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat memuat daftar banner landing page.', confirmButtonColor: '#1a5f51' });
     } finally {
       setLoading(false);
     }
@@ -136,6 +136,7 @@ export default function BannersPage() {
     setSaving(true);
     try {
       const fd = new FormData();
+      fd.append('target', 'landing');
       fd.append('title', form.title);
       fd.append('description', form.description);
       fd.append('cta_text', form.cta_text);
@@ -154,7 +155,7 @@ export default function BannersPage() {
         await libAxios.post('/api/admin/banners', fd);
       }
 
-      await Swal.fire({ icon: 'success', title: 'Tersimpan', text: editing ? 'Banner diperbarui.' : 'Banner ditambahkan.', confirmButtonColor: '#1a5f51', timer: 1800 });
+      await Swal.fire({ icon: 'success', title: 'Tersimpan', text: editing ? 'Banner landing page diperbarui.' : 'Banner landing page ditambahkan.', confirmButtonColor: '#1a5f51', timer: 1800 });
       closeForm();
       await load();
     } catch (error) {
@@ -188,52 +189,53 @@ export default function BannersPage() {
     try {
       await libAxios.delete(`/api/admin/banners/${banner.id}`);
       setBanners(prev => prev.filter(b => b.id !== banner.id));
+      Swal.fire({ icon: 'success', title: 'Terhapus', confirmButtonColor: '#1a5f51', timer: 1200 });
     } catch (error) {
-      Swal.fire({ icon: 'error', title: 'Gagal', text: fieldErrorText(error), confirmButtonColor: '#1a5f51' });
+      Swal.fire({ icon: 'error', title: 'Gagal menghapus', text: fieldErrorText(error), confirmButtonColor: '#1a5f51' });
     }
   };
 
-  /** Pindah posisi lalu persist urutan baru ke backend. */
-  const move = async (index: number, delta: number) => {
-    const target = index + delta;
+  const move = async (fromIdx: number, delta: number) => {
+    const target = fromIdx + delta;
     if (target < 0 || target >= banners.length || reordering) return;
     const next = [...banners];
-    [next[index], next[target]] = [next[target], next[index]];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(target, 0, moved);
     setBanners(next);
     setReordering(true);
     try {
-      await libAxios.patch('/api/admin/banners/reorder', { orders: next.map(b => b.id) });
+      await libAxios.post('/api/admin/banners/reorder', { ids: next.map(b => b.id) });
+    } catch {
       await load();
-    } catch (error) {
-      Swal.fire({ icon: 'error', title: 'Gagal mengurutkan', text: fieldErrorText(error), confirmButtonColor: '#1a5f51' });
-      await load();
+      Swal.fire({ icon: 'error', title: 'Gagal mengurutkan', confirmButtonColor: '#1a5f51' });
     } finally {
       setReordering(false);
     }
   };
 
-  const previewMediaSrc = previewSrc ?? (editing?.has_image ? `${apiBase}${editing.image_url}` : null);
   const isVideoPreview = imageFile
-    ? (imageFile.type.startsWith('video/') || imageFile.name.match(/\.(mp4|webm)$/i))
-    : (editing?.media_type === 'video');
+    ? (imageFile.type ? imageFile.type.startsWith('video/') : /\.(mp4|webm)$/i.test(imageFile.name))
+    : editing?.media_type === 'video';
+
+  const previewMediaSrc = previewSrc ?? (editing?.has_image ? `${apiBase}${editing.image_url}` : null);
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
+      <header className={styles.header}>
+        <div className={styles.headerTitle}>
           <h1>Banner Hero Landing Page</h1>
           <p>Kelola slide hero yang tampil di halaman utama SPMB. Hanya banner aktif dan berada dalam periode tayang yang dilihat publik.</p>
         </div>
         {!showForm && (
-          <button className={styles.btnPrimary} onClick={openCreate}>+ Tambah Banner</button>
+          <button className={styles.btnPrimary} onClick={openCreate}>+ Tambah Slide Hero</button>
         )}
-      </div>
+      </header>
 
       {showForm && (
-        <div className={styles.formCard}>
+        <section className={styles.formCard} aria-labelledby="form-title">
           <div className={styles.formHeader}>
             <div>
-              <h2>{editing ? 'Edit Banner Hero' : 'Tambah Banner Hero Baru'}</h2>
+              <h2 id="form-title">{editing ? 'Edit Slide Hero' : 'Tambah Slide Hero Baru'}</h2>
               <p>Isi informasi detail slide hero yang akan ditampilkan di landing page SPMB.</p>
             </div>
             <button className={styles.btnSecondary} onClick={closeForm} disabled={saving}>
@@ -271,7 +273,7 @@ export default function BannersPage() {
             </div>
           </div>
 
-          <div className={styles.formSectionTitle}>Pengaturan Tayang & Urutan</div>
+          <div className={styles.formSectionTitle}>Pengaturan & Jadwal Tayang</div>
           <div className={styles.formGrid}>
             <div>
               <label className={styles.label} htmlFor="banner-order">Urutan Tampil <small>(0 = slide paling awal)</small></label>
@@ -280,26 +282,28 @@ export default function BannersPage() {
             </div>
 
             <div>
-              <label className={styles.label}>Status Visibilitas</label>
-              <label className={styles.checkboxCard} htmlFor="banner-active">
-                <input id="banner-active" type="checkbox" checked={form.is_active}
-                  onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-                <div className={styles.checkboxInfo}>
-                  <strong>Aktifkan Slide</strong>
-                  <span>Slide akan tayang di landing page jika dalam jadwal aktif</span>
-                </div>
-              </label>
+              <label className={styles.label}>Status Publikasi</label>
+              <div className={styles.checkboxWrapper}>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" checked={form.is_active}
+                    onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
+                  <div>
+                    <strong>Aktifkan Slide</strong>
+                    <span>Slide akan tayang di landing page jika dalam jadwal aktif</span>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <div>
-              <label className={styles.label} htmlFor="banner-starts">Mulai Tayang <small>(opsional)</small></label>
-              <input id="banner-starts" className={styles.input} type="datetime-local"
+              <label className={styles.label} htmlFor="banner-start">Mulai Tayang <small>(opsional)</small></label>
+              <input id="banner-start" className={styles.input} type="datetime-local"
                 value={form.starts_at} onChange={e => setForm(f => ({ ...f, starts_at: e.target.value }))} />
             </div>
 
             <div>
-              <label className={styles.label} htmlFor="banner-ends">Selesai Tayang <small>(opsional)</small></label>
-              <input id="banner-ends" className={styles.input} type="datetime-local"
+              <label className={styles.label} htmlFor="banner-end">Selesai Tayang <small>(opsional)</small></label>
+              <input id="banner-end" className={styles.input} type="datetime-local"
                 value={form.ends_at} onChange={e => setForm(f => ({ ...f, ends_at: e.target.value }))} />
             </div>
           </div>
@@ -313,17 +317,17 @@ export default function BannersPage() {
               <div className={styles.uploadArea}>
                 <input
                   id="banner-media"
-                  className={styles.fileInput}
                   type="file"
                   accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-                  onChange={e => setImageFile(e.target.files?.[0] ?? null)}
+                  onChange={e => {
+                    const f = e.target.files?.[0] ?? null;
+                    setImageFile(f);
+                  }}
                 />
-                <div className={styles.uploadBox}>
-                  <div className={styles.uploadIcon}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><path d="m14 8 4 4"/></svg>
-                  </div>
+                <div className={styles.uploadContent}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   <div className={styles.uploadText}>
-                    <strong>{imageFile ? imageFile.name : 'Pilih file gambar atau video (Klik / Drag & Drop)'}</strong>
+                    <strong>{imageFile ? imageFile.name : 'Pilih file media atau seret ke sini'}</strong>
                     <span>Format didukung: JPG, PNG, WEBP, MP4, atau WEBM (maksimal 25 MB).</span>
                   </div>
                 </div>
@@ -334,23 +338,17 @@ export default function BannersPage() {
                   <span>Simulasi Tampilan di Hero Landing Page</span>
                   <small>Rasio aspek responsif dengan lapisan gradien</small>
                 </div>
-                <div className={styles.previewBox} aria-label="Pratinjau tampilan banner">
+                <div className={styles.previewBox} aria-label="Pratinjau tampilan slide hero">
                   {previewMediaSrc ? (
                     <>
                       {isVideoPreview ? (
-                        <video
-                          src={previewMediaSrc}
-                          className={styles.previewMedia}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                        />
+                        <video src={previewMediaSrc} controls muted loop playsInline />
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={previewMediaSrc} alt="Pratinjau banner" className={styles.previewMedia} />
+                        <img src={previewMediaSrc} alt="Pratinjau media" />
                       )}
                       <div className={styles.previewOverlay}>
+                        <span className={styles.previewBadge}>Slide Hero</span>
                         <h3>{form.title || 'Judul banner'}</h3>
                         {form.description && <p>{form.description}</p>}
                         {form.cta_text && form.cta_url && <span className={styles.previewCta}>{form.cta_text}</span>}
@@ -370,17 +368,18 @@ export default function BannersPage() {
           <div className={styles.formActions}>
             <button className={styles.btnSecondary} onClick={closeForm} disabled={saving}>Batal</button>
             <button className={styles.btnPrimary} onClick={handleSubmit} disabled={saving}>
-              {saving ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : 'Publikasikan Banner'}
+              {saving ? 'Menyimpan...' : (editing ? 'Simpan Perubahan' : 'Terbitkan Slide Hero')}
             </button>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className={styles.listCard}>
+      <section className={styles.listCard} aria-labelledby="list-title">
+        <h2 id="list-title" className={styles.srOnly}>Daftar Slide Hero</h2>
         {loading ? (
-          <div className={styles.loadingState}>Memuat daftar banner…</div>
+          <div className={styles.emptyState}>Memuat data slide hero...</div>
         ) : banners.length === 0 ? (
-          <div className={styles.emptyState}>Belum ada banner. Landing page akan menampilkan tampilan bawaan sampai banner pertama dipublikasikan.</div>
+          <div className={styles.emptyState}>Belum ada slide hero. Landing page akan menampilkan tampilan bawaan sampai slide pertama dipublikasikan.</div>
         ) : (
           banners.map((banner, i) => (
             <div key={banner.id} className={styles.bannerRow}>
@@ -425,20 +424,24 @@ export default function BannersPage() {
                 </div>
               </div>
 
-              <div className={styles.rowActions}>
-                <button className={`${styles.actionBtn} ${styles.actionNeutral}`} onClick={() => openEdit(banner)}>Edit</button>
+              <div className={styles.actions}>
                 <button
-                  className={`${styles.actionBtn} ${banner.is_active ? styles.actionGray : styles.actionGreen}`}
+                  className={`${styles.actionBtn} ${banner.is_active ? styles.actionDeactivate : styles.actionActivate}`}
                   onClick={() => handleToggle(banner)}
                 >
                   {banner.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                 </button>
-                <button className={`${styles.actionBtn} ${styles.actionRed}`} onClick={() => handleDelete(banner)}>Hapus</button>
+                <button className={`${styles.actionBtn} ${styles.actionEdit}`} onClick={() => openEdit(banner)}>
+                  Edit
+                </button>
+                <button className={`${styles.actionBtn} ${styles.actionDelete}`} onClick={() => handleDelete(banner)}>
+                  Hapus
+                </button>
               </div>
             </div>
           ))
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,263 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalCard {
+  background: #ffffff;
+  width: 100%;
+  max-width: 380px;
+  border-radius: 24px;
+  padding: 24px 20px 20px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: popUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: none;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.appBadgeWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.iconCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background-color: #ffffff;
+  padding: 8px;
+  box-shadow: 0 10px 20px rgba(26, 95, 81, 0.12);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.content {
+  margin-bottom: 16px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a5f51;
+  background-color: #e6f4f1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.45;
+  padding: 0 6px;
+}
+
+.features {
+  background-color: #f8fafc;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.featureIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.primaryBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #1a5f51;
+  color: #ffffff;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(26, 95, 81, 0.25);
+  transition: all 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background-color: #13463c;
+  transform: translateY(-1px);
+}
+
+.secondaryBtn {
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.secondaryBtn:hover {
+  color: #64748b;
+}
+
+/* iOS Safari Guide Styles */
+.iosGuideWrapper {
+  text-align: left;
+  padding-top: 4px;
+}
+
+.guideHeader h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.guideHeader p {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.iosSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.iosStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.stepNum {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #1a5f51;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.stepText {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.shareIconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0f2fe;
+  padding: 2px 4px;
+  border-radius: 4px;
+  vertical-align: middle;
+}

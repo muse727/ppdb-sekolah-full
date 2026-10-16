@@ -51,6 +51,7 @@ export default function DaftarUlangPage() {
         if (status === 'SUCCESS') setViewState('SUCCESS');
         else if (status === 'PENDING_MANUAL') setViewState('PENDING_MANUAL');
         else if (status === 'REJECTED') setViewState('REJECTED');
+        else if (!inv.is_agreement_accepted) setViewState('AGREEMENT');
         else setViewState('INVOICE');
     }, []);
 
@@ -188,13 +189,20 @@ export default function DaftarUlangPage() {
         });
     }, [submitWithdraw]);
 
-    // Initial load: resolve identity + current pricing + server-derived account.
+    // Initial load: resolve identity + current pricing + server-derived account + active invoice.
     useEffect(() => {
         let active = true;
         const load = async () => {
             try {
-                const { data } = await libAxios.get<DuParentPricing>('/api/daftar-ulang/pricing');
-                if (active) setPricing(data);
+                const [pricingRes, invoiceRes] = await Promise.all([
+                    libAxios.get<DuParentPricing>('/api/daftar-ulang/pricing'),
+                    libAxios.get<DuParentInvoice | null>('/api/daftar-ulang/invoices/active').catch(() => ({ data: null })),
+                ]);
+                if (!active) return;
+                setPricing(pricingRes.data);
+                if (invoiceRes.data) {
+                    applyInvoice(invoiceRes.data);
+                }
             } catch (err) {
                 if (!active) return;
                 if (axios.isAxiosError(err) && err.response?.status === 422
@@ -218,7 +226,7 @@ export default function DaftarUlangPage() {
         };
         load();
         return () => { active = false; };
-    }, [handleError]);
+    }, [applyInvoice, handleError]);
 
     // Create (idempotent) or retrieve the canonical invoice, then show its immutable snapshot.
     const loadInvoice = useCallback(async (): Promise<DuParentInvoice | null> => {
@@ -237,7 +245,7 @@ export default function DaftarUlangPage() {
 
     const proceedToAgreement = async () => {
         const inv = await loadInvoice();
-        if (inv) setViewState('AGREEMENT');
+        if (inv) applyInvoice(inv);
     };
 
     // Agreement acceptance: the backend binds the snapshot version/hash itself.

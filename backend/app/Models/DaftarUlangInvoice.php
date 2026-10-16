@@ -7,7 +7,7 @@ class DaftarUlangInvoice extends ImmutableDaftarUlangRecord
     protected $table = 'du_invoices';
     protected $casts = ['pricing_snapshot' => 'array', 'subtotal' => 'integer',
         'discount_nominal' => 'integer', 'total' => 'integer', 'snapshot_at' => 'datetime', 'withdrawn_at' => 'datetime'];
-    protected $appends = ['financial_status'];
+    protected $appends = ['financial_status', 'is_agreement_accepted'];
 
     /**
      * B.7.1: the pricing snapshot, amounts and identity remain immutable, but
@@ -41,5 +41,18 @@ class DaftarUlangInvoice extends ImmutableDaftarUlangRecord
             'REJECTED' => 'REJECTED', 'EXPIRED' => 'EXPIRED', 'FAILED' => 'FAILED',
             default => 'CREATED',
         };
+    }
+
+    public function getIsAgreementAcceptedAttribute(): bool
+    {
+        $agreement = $this->pricing_snapshot['agreement'] ?? null;
+        if (!is_array($agreement)) {
+            return false;
+        }
+        return DaftarUlangAgreementAcceptance::where('invoice_id', $this->id)
+            ->where('user_id', $this->user_id)
+            ->where('agreement_version', $agreement['version'] ?? '')
+            ->where('agreement_sha256', $agreement['sha256'] ?? '')
+            ->exists();
     }
 }

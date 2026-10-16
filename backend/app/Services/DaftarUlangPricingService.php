@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\DaftarUlangIndividualPricing;
+use App\Models\DaftarUlangInvoice;
 use App\Models\DaftarUlangPricingRevision;
+use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,7 +16,8 @@ class DaftarUlangPricingService
 
     private function authorize(int $actorId): void
     {
-        abort_unless(User::whereKey($actorId)->value('role') === 'super_admin', 403);
+        $role = User::whereKey($actorId)->value('role');
+        abort_unless(in_array($role, ['admin', 'super_admin'], true), 403);
     }
 
     public function updateDefault(int $actorId, string $jenjang, array $items, mixed $discount): DaftarUlangPricingRevision
@@ -81,6 +84,43 @@ class DaftarUlangPricingService
             $head ??= new DaftarUlangIndividualPricing(['user_id' => $userId, 'created_by' => $actorId]);
             $head->fill(['mode' => $mode, 'active' => $active, 'pricing_revision_id' => $revisionId, 'updated_by' => $actorId])->save();
             $this->audit($actorId, 'INDIVIDUAL_PRICING', $userId, $user->jenjang, ['before' => $before, 'after' => $head->getAttributes()]);
+
+            // Sync existing invoice & pending payment if present
+            $invoice = DaftarUlangInvoice::where('user_id', $userId)->first();
+            if ($invoice) {
+                $payment = Payment::daftarUlang()->whereKey($invoice->payment_id)->first();
+                if ($payment && $payment->status === 'SUCCESS') {
+                    throw ValidationException::withMessages(['pricing' => 'Siswa sudah menyelesaikan pembayaran daftar ulang. Nominal tidak dapat diubah lagi.']);
+                }
+                if ($payment && $payment->status === 'PENDING_MANUAL') {
+                    throw ValidationException::withMessages(['pricing' => 'Siswa sedang menunggu verifikasi pembayaran. Tolak bukti pembayaran terlebih dahulu jika ingin merevisi nominal.']);
+                }
+
+                if (!$payment || $payment->status === 'PENDING') {
+                    $snapshot = $this->resolveLocked($user);
+                    if (isset($invoice->pricing_snapshot['agreement'])) {
+                        $snapshot['agreement'] = $invoice->pricing_snapshot['agreement'];
+                    }
+                    $snapshot['snapshot_at'] = now()->toIso8601String();
+
+                    DB::table('du_invoices')->where('id', $invoice->id)->update([
+                        'pricing_revision_id' => $snapshot['pricing_revision_id'],
+                        'pricing_snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+                        'subtotal' => $snapshot['subtotal'],
+                        'discount_nominal' => $snapshot['discount_nominal'],
+                        'total' => $snapshot['total'],
+                        'snapshot_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    if ($payment && $payment->status === 'PENDING') {
+                        $payment->update([
+                            'amount' => $snapshot['total'],
+                        ]);
+                    }
+                }
+            }
+
             return $head->load('revision');
         });
     }

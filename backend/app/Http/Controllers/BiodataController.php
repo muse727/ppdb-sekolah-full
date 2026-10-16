@@ -74,6 +74,20 @@ class BiodataController extends Controller
             ])
         );
 
+        // Pastikan alokasi kursi SMP tersinkronisasi dengan jenis kelamin siswa
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->jenjang === 'SMP') {
+            \App\Models\PpdbSeatAllocation::where('user_id', $currentUser->id)
+                ->where('status', \App\Models\PpdbSeatAllocation::STATUS_ALLOCATED)
+                ->where('jenis_kelamin', '!=', $request->jenis_kelamin)
+                ->orWhere(function ($q) use ($currentUser) {
+                    $q->where('user_id', $currentUser->id)
+                      ->where('status', \App\Models\PpdbSeatAllocation::STATUS_ALLOCATED)
+                      ->whereNull('jenis_kelamin');
+                })
+                ->update(['jenis_kelamin' => $request->jenis_kelamin]);
+        }
+
         return response()->json(['success' => true, 'message' => 'Biodata berhasil disimpan.']);
     }
 }

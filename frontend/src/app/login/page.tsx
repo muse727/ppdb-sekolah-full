@@ -3,8 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
+import InstallPwaModal from '@/components/pwa/InstallPwaModal';
 import styles from './login.module.css';
 
 export default function Login() {
@@ -33,9 +35,15 @@ export default function Login() {
   // === STATE MODAL TOKEN ===
   const [showModal, setShowModal] = useState(false);
   const [modalStep, setModalStep] = useState('PILIH_JENJANG'); 
-  const [tokenForm, setTokenForm] = useState({ nama: '', email: '' });
-  const [generatedToken, setGeneratedToken] = useState('');
+  const [tokenForm, setTokenForm] = useState({ nama: '', email: '', jenis_kelamin: 'L' });
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // === STATUS GERBANG PPDB ===
+  const [gateStatus, setGateStatus] = useState<{
+    status: 'BUKA' | 'TUTUP';
+    status_umum: 'BUKA' | 'TUTUP';
+    status_internal: 'BUKA' | 'TUTUP';
+  } | null>(null);
 
   // Generate Captcha Otomatis pas halaman dimuat
   const generateCaptcha = () => {
@@ -46,21 +54,64 @@ export default function Login() {
 
   useEffect(() => {
     generateCaptcha();
+    libAxios.get('/api/public/kuota')
+      .then((res) => {
+        if (res.data) {
+          setGateStatus({
+            status: res.data.status,
+            status_umum: res.data.status_umum,
+            status_internal: res.data.status_internal,
+          });
+          if (res.data.status_umum === 'TUTUP' && res.data.status_internal === 'BUKA') {
+            setRegJalur('INTERNAL');
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const openTokenModal = () => { setModalStep('PILIH_JENJANG'); setTokenForm({ nama: '', email: '' }); setShowModal(true); };
+  const isUmumClosed = gateStatus?.status_umum === 'TUTUP';
+
+  const openTokenModal = () => {
+    if (isUmumClosed) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Jalur Umum Ditutup',
+        text: 'Pendaftaran Jalur Reguler (Umum) saat ini sedang ditutup oleh pihak sekolah. Pendaftaran saat ini hanya dibuka untuk Jalur Alumni Internal.',
+        confirmButtonColor: '#1a5f51',
+      });
+      return;
+    }
+    setModalStep('PILIH_JENJANG');
+    setTokenForm({ nama: '', email: '', jenis_kelamin: 'L' });
+    setShowModal(true);
+  };
   const closeTokenModal = () => setShowModal(false);
 
   const handleGenerateSMPToken = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
-    setTimeout(() => {
-      const dummyToken = 'AM-SMP-' + Math.floor(Math.random() * 9000 + 1000);
-      setGeneratedToken(dummyToken);
-      setRegKredensial(dummyToken); 
+    try {
+      await libAxios.get('/sanctum/csrf-cookie');
+      await libAxios.post('/api/smp/email-token/request', {
+        nama: tokenForm.nama.trim(),
+        email: tokenForm.email.trim(),
+        jenis_kelamin: tokenForm.jenis_kelamin,
+      });
+      // Sinkronkan nama dan email ke form registrasi
+      setRegName(tokenForm.nama.trim());
+      setRegEmail(tokenForm.email.trim());
+      setRegKredensial(''); // Kosongkan agar orang tua mengisi token dari email
       setModalStep('SUCCESS_SMP');
+    } catch (error: any) {
+      let errMsg = 'Gagal mengirim token ke email. Silakan coba lagi.';
+      if (error.response?.data?.message) {
+        errMsg = error.response.data.message;
+      }
+      Swal.fire({ icon: 'error', title: 'Gagal', text: errMsg, confirmButtonColor: '#1a5f51' });
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
 
   // === HANDLE REGISTER ===
@@ -70,9 +121,24 @@ export default function Login() {
 
     try {
       await libAxios.get('/sanctum/csrf-cookie');
-      const response = await libAxios.post('/api/register', { 
-        name: regName, email: regEmail, password: regPassword, jalur: regJalur, kredensial: regKredensial
-      });
+      let jalurToSend = regJalur;
+      if (regJalur === 'UMUM' && regKredensial.trim().toUpperCase().startsWith('SMP-')) {
+        jalurToSend = 'SMP_EMAIL';
+      }
+
+      const payload: Record<string, any> = { 
+        name: regName.trim(), 
+        email: regEmail.trim(), 
+        password: regPassword, 
+        jalur: jalurToSend, 
+        kredensial: regKredensial.trim()
+      };
+
+      if (regJalur === 'INTERNAL') {
+        payload.nomor_internal = regKredensial.trim();
+      }
+
+      const response = await libAxios.post('/api/register', payload);
       
       const userRole = response.data?.user?.role || 'orang_tua';
       Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Akun berhasil dibuat. Mengalihkan...', showConfirmButton: false, timer: 1500 })
@@ -84,6 +150,8 @@ export default function Login() {
     } catch (error: any) {
       let errorMessage = 'Terjadi kesalahan saat registrasi';
       if (error.response?.data?.errors?.email) errorMessage = 'Email ini sudah terdaftar. Silakan gunakan email lain atau langsung Login.';
+      else if (error.response?.data?.errors?.nomor_internal) errorMessage = error.response.data.errors.nomor_internal[0];
+      else if (error.response?.data?.errors?.kredensial) errorMessage = error.response.data.errors.kredensial[0];
       else if (error.response?.data?.message) errorMessage = error.response.data.message;
       Swal.fire({ icon: 'error', title: 'Gagal', text: errorMessage, confirmButtonColor: '#1a5f51' });
     }
@@ -140,16 +208,38 @@ export default function Login() {
             <h1 className={styles.title}>Buat Akun SPMB</h1>
             
             <div className={styles.jalurToggleContainer}>
-                <button type="button" className={`${styles.jalurToggleBtn} ${regJalur === 'UMUM' ? styles.jalurActive : ''}`} onClick={() => { setRegJalur('UMUM'); setRegKredensial(''); }}>
-                    Jalur Umum
+                <button 
+                  type="button" 
+                  className={`${styles.jalurToggleBtn} ${regJalur === 'UMUM' ? styles.jalurActive : ''}`} 
+                  onClick={() => {
+                    if (isUmumClosed) {
+                      Swal.fire({
+                        icon: 'info',
+                        title: 'Jalur Umum Ditutup',
+                        text: 'Pendaftaran Jalur Reguler (Umum) saat ini sedang ditutup. Pendaftaran dibuka khusus Jalur Alumni Internal.',
+                        confirmButtonColor: '#1a5f51',
+                      });
+                      return;
+                    }
+                    setRegJalur('UMUM');
+                    setRegKredensial('');
+                  }}
+                >
+                    Jalur Umum {isUmumClosed ? '(Tutup)' : ''}
                 </button>
                 <button type="button" className={`${styles.jalurToggleBtn} ${regJalur === 'INTERNAL' ? styles.jalurActive : ''}`} onClick={() => { setRegJalur('INTERNAL'); setRegKredensial(''); }}>
                     Alumni Internal
                 </button>
             </div>
-            <span className={styles.paragraph} style={{marginTop: 0}}>
-                {regJalur === 'UMUM' ? 'Gunakan Token Pendaftaran Reguler' : 'Gunakan NISN Terdaftar (TK/SD Al-Mubarak)'}
-            </span>
+            {isUmumClosed && regJalur === 'UMUM' ? (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', margin: '8px 0', fontSize: '12.5px', color: '#991b1b', lineHeight: 1.5, textAlign: 'left' }}>
+                Pendaftaran Jalur Reguler (Umum) saat ini sedang ditutup oleh pihak sekolah. Silakan pilih <b>Alumni Internal</b> jika Anda memiliki nomor registrasi dari sekolah.
+              </div>
+            ) : (
+              <span className={styles.paragraph} style={{marginTop: 0}}>
+                  {regJalur === 'UMUM' ? 'Gunakan Token Pendaftaran Reguler' : 'Gunakan Nomor Registrasi Jalur Internal (10 Digit)'}
+              </span>
+            )}
 
             <div className={styles.inputGroup}>
               <svg className={styles.icon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -178,7 +268,7 @@ export default function Login() {
               <input 
                 className={`${styles.input} ${regJalur === 'INTERNAL' ? styles.inputHighlight : ''}`} 
                 type="text" 
-                placeholder={regJalur === 'UMUM' ? "Masukkan Kode Token..." : "Masukkan NISN Valid..."} 
+                placeholder={regJalur === 'UMUM' ? "Masukkan Kode Token..." : "Masukkan 10 Digit Nomor Internal..."} 
                 required 
                 value={regKredensial} 
                 onChange={(e) => setRegKredensial(e.target.value)} 
@@ -233,7 +323,7 @@ export default function Login() {
                     <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                     <span>Ingat akun saya</span>
                 </label>
-                <a href="#" className={styles.link}>Lupa Password?</a>
+                <Link href="/lupa-password" className={styles.link}>Lupa Password?</Link>
             </div>
 
             <div className={styles.captchaBox}>
@@ -312,6 +402,18 @@ export default function Login() {
                   <svg className={styles.icon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <input className={styles.input} type="text" placeholder="Nama Calon Siswa SMPIT" required value={tokenForm.nama} onChange={(e) => setTokenForm({...tokenForm, nama: e.target.value})} />
                 </div>
+                <div className={styles.inputGroup} style={{marginBottom: '15px'}}>
+                  <svg className={styles.icon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                  <select 
+                    className={styles.input} 
+                    style={{ cursor: 'pointer' }} 
+                    value={tokenForm.jenis_kelamin} 
+                    onChange={(e) => setTokenForm({...tokenForm, jenis_kelamin: e.target.value})}
+                  >
+                    <option value="L">Calon Siswa Putra (Ikhwan)</option>
+                    <option value="P">Calon Siswi Putri (Akhwat)</option>
+                  </select>
+                </div>
                 <div className={styles.inputGroup}>
                   <svg className={styles.icon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                   <input className={styles.input} type="email" placeholder="Email Aktif Orang Tua" required value={tokenForm.email} onChange={(e) => setTokenForm({...tokenForm, email: e.target.value})} />
@@ -330,13 +432,13 @@ export default function Login() {
                 <div className={styles.successIconWrapper}>
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
-                <h4 style={{fontSize: '20px', color: '#1a5f51', marginBottom: '10px', fontWeight: 800}}>Token Berhasil Dibuat!</h4>
-                <p className={styles.modalDesc} style={{background: '#f0fdf4', color: '#059669', padding: '10px', borderRadius: '8px', border: '1px solid #a7f3d0'}}>
-                  Tembusan token juga telah berhasil dikirimkan ke kotak masuk email <b>{tokenForm.email}</b>.
+                <h4 style={{fontSize: '20px', color: '#1a5f51', marginBottom: '10px', fontWeight: 800}}>Token Dikirim ke Email!</h4>
+                <p className={styles.modalDesc} style={{background: '#f0fdf4', color: '#059669', padding: '14px', borderRadius: '10px', border: '1px solid #a7f3d0', lineHeight: 1.6, textAlign: 'left', fontSize: '13.5px'}}>
+                  Kode token pendaftaran SMPIT telah dikirimkan ke kotak masuk email <b>{tokenForm.email}</b>.<br/><br/>
+                  Silakan buka email Anda (cek juga folder spam jika belum muncul), salin kode tokennya, lalu masukkan ke kolom token pada form pendaftaran.
                 </p>
-                <div className={styles.tokenDisplayBox}>{generatedToken}</div>
                 <button type="button" className={styles.btnModalPrimary} style={{width: '100%', marginTop: '20px'}} onClick={closeTokenModal}>
-                  Tutup & Lanjutkan Daftar
+                  Lanjutkan Pendaftaran
                 </button>
               </div>
             )}
@@ -351,7 +453,7 @@ export default function Login() {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button type="button" className={styles.btnModalOutline} onClick={() => setModalStep('PILIH_JENJANG')}>Kembali</button>
-                  <button type="button" className={styles.btnModalWhatsApp} onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Admin...', '_blank')}>
+                  <button type="button" className={styles.btnModalWhatsApp} onClick={() => window.open('https://wa.me/6289517036100?text=Halo%20Admin%20SDIT%20Al-Mubarak,%20saya%20ingin%20meminta%20token%20pendaftaran%20SPMB', '_blank')}>
                     Hubungi via WA
                   </button>
                 </div>
@@ -361,6 +463,9 @@ export default function Login() {
           </div>
         </div>
       )}
+
+      {/* Modal Ajakan Pasang Aplikasi PWA Mobile */}
+      <InstallPwaModal />
 
     </div>
   );

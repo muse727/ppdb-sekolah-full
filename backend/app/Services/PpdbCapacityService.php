@@ -64,8 +64,58 @@ class PpdbCapacityService
         return (Setting::where('key', 'ppdb_status')->value('value') ?? 'TUTUP') === 'BUKA';
     }
 
+    public function isUmumOpen(): bool
+    {
+        // Global switch harus BUKA dan gate_jalur_umum harus BUKA
+        if (!$this->isGlobalOpen()) return false;
+        return (Setting::where('key', 'gate_jalur_umum')->value('value') ?? 'TUTUP') === 'BUKA';
+    }
+
+    public function isInternalOpen(): bool
+    {
+        // Global switch harus BUKA dan gate_jalur_internal harus BUKA
+        if (!$this->isGlobalOpen()) return false;
+        return (Setting::where('key', 'gate_jalur_internal')->value('value') ?? 'BUKA') === 'BUKA';
+    }
+
+    public function getSmpGenderCapacity(): array
+    {
+        $maxIkhwan = (int) (Setting::where('key', 'kuota_smp_ikhwan')->value('value') ?? 30);
+        $maxAkhwat = (int) (Setting::where('key', 'kuota_smp_akhwat')->value('value') ?? 30);
+
+        // Hitung alokasi terpakai per gender di SMP
+        $usedIkhwan = (int) PpdbSeatAllocation::where('jenjang', 'SMP')
+            ->where('status', PpdbSeatAllocation::STATUS_ALLOCATED)
+            ->where('jenis_kelamin', 'L')
+            ->count();
+
+        $usedAkhwat = (int) PpdbSeatAllocation::where('jenjang', 'SMP')
+            ->where('status', PpdbSeatAllocation::STATUS_ALLOCATED)
+            ->where('jenis_kelamin', 'P')
+            ->count();
+
+        return [
+            'ikhwan' => [
+                'total'    => $maxIkhwan,
+                'terpakai' => $usedIkhwan,
+                'sisa'     => max(0, $maxIkhwan - $usedIkhwan),
+                'tersedia' => ($maxIkhwan - $usedIkhwan) > 0,
+            ],
+            'akhwat' => [
+                'total'    => $maxAkhwat,
+                'terpakai' => $usedAkhwat,
+                'sisa'     => max(0, $maxAkhwat - $usedAkhwat),
+                'tersedia' => ($maxAkhwat - $usedAkhwat) > 0,
+            ],
+            'total'    => $maxIkhwan + $maxAkhwat,
+            'terpakai' => $usedIkhwan + $usedAkhwat,
+            'sisa'     => max(0, ($maxIkhwan + $maxAkhwat) - ($usedIkhwan + $usedAkhwat)),
+            'tersedia' => (($maxIkhwan + $maxAkhwat) - ($usedIkhwan + $usedAkhwat)) > 0,
+        ];
+    }
+
     /** Registration reserves capacity before creating its canonical user owner. */
-    public function lockRegistrationCapacity(string $jenjang): void
+    public function lockRegistrationCapacity(string $jenjang, ?string $gender = null): void
     {
         if (DB::transactionLevel() < 1) {
             throw new \LogicException('Registration capacity requires a transaction.');
@@ -76,11 +126,37 @@ class PpdbCapacityService
 
         $capacity = PpdbCapacity::where('jenjang', $jenjang)->lockForUpdate()->first();
         // A locking read sees the latest committed seats even at REPEATABLE READ.
-        $active = PpdbSeatAllocation::where('jenjang', $jenjang)
+        $activeQuery = PpdbSeatAllocation::where('jenjang', $jenjang)
             ->where('status', PpdbSeatAllocation::STATUS_ALLOCATED)
-            ->lockForUpdate()->pluck('id')->count();
+            ->lockForUpdate();
+
+        $active = $activeQuery->pluck('id')->count();
         if (!$capacity || $active >= (int) $capacity->max_seats) {
             throw new CapacityException(CapacityException::JENJANG_FULL, "Kuota {$jenjang} sudah penuh.");
+        }
+
+        // Cek kuota gender khusus SMP jika gender disertakan
+        if ($jenjang === 'SMP' && $gender !== null) {
+            $g = strtoupper($gender);
+            if ($g === 'L') {
+                $maxL = (int) (Setting::where('key', 'kuota_smp_ikhwan')->value('value') ?? 30);
+                $activeL = PpdbSeatAllocation::where('jenjang', 'SMP')
+                    ->where('status', PpdbSeatAllocation::STATUS_ALLOCATED)
+                    ->where('jenis_kelamin', 'L')
+                    ->count();
+                if ($activeL >= $maxL) {
+                    throw new CapacityException(CapacityException::JENJANG_FULL, "Kuota SMPIT Putra (Ikhwan) sudah penuh.");
+                }
+            } elseif ($g === 'P') {
+                $maxP = (int) (Setting::where('key', 'kuota_smp_akhwat')->value('value') ?? 30);
+                $activeP = PpdbSeatAllocation::where('jenjang', 'SMP')
+                    ->where('status', PpdbSeatAllocation::STATUS_ALLOCATED)
+                    ->where('jenis_kelamin', 'P')
+                    ->count();
+                if ($activeP >= $maxP) {
+                    throw new CapacityException(CapacityException::JENJANG_FULL, "Kuota SMPIT Putri (Akhwat) sudah penuh.");
+                }
+            }
         }
     }
 
@@ -228,9 +304,12 @@ class PpdbCapacityService
     {
         $sd  = $this->getCapacity('SD');
         $smp = $this->getCapacity('SMP');
+        $smpGender = $this->getSmpGenderCapacity();
 
         return [
-            'status' => $this->isGlobalOpen() ? 'BUKA' : 'TUTUP',
+            'status'         => $this->isGlobalOpen() ? 'BUKA' : 'TUTUP',
+            'status_umum'    => $this->isUmumOpen() ? 'BUKA' : 'TUTUP',
+            'status_internal'=> $this->isInternalOpen() ? 'BUKA' : 'TUTUP',
             'sd'     => [
                 'total'    => $sd['total'],
                 'terpakai' => $sd['terpakai'],
@@ -242,6 +321,8 @@ class PpdbCapacityService
                 'terpakai' => $smp['terpakai'],
                 'sisa'     => $smp['sisa'],
                 'tersedia' => $smp['tersedia'],
+                'ikhwan'   => $smpGender['ikhwan'],
+                'akhwat'   => $smpGender['akhwat'],
             ],
         ];
     }

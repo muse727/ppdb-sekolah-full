@@ -32,9 +32,16 @@ class BannerController extends Controller
      * GET /api/banners — slide yang sedang tayang, urut naik.
      * Hanya metadata aman; created_by/internal path tidak diekspos.
      */
-    public function publicIndex()
+    public function publicIndex(Request $request)
     {
-        $banners = Banner::visible()->orderBy('sort_order')->orderBy('id')->get();
+        $query = Banner::visible()->orderBy('sort_order')->orderBy('id');
+        if ($request->filled('target')) {
+            $query->whereIn('target', [$request->input('target'), 'all']);
+        } else {
+            // Default untuk landing page jika tanpa parameter target
+            $query->whereIn('target', ['landing', 'all']);
+        }
+        $banners = $query->get();
 
         return response()->json(
             $banners->map(fn (Banner $b) => [
@@ -42,7 +49,10 @@ class BannerController extends Controller
                 'title'       => $b->title,
                 'description' => $b->description,
                 'media_type'  => $b->media_type ?? 'image',
-                'image_url'   => $b->imageUrl(),
+                'target'      => $b->target ?? 'landing',
+                'bg_color'    => $b->bg_color ?? '#1a5f51',
+                'image_url'   => $b->image_path ? $b->imageUrl() : null,
+                'has_image'   => $b->image_path !== null,
                 'cta_text'    => $b->cta_text,
                 'cta_url'     => $b->cta_url,
             ])->values()
@@ -66,14 +76,21 @@ class BannerController extends Controller
     // ── Admin (di dalam group CheckRole:admin) ─────────────────────────
 
     /** GET /api/admin/banners — semua banner termasuk nonaktif. */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
+        $query = Banner::orderBy('sort_order')->orderBy('id');
+        if ($request->filled('target')) {
+            $query->where('target', $request->input('target'));
+        }
+
         return response()->json(
-            Banner::orderBy('sort_order')->orderBy('id')->get()->map(fn (Banner $b) => [
+            $query->get()->map(fn (Banner $b) => [
                 'id'          => $b->id,
                 'title'       => $b->title,
                 'description' => $b->description,
                 'media_type'  => $b->media_type ?? 'image',
+                'target'      => $b->target ?? 'pendaftar',
+                'bg_color'    => $b->bg_color ?? '#1a5f51',
                 'image_url'   => '/api/admin/banners/' . $b->id . '/image',
                 'has_image'   => $b->image_path !== null,
                 'cta_text'    => $b->cta_text,
@@ -99,7 +116,7 @@ class BannerController extends Controller
         $data = $this->validated($request, imageRequired: true);
 
         [$path, $mediaType, $bytesOk] = $this->storeMedia($request->file('image'));
-        abort_unless($bytesOk, 422, $path); // $path membawa pesan error saat gagal
+        abort_unless($bytesOk, 422, $path);
 
         $banner = DB::transaction(function () use ($data, $path, $mediaType, $request) {
             return Banner::create([
@@ -193,6 +210,8 @@ class BannerController extends Controller
         $data = $request->validate([
             'title'       => 'required|string|max:120',
             'description' => 'nullable|string|max:500',
+            'target'      => 'nullable|string|in:pendaftar,landing,all',
+            'bg_color'    => 'nullable|string|max:30',
             'cta_text'    => 'nullable|string|max:60',
             'cta_url'     => [
                 'nullable',
@@ -214,7 +233,9 @@ class BannerController extends Controller
             'ends_at.after_or_equal' => 'Periode berakhir tidak boleh sebelum periode mulai.',
         ]);
 
-        // Normalisasi: cta_url kosong → null; tanpa URL, teks CTA tak berguna.
+        // Normalisasi
+        $data['target']     = $data['target'] ?? 'landing';
+        $data['bg_color']   = $data['bg_color'] ?? '#1a5f51';
         $data['cta_text']   = $data['cta_text'] ?? null;
         $data['cta_url']    = $data['cta_url'] ?? null;
         if (!$data['cta_url']) {

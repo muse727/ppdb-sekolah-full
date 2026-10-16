@@ -22,6 +22,36 @@ export default function JadwalObservasiAdminPage() {
     const [showModal, setShowModal] = useState(false);
     const [activeStudent, setActiveStudent] = useState<JadwalObservasiRow | null>(null);
     const [form, setForm] = useState({ tanggal: '', jam: '', ruangan: '', perlengkapan: '' });
+    const [jamMulai, setJamMulai] = useState('08:00');
+    const [jamSelesai, setJamSelesai] = useState('09:30');
+
+    const TIME_PRESETS = [
+        { label: 'Sesi 1', start: '08:00', end: '09:30' },
+        { label: 'Sesi 2', start: '09:30', end: '11:00' },
+        { label: 'Sesi 3', start: '13:00', end: '14:30' },
+        { label: 'Sesi 4', start: '14:30', end: '16:00' }
+    ];
+
+    const applyTimePreset = (start: string, end: string) => {
+        setJamMulai(start);
+        setJamSelesai(end);
+        setForm(prev => ({ ...prev, jam: `${start} - ${end} WIB` }));
+    };
+
+    const handleTimeChange = (newStart: string, newEnd: string) => {
+        setJamMulai(newStart);
+        setJamSelesai(newEnd);
+        setForm(prev => ({ ...prev, jam: `${newStart} - ${newEnd} WIB` }));
+    };
+
+    const parseExistingTime = (jamString?: string | null) => {
+        if (!jamString) return { start: '08:00', end: '09:30' };
+        const match = jamString.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+        if (match) {
+            return { start: match[1], end: match[2] };
+        }
+        return { start: '08:00', end: '09:30' };
+    };
 
     const fetchStudents = async () => {
         try {
@@ -60,9 +90,13 @@ export default function JadwalObservasiAdminPage() {
     // === BUKA MODAL ===
     const openModalSingle = (siswa: JadwalObservasiRow) => {
         setActiveStudent(siswa);
+        const { start, end } = parseExistingTime(siswa.jam_observasi);
+        setJamMulai(start);
+        setJamSelesai(end);
+        const jamFormatted = siswa.jam_observasi || `${start} - ${end} WIB`;
         setForm({ 
             tanggal: siswa.jadwal_observasi || '', 
-            jam: siswa.jam_observasi || '', 
+            jam: jamFormatted, 
             ruangan: siswa.ruang_observasi || '',
             perlengkapan: siswa.perlengkapan || (jenjangFilter === 'SD' ? 'Alat Tulis & Meja Lipat' : 'Alat Tulis & Papan Ujian')
         });
@@ -75,9 +109,11 @@ export default function JadwalObservasiAdminPage() {
             return;
         }
         setActiveStudent(null);
+        setJamMulai('08:00');
+        setJamSelesai('09:30');
         setForm({ 
             tanggal: '', 
-            jam: '', 
+            jam: '08:00 - 09:30 WIB', 
             ruangan: '', 
             perlengkapan: jenjangFilter === 'SD' ? 'Alat Tulis & Meja Lipat' : 'Alat Tulis & Papan Ujian' 
         });
@@ -233,9 +269,48 @@ export default function JadwalObservasiAdminPage() {
                                 <label style={{fontSize: '14px', marginBottom: '8px'}}>Tanggal Kedatangan</label>
                                 <input type="date" className={styles.formInputLarge} style={{background: 'white', fontSize: '16px', maxWidth: '100%'}} value={form.tanggal} onChange={(e) => setForm({...form, tanggal: e.target.value})} required />
                             </div>
-                            <div className={styles.formGroup} style={{marginBottom: '15px'}}>
-                                <label style={{fontSize: '14px', marginBottom: '8px'}}>Jam (Cth: 08:00 - 09:30)</label>
-                                <input type="text" className={styles.formInputLarge} style={{background: 'white', fontSize: '16px', maxWidth: '100%'}} placeholder="08:00 - 09:30 WIB" value={form.jam} onChange={(e) => setForm({...form, jam: e.target.value})} required />
+                            <div className={styles.formGroup} style={{marginBottom: '18px'}}>
+                                <label style={{fontSize: '14px', marginBottom: '8px'}}>Jam / Sesi</label>
+                                
+                                {/* Tombol Cepat Pilihan Sesi Standar */}
+                                <div className={styles.presetList}>
+                                    {TIME_PRESETS.map((p) => {
+                                        const isActive = jamMulai === p.start && jamSelesai === p.end;
+                                        return (
+                                            <button
+                                                key={p.label}
+                                                type="button"
+                                                className={`${styles.presetBtn} ${isActive ? styles.presetBtnActive : ''}`}
+                                                onClick={() => applyTimePreset(p.start, p.end)}
+                                            >
+                                                {p.label}: {p.start} - {p.end}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Time Picker: Jam Mulai & Jam Selesai */}
+                                <div className={styles.timePickerContainer}>
+                                    <input
+                                        type="time"
+                                        className={styles.timeInput}
+                                        value={jamMulai}
+                                        onChange={(e) => handleTimeChange(e.target.value, jamSelesai)}
+                                        required
+                                    />
+                                    <span className={styles.timeSeparator}>sampai</span>
+                                    <input
+                                        type="time"
+                                        className={styles.timeInput}
+                                        value={jamSelesai}
+                                        onChange={(e) => handleTimeChange(jamMulai, e.target.value)}
+                                        required
+                                    />
+                                    <span className={styles.timeZoneBadge}>WIB</span>
+                                </div>
+                                <div className={styles.timePreview}>
+                                    Format tersimpan: <strong>{form.jam || `${jamMulai} - ${jamSelesai} WIB`}</strong>
+                                </div>
                             </div>
                             <div className={styles.formGroup} style={{marginBottom: '15px'}}>
                                 <label style={{fontSize: '14px', marginBottom: '8px'}}>Ruangan / Lokasi</label>

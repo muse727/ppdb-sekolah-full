@@ -6,7 +6,7 @@
     margin: 0 auto; 
     min-height: 100vh; 
     background: #f8fafc; /* Solid Flat */
-    padding: 30px 20px 50px 20px; 
+    padding: calc(30px + env(safe-area-inset-top, 0px)) 20px 50px 20px; 
     font-family: 'Poppins', sans-serif;
 }
 

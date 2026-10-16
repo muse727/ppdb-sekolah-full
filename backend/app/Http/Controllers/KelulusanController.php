@@ -5,8 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Setting;
+use App\Models\HasilObservasi;
+use App\Models\CbtResult;
+use App\Models\Biodata;
 use App\Services\KelulusanLetterService;
 use App\Services\KelulusanLifecycleService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class KelulusanController extends Controller
 {
@@ -223,6 +228,136 @@ class KelulusanController extends Controller
     }
 
     /**
+     * Unduh PDF lembar hasil observasi untuk kandidat SD.
+     */
+    public function downloadHasilObservasi(Request $request, KelulusanLetterService $letters)
+    {
+        $validated = $request->validate([
+            'user_id' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $currentUser = $request->user();
+        $targetId = in_array($currentUser->role, ['admin', 'super_admin'], true)
+            ? (int) ($validated['user_id'] ?? $currentUser->id)
+            : (int) $currentUser->id;
+
+        $targetUser = User::findOrFail($targetId);
+        $biodata = Biodata::where('user_id', $targetId)->first();
+
+        $hasil = HasilObservasi::where('user_id', $targetId)->first();
+        if (!$hasil) {
+            return response()->json(['message' => 'Data lembar hasil observasi belum tersedia.'], 404);
+        }
+
+        $config = $letters->getConfig('SD') ?? [];
+        $rawJawaban = is_array($hasil->jawaban_json) ? $hasil->jawaban_json : json_decode($hasil->jawaban_json ?? '[]', true);
+        if (!is_array($rawJawaban)) {
+            $rawJawaban = [];
+        }
+
+        $jawabanList = array_values($rawJawaban);
+        $saranList = [];
+        foreach ($jawabanList as $item) {
+            if (!empty($item['saran']) && trim($item['saran']) !== '') {
+                $saranList[] = $item;
+            }
+        }
+
+        $tanggalSurat = !empty($config['tanggal_surat'])
+            ? $config['tanggal_surat']
+            : now()->locale('id')->isoFormat('D MMMM Y');
+
+        $pdf = Pdf::loadView('pdf.observasi.hasil', [
+            'user'         => $targetUser,
+            'biodata'      => $biodata,
+            'hasil'        => $hasil,
+            'jawabanList'  => $jawabanList,
+            'saranList'    => $saranList,
+            'namaSekolah'  => $config['nama_sekolah'] ?? 'SDIT AL MUBARAK',
+            'tagline'      => $config['tagline'] ?? 'Bertakwa - Mandiri - Kreatif - Cerdas',
+            'alamat'       => $config['alamat'] ?? 'Jl. Pramuka Sari III/24 Rawasari - Jakarta Pusat',
+            'kontak'       => $config['kontak'] ?? 'Telp/Faks. 021 - 4269246 — www.sitalmubarak.com',
+            'tanggalSurat' => $tanggalSurat,
+            'namaKepsek'   => $config['nama_kepsek'] ?? 'Amang Suryaman, M.Pd.',
+            'logoDataUri'  => $letters->logoPreviewUri($config),
+            'ttdDataUri'   => $letters->ttdPreviewUri($config),
+        ])->setPaper('A4', 'portrait')->output();
+
+        $filename = sprintf(
+            'lembar-hasil-observasi-%s.pdf',
+            Str::slug($biodata->nama_lengkap ?? $targetUser->name) ?: 'kandidat'
+        );
+
+        return response($pdf, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Unduh PDF lembar hasil CBT untuk kandidat SMP.
+     */
+    public function downloadHasilCbt(Request $request, KelulusanLetterService $letters)
+    {
+        $validated = $request->validate([
+            'user_id' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $currentUser = $request->user();
+        $targetId = in_array($currentUser->role, ['admin', 'super_admin'], true)
+            ? (int) ($validated['user_id'] ?? $currentUser->id)
+            : (int) $currentUser->id;
+
+        $targetUser = User::findOrFail($targetId);
+        $biodata = Biodata::where('user_id', $targetId)->first();
+
+        $cbt = CbtResult::with('session')->where('user_id', $targetId)->latest('id')->first();
+        if (!$cbt) {
+            return response()->json(['message' => 'Data lembar hasil tes CBT belum tersedia.'], 404);
+        }
+
+        $config = $letters->getConfig('SMP') ?? [];
+
+        $tanggalSurat = !empty($config['tanggal_surat'])
+            ? $config['tanggal_surat']
+            : now()->locale('id')->isoFormat('D MMMM Y');
+
+        $tanggalUjian = $cbt->session && $cbt->session->tanggal_ujian
+            ? \Carbon\Carbon::parse($cbt->session->tanggal_ujian)->locale('id')->isoFormat('D MMMM Y')
+            : $cbt->created_at->locale('id')->isoFormat('D MMMM Y');
+
+        $pdf = Pdf::loadView('pdf.cbt.hasil', [
+            'user'         => $targetUser,
+            'biodata'      => $biodata,
+            'cbt'          => $cbt,
+            'namaSekolah'  => $config['nama_sekolah'] ?? 'SMPIT AL MUBARAK',
+            'tagline'      => $config['tagline'] ?? 'Sholeh - Tangguh - Berdaya Guna',
+            'alamat'       => $config['alamat'] ?? 'Jl. Pramuka Sari III/24 Rawasari - Jakarta Pusat',
+            'kontak'       => $config['kontak'] ?? 'Telp/Faks. 021 - 4269246 — www.sitalmubarak.com',
+            'tanggalUjian' => $tanggalUjian,
+            'tanggalSurat' => $tanggalSurat,
+            'namaKepsek'   => $config['nama_kepsek'] ?? 'Iman Sobirin',
+            'logoDataUri'  => $letters->logoPreviewUri($config),
+            'ttdDataUri'   => $letters->ttdPreviewUri($config),
+            'totalSkor'    => (float) $cbt->skor + (float) $cbt->skor_esai,
+        ])->setPaper('A4', 'portrait')->output();
+
+        $filename = sprintf(
+            'lembar-hasil-cbt-%s.pdf',
+            Str::slug($biodata->nama_lengkap ?? $targetUser->name) ?: 'kandidat'
+        );
+
+        return response($pdf, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control'       => 'no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
      * Bentuk respons admin: konten teks + penanda ada/tidaknya gambar.
      *
      * Path gambar di disk PRIVAT tidak pernah dibocorkan; admin mengunggah
@@ -264,9 +399,20 @@ class KelulusanController extends Controller
         $waktuRilis   = $setting ? $setting->value : null;
         $statusKelulusan = 'BELUM';
 
-        if ($waktuRilis && time() >= strtotime($waktuRilis)) {
-            // Waktu rilis sudah lewat — boleh tampilkan status asli
-            $statusKelulusan = $user->status_kelulusan ?? 'BELUM';
+        if ($waktuRilis) {
+            // Admin menginput waktu dalam WIB (Asia/Jakarta, UTC+7).
+            // Konversi ke Carbon dengan timezone Asia/Jakarta agar perbandingan
+            // terhadap waktu sekarang (now()) presisi tanpa selisih 7 jam.
+            try {
+                $releaseTime = \Carbon\Carbon::parse($waktuRilis, 'Asia/Jakarta');
+                if (now()->greaterThanOrEqualTo($releaseTime)) {
+                    $statusKelulusan = $user->status_kelulusan ?? 'BELUM';
+                }
+            } catch (\Throwable $e) {
+                if (time() >= strtotime($waktuRilis)) {
+                    $statusKelulusan = $user->status_kelulusan ?? 'BELUM';
+                }
+            }
         }
 
         return response()->json([

@@ -10,7 +10,7 @@
     box-shadow: 0 0 50px rgba(0,0,0,0.1); 
 }
 
-.headerMini { background-color: #1a5f51; padding: 25px 20px 40px 20px; color: white; border-radius: 0 0 30px 30px; display: flex; align-items: center; gap: 15px; }
+.headerMini { background-color: #1a5f51; padding: calc(25px + env(safe-area-inset-top, 0px)) 20px 40px 20px; color: white; border-radius: 0 0 30px 30px; display: flex; align-items: center; gap: 15px; }
 .backBtn { background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
 .backBtn:hover { background: rgba(255,255,255,0.3); }
 .headerTitle { margin: 0 0 5px 0; font-size: 20px; font-weight: 800; }
@@ -64,6 +64,248 @@
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
     z-index: 1000; display: flex; justify-content: center; align-items: flex-end; 
+}
+
+/* ==========================================
+ SCANNING / ANALYZING OVERLAY (PREMIUM AI)
+========================================== */
+.scanningOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px);
+    z-index: 2000; display: flex; justify-content: center; align-items: center;
+    padding: 24px; box-sizing: border-box;
+}
+
+.scanningCard {
+    background: #ffffff;
+    width: 100%;
+    max-width: 380px;
+    border-radius: 24px;
+    padding: 32px 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.scannerBeam {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: #e6f0ee;
+    color: #1a5f51;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(26, 95, 81, 0.15);
+}
+
+.scannerPulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    border: 2px solid #1a5f51;
+    animation: scannerRipple 1.8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes scannerRipple {
+    0% { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1.45); opacity: 0; }
+}
+
+.scanningBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #1a5f51;
+    background: #e6f0ee;
+    padding: 5px 12px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+}
+
+.scanningBadgeDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1a5f51;
+    animation: pulseDot 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.scanningTitle {
+    margin: 0 0 6px 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.3px;
+}
+
+.scanningDesc {
+    margin: 0 0 20px 0;
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.5;
+    max-width: 280px;
+}
+
+.scanningProgressBg {
+    width: 100%;
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.scanningProgressBar {
+    position: absolute;
+    height: 100%;
+    background: #1a5f51;
+    border-radius: 99px;
+    animation: scanningSlide 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.scanningStepText {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* ==========================================
+ PREMIUM DIALOG & ALERT MODAL (NO GRADIENT)
+========================================== */
+.dialogOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);
+    z-index: 3000; display: flex; justify-content: center; align-items: center;
+    padding: 20px; box-sizing: border-box;
+}
+
+.dialogCard {
+    background: #ffffff;
+    width: 100%;
+    max-width: 380px;
+    border-radius: 24px;
+    padding: 28px 22px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+    animation: dialogPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dialogPop {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.dialogIcon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.dialogIconWarning {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.dialogIconInfo {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.dialogIconError {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.dialogIconSuccess {
+    background: #e6f0ee;
+    color: #1a5f51;
+}
+
+.dialogTitle {
+    margin: 0 0 8px 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    line-height: 1.35;
+}
+
+.dialogMessage {
+    margin: 0 0 24px 0;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.55;
+    padding: 0 4px;
+}
+
+.dialogActions {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+}
+
+.dialogConfirmBtn {
+    flex: 1;
+    background: #1a5f51;
+    color: #ffffff;
+    border: none;
+    padding: 14px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+
+.dialogConfirmBtn:hover {
+    background: #134e40;
+}
+
+.dialogCancelBtn {
+    flex: 1;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 14px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    font-family: inherit;
+}
+
+.dialogCancelBtn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .modalContent {

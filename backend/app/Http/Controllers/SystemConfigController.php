@@ -17,39 +17,62 @@ class SystemConfigController extends Controller
     {
         $sd  = $capacity->getCapacity('SD');
         $smp = $capacity->getCapacity('SMP');
+        $smpGender = $capacity->getSmpGenderCapacity();
 
         return response()->json([
-            'ppdb_status' => $capacity->isGlobalOpen() ? 'BUKA' : 'TUTUP',
-            'kuota_sd'    => $sd['total'],
-            'kuota_smp'   => $smp['total'],
-            'kuota_sd_terpakai'  => $sd['terpakai'],
-            'kuota_smp_terpakai' => $smp['terpakai'],
-            'kuota_sd_sisa'      => $sd['sisa'],
-            'kuota_smp_sisa'     => $smp['sisa'],
+            'ppdb_status'          => $capacity->isGlobalOpen() ? 'BUKA' : 'TUTUP',
+            'gate_jalur_umum'      => (Setting::where('key', 'gate_jalur_umum')->value('value') ?? 'TUTUP') === 'BUKA' ? 'BUKA' : 'TUTUP',
+            'gate_jalur_internal'  => (Setting::where('key', 'gate_jalur_internal')->value('value') ?? 'BUKA') === 'BUKA' ? 'BUKA' : 'TUTUP',
+            'kuota_sd'             => $sd['total'],
+            'kuota_smp'            => $smp['total'],
+            'kuota_smp_ikhwan'     => $smpGender['ikhwan']['total'],
+            'kuota_smp_akhwat'     => $smpGender['akhwat']['total'],
+            'kuota_sd_terpakai'    => $sd['terpakai'],
+            'kuota_smp_terpakai'   => $smp['terpakai'],
+            'kuota_smp_ikhwan_terpakai' => $smpGender['ikhwan']['terpakai'],
+            'kuota_smp_akhwat_terpakai' => $smpGender['akhwat']['terpakai'],
+            'kuota_sd_sisa'        => $sd['sisa'],
+            'kuota_smp_sisa'       => $smp['sisa'],
+            'kuota_smp_ikhwan_sisa' => $smpGender['ikhwan']['sisa'],
+            'kuota_smp_akhwat_sisa' => $smpGender['akhwat']['sisa'],
         ]);
     }
 
     public function saveSettings(Request $request, PpdbCapacityService $capacity)
     {
-        // Admin configures the TOTAL (max_seats) per jenjang + the global gate.
-        // "Remaining" is never accepted/stored — it is always derived.
+        // Admin configures the TOTAL (max_seats) per jenjang + the global and specific gates.
         $request->validate([
-            'ppdb_status' => 'required|in:BUKA,TUTUP',
-            'kuota_sd'    => 'required|integer|min:0|max:10000',
-            'kuota_smp'   => 'required|integer|min:0|max:10000',
+            'ppdb_status'          => 'required|in:BUKA,TUTUP',
+            'gate_jalur_umum'      => 'nullable|in:BUKA,TUTUP',
+            'gate_jalur_internal'  => 'nullable|in:BUKA,TUTUP',
+            'kuota_sd'             => 'required|integer|min:0|max:10000',
+            'kuota_smp_ikhwan'     => 'nullable|integer|min:0|max:10000',
+            'kuota_smp_akhwat'     => 'nullable|integer|min:0|max:10000',
+            'kuota_smp'            => 'nullable|integer|min:0|max:10000',
         ]);
 
+        $maxIkhwan = $request->has('kuota_smp_ikhwan') ? (int) $request->kuota_smp_ikhwan : 30;
+        $maxAkhwat = $request->has('kuota_smp_akhwat') ? (int) $request->kuota_smp_akhwat : 30;
+        $totalSmp  = $request->filled('kuota_smp') ? (int) $request->kuota_smp : ($maxIkhwan + $maxAkhwat);
+
         try {
-            // Writes to ppdb_capacities (the authoritative totals). Lowering below
-            // the currently-allocated active seat count is REJECTED (no silent clamp).
+            // Writes to ppdb_capacities (the authoritative totals).
             $capacity->increaseMaxCapacity('SD',  (int) $request->kuota_sd);
-            $capacity->increaseMaxCapacity('SMP', (int) $request->kuota_smp);
+            $capacity->increaseMaxCapacity('SMP', $totalSmp);
         } catch (CapacityException $e) {
             $status = $e->reasonCode === CapacityException::MAX_BELOW_ACTIVE ? 422 : 422;
             return response()->json(['message' => $e->getMessage()], $status);
         }
 
         Setting::updateOrCreate(['key' => 'ppdb_status'], ['value' => $request->ppdb_status]);
+        if ($request->filled('gate_jalur_umum')) {
+            Setting::updateOrCreate(['key' => 'gate_jalur_umum'], ['value' => $request->gate_jalur_umum]);
+        }
+        if ($request->filled('gate_jalur_internal')) {
+            Setting::updateOrCreate(['key' => 'gate_jalur_internal'], ['value' => $request->gate_jalur_internal]);
+        }
+        Setting::updateOrCreate(['key' => 'kuota_smp_ikhwan'], ['value' => (string) $maxIkhwan]);
+        Setting::updateOrCreate(['key' => 'kuota_smp_akhwat'], ['value' => (string) $maxAkhwat]);
 
         return response()->json(['success' => true]);
     }
@@ -63,33 +86,34 @@ class SystemConfigController extends Controller
             Whitelist::orderBy('created_at', 'desc')
                 ->get()
                 ->map(fn ($w) => [
-                    'id'          => $w->id,
-                    'nama_siswa'  => $w->nama_siswa,
-                    'asal_sekolah'=> $w->asal_sekolah,
-                    'jenjang'     => $w->jenjang,
-                    'has_number'  => $w->registration_number !== null, // boolean only, never the value
-                    'is_used'     => $w->is_used,
-                    'user_id'     => $w->user_id,
-                    'created_at'  => $w->created_at,
+                    'id'            => $w->id,
+                    'nama_siswa'    => $w->nama_siswa,
+                    'asal_sekolah'  => $w->asal_sekolah,
+                    'jenjang'       => $w->jenjang,
+                    'jenis_kelamin' => $w->jenis_kelamin,
+                    'has_number'    => $w->registration_number !== null, // boolean only, never the value
+                    'is_used'       => $w->is_used,
+                    'user_id'       => $w->user_id,
+                    'created_at'    => $w->created_at,
                 ])
         );
     }
 
     public function storeWhitelist(Request $request, InternalAccessCodeService $codes)
     {
-        // P4-D.2: admin supplies ONLY the candidate's display data — nama, jenjang,
-        // optional asal_sekolah. NO NISN, NO NIK. The server auto-issues the sole
-        // credential: a 10-digit CSPRNG registration_number. Client can never
-        // choose the number.
+        // P4-D.2: admin supplies candidate's display data — nama, jenjang,
+        // optional asal_sekolah, and optional jenis_kelamin (L/P).
         $request->validate([
-            'nama_siswa'   => 'required|string|max:255',
-            'jenjang'      => 'required|in:SD,SMP',
-            'asal_sekolah' => 'nullable|string|max:255',
+            'nama_siswa'    => 'required|string|max:255',
+            'jenjang'       => 'required|in:SD,SMP',
+            'asal_sekolah'  => 'nullable|string|max:255',
+            'jenis_kelamin' => 'nullable|in:L,P',
         ]);
 
         $candidate = Whitelist::create([
             'nama_siswa'         => $request->nama_siswa,
             'jenjang'            => $request->jenjang,
+            'jenis_kelamin'      => $request->jenis_kelamin ?: null,
             'asal_sekolah'       => $request->asal_sekolah,
             'registration_number'=> $codes->generateCode(), // auto-issue bearer credential
         ]);
@@ -205,99 +229,166 @@ class SystemConfigController extends Controller
         });
     }
 
-    // === 3. IMPORT CSV WHITELIST ===
+    // === 3. IMPORT WHITELIST (XLSX / CSV / JSON) ===
     public function importWhitelist(Request $request, InternalAccessCodeService $codes)
     {
-        $request->validate(['file' => 'required|mimes:csv,txt|max:2048']);
+        $inputRows = [];
 
-        $path          = $request->file('file')->getRealPath();
-        $rows          = array_map('str_getcsv', file($path));
-        $headerSkipped = false;
-        $sukses        = 0;
-        $errors        = [];
-        $maxRows       = 1000; // Cegah upload CSV raksasa yang freeze server
-        $rowCount      = 0;
+        if ($request->has('rows') && is_array($request->rows)) {
+            $inputRows = $request->rows;
+        } elseif ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $ext  = strtolower($file->getClientOriginalExtension());
+            $path = $file->getRealPath();
+
+            if (in_array($ext, ['xlsx', 'xls'], true)) {
+                // Parse file Excel via python script dengan openpyxl
+                $escapedPath = escapeshellarg($path);
+                $pyCmd = "python3 -c " . escapeshellarg("
+import openpyxl, json, sys
+wb = openpyxl.load_workbook({$escapedPath}, data_only=True)
+sheet = wb.active
+rows = []
+for row in sheet.iter_rows(values_only=True):
+    if not row or all(v is None for v in row):
+        continue
+    rows.append([str(v) if v is not None else '' for v in row])
+print(json.dumps(rows))
+");
+                $output = shell_exec($pyCmd);
+                $rawRows = json_decode($output, true);
+                if (is_array($rawRows) && count($rawRows) > 1) {
+                    // Skip header
+                    array_shift($rawRows);
+                    foreach ($rawRows as $r) {
+                        if (count($r) >= 2) {
+                            $inputRows[] = [
+                                'nama_siswa'    => trim($r[0] ?? ''),
+                                'jenjang'       => trim($r[1] ?? ''),
+                                'jenis_kelamin' => trim($r[2] ?? ''),
+                                'asal_sekolah'  => trim($r[3] ?? ''),
+                            ];
+                        }
+                    }
+                }
+            } else {
+                $rawCsv = array_map('str_getcsv', file($path));
+                $headerSkipped = false;
+                foreach ($rawCsv as $r) {
+                    if (!$headerSkipped) {
+                        $headerSkipped = true;
+                        continue;
+                    }
+                    if (count($r) >= 2) {
+                        $inputRows[] = [
+                            'nama_siswa'    => trim($r[0] ?? ''),
+                            'jenjang'       => trim($r[1] ?? ''),
+                            'jenis_kelamin' => trim($r[2] ?? ''),
+                            'asal_sekolah'  => trim($r[3] ?? ''),
+                        ];
+                    }
+                }
+            }
+        } else {
+            return response()->json(['message' => 'File atau baris data tidak ditemukan.'], 422);
+        }
+
+        $sukses   = 0;
+        $countSD  = 0;
+        $countSMP = 0;
+        $errors   = [];
+        $maxRows  = 1000;
+        $rowCount = 0;
 
         DB::beginTransaction();
         try {
-            foreach ($rows as $row) {
-                // Skip header
-                if (!$headerSkipped) {
-                    $headerSkipped = true;
-                    continue;
-                }
-
-                // Batasi jumlah baris
+            foreach ($inputRows as $item) {
                 if (++$rowCount > $maxRows) {
-                    $errors[] = "Import dibatasi {$maxRows} baris per upload.";
+                    $errors[] = "Import dibatasi maksimal {$maxRows} baris per upload.";
                     break;
                 }
 
-                // P4-D.2 CSV columns: nama_siswa, jenjang, asal_sekolah(optional).
-                // NO NISN, NO NIK. Each new row auto-issues one registration_number.
-                if (count($row) < 2 || empty(trim($row[0]))) continue;
-
-                $nama_siswa = trim($row[0]);
-                $colJenjang = trim($row[1] ?? '');
+                $nama_siswa = trim($item['nama_siswa'] ?? '');
+                $colJenjang = trim($item['jenjang'] ?? '');
                 $jenjang    = $this->resolveJenjang($colJenjang);
-                $asal       = trim($row[2] ?? '');
+                $asal       = trim($item['asal_sekolah'] ?? '');
+                $rawGender  = trim($item['jenis_kelamin'] ?? ($item['gender'] ?? ''));
+                $gender     = null;
+                $gUpper     = strtoupper($rawGender);
+                if (in_array($gUpper, ['L', 'LAKI-LAKI', 'IKHWAN', 'PUTRA', 'LAKI', 'MALE', 'M'], true)) {
+                    $gender = 'L';
+                } elseif (in_array($gUpper, ['P', 'PEREMPUAN', 'AKHWAT', 'PUTRI', 'FEMALE', 'F'], true)) {
+                    $gender = 'P';
+                }
 
-                // Jenjang yang tidak dikenal DITOLAK — jangan pernah buat kandidat
-                // dengan jenjang NULL.
-                if ($jenjang === null) {
-                    $errors[] = "Jenjang tidak dikenal di baris {$rowCount} ('{$colJenjang}'). Gunakan SD/SMP.";
+                if (empty($nama_siswa)) {
                     continue;
                 }
 
-                // DUPLICATE: SKIP + REPORT (tidak pernah menimpa nama/jenjang/nomor
-                // kandidat yang sudah ada secara diam-diam). Tidak ada NISN lagi, jadi
-                // duplikat dideteksi via nama+jenjang yang persis sama.
+                if ($jenjang === null) {
+                    $errors[] = "Baris {$rowCount}: Jenjang '{$colJenjang}' untuk '{$nama_siswa}' tidak dikenal. Harap isi 'SD' atau 'SMP'.";
+                    continue;
+                }
+
+                // Cek duplikasi
                 $exists = Whitelist::where('nama_siswa', $nama_siswa)
                     ->where('jenjang', $jenjang)
                     ->exists();
                 if ($exists) {
-                    $errors[] = "{$nama_siswa} ({$jenjang}) sudah ada — dilewati (tidak diubah).";
+                    $errors[] = "{$nama_siswa} ({$jenjang}) sudah terdaftar — dilewati.";
                     continue;
                 }
 
                 Whitelist::create([
-                    'nama_siswa'         => substr($nama_siswa, 0, 255),
-                    'jenjang'            => $jenjang,
-                    // asal_sekolah column is NOT NULL — store empty string, not null.
-                    'asal_sekolah'       => substr($asal, 0, 255),
-                    'registration_number'=> $codes->generateCode(),
+                    'nama_siswa'          => substr($nama_siswa, 0, 255),
+                    'jenjang'             => $jenjang,
+                    'jenis_kelamin'       => $gender,
+                    'asal_sekolah'        => substr($asal, 0, 255),
+                    'registration_number' => $codes->generateCode(),
                 ]);
+
                 $sukses++;
+                if ($jenjang === 'SD') $countSD++;
+                if ($jenjang === 'SMP') $countSMP++;
             }
 
             DB::commit();
 
+            $msg = "{$sukses} data siswa berhasil diimpor ({$countSD} SDIT, {$countSMP} SMPIT).";
+            if (count($errors) > 0) {
+                $msg .= " (" . count($errors) . " baris dilewati).";
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "{$sukses} data berhasil di-import. " . count($errors) . " dilewati/ditolak.",
+                'message' => $msg,
+                'total_sukses' => $sukses,
+                'total_sd' => $countSD,
+                'total_smp' => $countSMP,
                 'errors'  => $errors,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Terjadi kesalahan format CSV.'], 500);
+            return response()->json(['message' => 'Terjadi kesalahan saat memproses data: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Resolve the explicit jenjang for an import row. Accepts a direct SD/SMP value
-     * or the documented legacy asal_sekolah source. Returns null when unrecognized
-     * (caller must reject the row).
+     * or legacy school names. Returns null when unrecognized.
      */
     private function resolveJenjang(string $value): ?string
     {
         $v = strtoupper(trim($value));
-        return match (true) {
-            $v === 'SD'  => 'SD',
-            $v === 'SMP' => 'SMP',
-            $value === 'TK IT Al-Mubarak' => 'SD',
-            $value === 'SD IT Al-Mubarak' => 'SMP',
-            default => null,
-        };
+        if (in_array($v, ['SD', 'SDIT', 'SD IT', 'TK', 'TKIT', 'TK IT AL-MUBARAK'], true)) {
+            return 'SD';
+        }
+        if (in_array($v, ['SMP', 'SMPIT', 'SMP IT', 'SDIT AL-MUBARAK', 'SD IT AL-MUBARAK'], true)) {
+            return 'SMP';
+        }
+        if (str_contains($v, 'SMP')) return 'SMP';
+        if (str_contains($v, 'SD')) return 'SD';
+        return null;
     }
 
     // === 4. MANAJEMEN TOKEN (JALUR UMUM) ===

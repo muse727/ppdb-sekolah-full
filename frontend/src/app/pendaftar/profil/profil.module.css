@@ -1,0 +1,355 @@
+/* src/app/pendaftar/profil/profil.module.css */
+
+.mobileContainer { 
+  width: 100%; max-width: 480px; margin: 0 auto; 
+  background-color: #f4f7fe; min-height: 100vh; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative; overflow-x: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; 
+  padding-bottom: 110px;
+}
+
+/* Header Profil */
+.profileHeader {
+  background-color: #1a5f51;
+  padding: calc(30px + env(safe-area-inset-top, 0px)) 20px 70px 20px;
+  color: white;
+  border-radius: 0 0 35px 35px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.profileHeader::before {
+  content: ''; position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.btnBack {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btnBack:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.pageTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.avatarWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1a5f51;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 900;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 4px solid rgba(255, 255, 255, 0.25);
+}
+
+.userName {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.userEmail {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 0 0 12px 0;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.badgeGold {
+  background: #f59e0b;
+  color: #111827;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Panel Konten */
+.contentPanel {
+  margin: -40px 18px 20px 18px;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTitleIcon {
+  color: #1a5f51;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+.infoItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.infoLabel {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.infoValue {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Form Ganti Password */
+.formGroup {
+  margin-bottom: 14px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: 0.2s;
+  background: #f8fafc;
+}
+
+.input:focus {
+  border-color: #1a5f51;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 95, 81, 0.1);
+}
+
+.btnSubmit {
+  width: 100%;
+  padding: 12px;
+  background: #1a5f51;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 6px;
+}
+
+.btnSubmit:hover {
+  background: #13463c;
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Tombol Keluar */
+.btnLogout {
+  width: 100%;
+  padding: 14px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.2s;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.05);
+}
+
+.btnLogout:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+/* ==========================================
+ BOTTOM DOCK NAVIGATION (MODERN & BALANCED)
+========================================== */
+.bottomNavWrapper {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  z-index: 100;
+  pointer-events: none;
+  padding: 0 16px 14px 16px;
+  box-sizing: border-box;
+}
+
+.bottomNav { 
+  pointer-events: auto;
+  background: #ffffff;
+  border-radius: 26px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 8px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.navItem { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  gap: 4px; 
+  font-size: 11px; 
+  font-weight: 700; 
+  color: #94a3b8; 
+  cursor: pointer; 
+  transition: all 0.2s ease;
+  padding: 6px 0;
+  user-select: none;
+}
+
+.navItem:active {
+  transform: scale(0.92);
+}
+
+.navItemActive { 
+  color: #1a5f51; 
+  font-weight: 800;
+}
+
+.navItemActive svg {
+  transform: translateY(-1px);
+}
+
+.navCenterSlot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.navFloatingBtn { 
+  width: 52px; 
+  height: 52px; 
+  background: #1a5f51; 
+  color: white; 
+  border-radius: 50%; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  margin-top: -24px; 
+  border: 4px solid #ffffff; 
+  box-shadow: 0 8px 20px rgba(26, 95, 81, 0.35); 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navFloatingBtn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(26, 95, 81, 0.45);
+}
+
+.navFloatingBtn:active {
+  transform: translateY(0) scale(0.95);
+}

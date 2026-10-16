@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
@@ -50,16 +51,36 @@ Route::get('/banners/{banner}/image', [BannerController::class, 'showImage']);
 Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
-// CBT student actions require an authenticated account.
-Route::middleware(['auth:sanctum', CheckRole::class . ':orang_tua'])->group(function () {
-    Route::post('/cbt/login',  [CbtController::class, 'loginCbt']);
-    Route::post('/cbt/submit', [CbtController::class, 'submitCbt']);
-});
+// CBT student actions — standalone exam portal via email & exam token
+Route::post('/cbt/login',  [CbtController::class, 'loginCbt']);
+Route::post('/cbt/submit', [CbtController::class, 'submitCbt']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/user/change-password', function (Request $request) {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|max:100|confirmed',
+        ], [
+            'current_password.required' => 'Password saat ini wajib diisi.',
+            'new_password.required'     => 'Password baru wajib diisi.',
+            'new_password.min'          => 'Password baru minimal 8 karakter.',
+            'new_password.confirmed'    => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        $user = $request->user();
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Password saat ini tidak sesuai.'], 422);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json(['message' => 'Password berhasil diubah.']);
+    })->middleware('throttle:6,1');
 
     
     Route::get('/user', function (Request $request) {
@@ -106,6 +127,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // P4-CB: unduh Surat Keputusan Kelulusan (PDF). Jenjang/template selalu
     // ditentukan server dari data kandidat — parameter klien tidak berpengaruh.
     Route::get('/kelulusan/surat', [KelulusanController::class, 'downloadSurat']);
+    Route::get('/kelulusan/hasil-observasi', [KelulusanController::class, 'downloadHasilObservasi']);
+    Route::get('/kelulusan/hasil-cbt', [KelulusanController::class, 'downloadHasilCbt']);
 
     // Payment evidence — owner or admin (authorization enforced in controller).
     Route::get('/payments/{id}/evidence', [PaymentController::class, 'evidence']);

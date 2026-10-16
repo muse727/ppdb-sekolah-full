@@ -136,6 +136,7 @@ export interface WhitelistEntry {
     nama_siswa: string;
     asal_sekolah: string | null;
     jenjang: Jenjang;
+    jenis_kelamin?: 'L' | 'P' | null;
     /** Boolean only — the backend never returns the secret registration_number. */
     has_number: boolean;
     is_used: boolean;
@@ -716,6 +717,7 @@ export interface DuParentInvoice {
     pricing_snapshot: DuParentInvoiceSnapshot;
     payment: DuParentInvoicePayment | null;
     financial_status: DuFinancialStatus;
+    is_agreement_accepted?: boolean;
     /** B.7.1: committed withdrawal timestamp (server-set; NULL until withdrawn). */
     withdrawn_at?: string | null;
 }

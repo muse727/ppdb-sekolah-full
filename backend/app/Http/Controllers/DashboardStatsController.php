@@ -8,7 +8,7 @@ use App\Models\Payment;
 use App\Models\Berkas;
 use App\Models\PpdbCapacity;
 use App\Models\PpdbSeatAllocation;
-use App\Models\DaftarUlang\DuInvoice;
+use App\Models\DaftarUlangInvoice;
 use App\Models\CbtSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +47,11 @@ class DashboardStatsController extends Controller
             })->count();
 
         // 2. Daftar Ulang (DU)
-        $daftarUlangCount = DuInvoice::where('status', 'PAID')->count();
+        // Tabel du_invoices tidak punya kolom `status`; status finansial diambil
+        // dari relasi payment (lihat DaftarUlangInvoice::getFinancialStatusAttribute).
+        $daftarUlangCount = DaftarUlangInvoice::query()
+            ->whereHas('payment', fn ($p) => $p->where('status', 'SUCCESS'))
+            ->count();
         if ($daftarUlangCount === 0) {
             $daftarUlangCount = User::where('role', 'orang_tua')->where('status_kelulusan', 'LULUS')->count();
         }

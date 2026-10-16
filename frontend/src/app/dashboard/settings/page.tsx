@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import libAxios from '@/lib/axios';
 import Swal from 'sweetalert2';
 import type { Jenjang, PpdbStatus, StaffAccount, TokenMetadata, WhitelistEntry } from '@/lib/domain';
@@ -20,13 +21,26 @@ interface BiayaForm {
 interface WhitelistForm {
   nama_siswa: string;
   jenjang: Jenjang;
+  jenis_kelamin: 'L' | 'P';
   asal_sekolah: string;
 }
 
 interface SystemConfigView {
   ppdb_status?: string;
-  kuota_sd?: string;
-  kuota_smp?: string;
+  gate_jalur_umum?: string;
+  gate_jalur_internal?: string;
+  kuota_sd?: string | number;
+  kuota_smp?: string | number;
+  kuota_smp_ikhwan?: string | number;
+  kuota_smp_akhwat?: string | number;
+  kuota_sd_terpakai?: number;
+  kuota_smp_terpakai?: number;
+  kuota_smp_ikhwan_terpakai?: number;
+  kuota_smp_akhwat_terpakai?: number;
+  kuota_sd_sisa?: number;
+  kuota_smp_sisa?: number;
+  kuota_smp_ikhwan_sisa?: number;
+  kuota_smp_akhwat_sisa?: number;
 }
 
 /**
@@ -84,19 +98,24 @@ export default function SettingsPage() {
   
   // Tab 1: Akun & Biaya
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'admin' });
+  const [showPassword, setShowPassword] = useState(false);
   const [biaya, setBiaya] = useState<BiayaForm>({ biaya_sd: '', biaya_smp: '', bank_name: '', rekening_sd: '', rekening_smp: '', bank_owner: '' });
   const [loadingBiaya, setLoadingBiaya] = useState(false);
   const [canEditFinancial, setCanEditFinancial] = useState(false);
   
   // Tab 2: Umum
   const [ppdbStatus, setPpdbStatus] = useState<PpdbStatus>('TUTUP');
+  const [gateUmum, setGateUmum] = useState<PpdbStatus>('TUTUP');
+  const [gateInternal, setGateInternal] = useState<PpdbStatus>('BUKA');
   const [kuotaSD, setKuotaSD] = useState(100);
-  const [kuotaSMP, setKuotaSMP] = useState(50);
+  const [kuotaSmpIkhwan, setKuotaSmpIkhwan] = useState(30);
+  const [kuotaSmpAkhwat, setKuotaSmpAkhwat] = useState(30);
+  const [statsUmum, setStatsUmum] = useState<SystemConfigView>({});
   const [loadingUmum, setLoadingUmum] = useState(false);
   
   // Tab 3: Whitelist
   const [whitelists, setWhitelists] = useState<WhitelistEntry[]>([]);
-  const [formWhite, setFormWhite] = useState<WhitelistForm>({ nama_siswa: '', jenjang: 'SD', asal_sekolah: '' });
+  const [formWhite, setFormWhite] = useState<WhitelistForm>({ nama_siswa: '', jenjang: 'SD', jenis_kelamin: 'L', asal_sekolah: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Tab 4: Token
@@ -129,8 +148,12 @@ export default function SettingsPage() {
           bank_owner: resBiaya.data?.bank_owner || 'Yayasan Al-Mubarak'
       });
       setPpdbStatus((resUmum.data?.ppdb_status as PpdbStatus) || 'TUTUP');
-      setKuotaSD(parseInt(resUmum.data?.kuota_sd || '100'));
-      setKuotaSMP(parseInt(resUmum.data?.kuota_smp || '50'));
+      setGateUmum((resUmum.data?.gate_jalur_umum as PpdbStatus) || 'TUTUP');
+      setGateInternal((resUmum.data?.gate_jalur_internal as PpdbStatus) || 'BUKA');
+      setKuotaSD(parseInt(String(resUmum.data?.kuota_sd || '100')));
+      setKuotaSmpIkhwan(parseInt(String(resUmum.data?.kuota_smp_ikhwan || '30')));
+      setKuotaSmpAkhwat(parseInt(String(resUmum.data?.kuota_smp_akhwat || '30')));
+      setStatsUmum(resUmum.data || {});
       setWhitelists(resWhite.data || []);
       setTokens(resTokens.data || []);
 
@@ -147,13 +170,92 @@ export default function SettingsPage() {
   }, []);
 
   // === 2. LOGIKA TAB AKUN & BIAYA ===
+  const handleCopyText = async (text: string, label: string) => {
+    if (!text) return;
+    const ok = await copyNumberToClipboard(text);
+    if (ok) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `${label} berhasil disalin!`,
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+  };
+
+  const handleCopyAccountCredentials = async (name: string, email: string, pass: string, roleValue: string) => {
+    const roleLabel = roleValue === 'admin' ? 'Admin (TU / Keuangan)' : 'Guru (Tim Observasi)';
+    const textToCopy = `*AKUN AKSES SPMB SIT AL-MUBARAK*\n\n` +
+      `Nama: ${name || '-'}\n` +
+      `Role: ${roleLabel}\n` +
+      `Email: ${email}\n` +
+      `Password: ${pass}\n\n` +
+      `Link Login: https://spmb.sitalmubarak.com/login`;
+
+    const ok = await copyNumberToClipboard(textToCopy);
+    if (ok) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Info akun lengkap berhasil disalin!',
+        showConfirmButton: false,
+        timer: 2000
+      });
+    }
+  };
+
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const accountSnapshot = { ...formData };
     try {
       await libAxios.get('/sanctum/csrf-cookie');
       await libAxios.post('/api/users', formData);
-      Swal.fire('Berhasil!', 'Akun berhasil ditambahkan', 'success');
+      
+      const roleLabel = accountSnapshot.role === 'admin' ? 'Admin (TU / Keuangan)' : 'Guru (Tim Observasi)';
+      const shareText = `*AKUN AKSES SPMB SIT AL-MUBARAK*\n\n` +
+        `Nama: ${accountSnapshot.name}\n` +
+        `Role: ${roleLabel}\n` +
+        `Email: ${accountSnapshot.email}\n` +
+        `Password: ${accountSnapshot.password}\n\n` +
+        `Link Login: https://spmb.sitalmubarak.com/login`;
+
+      void Swal.fire({
+        title: 'Akun Berhasil Dibuat!',
+        html: `
+          <div style="text-align: left; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-top: 10px; font-size: 13px; line-height: 1.6;">
+            <div><b>Nama:</b> ${escapeHtml(accountSnapshot.name)}</div>
+            <div><b>Role:</b> ${escapeHtml(roleLabel)}</div>
+            <div><b>Email:</b> ${escapeHtml(accountSnapshot.email)}</div>
+            <div><b>Password:</b> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${escapeHtml(accountSnapshot.password)}</code></div>
+          </div>
+          <p style="font-size: 12px; color: #718096; margin-top: 10px; text-align: left;">Klik tombol di bawah untuk menyalin pesan siap kirim (Email, Password, & Link Login) ke WhatsApp penerima.</p>
+        `,
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonColor: '#1a5f51',
+        cancelButtonColor: '#718096',
+        confirmButtonText: '📋 Salin Info Akun',
+        cancelButtonText: 'Tutup'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          void copyNumberToClipboard(shareText).then(() => {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'success',
+              title: 'Info akun disalin!',
+              showConfirmButton: false,
+              timer: 1500
+            });
+          });
+        }
+      });
+
       setFormData({ name: '', email: '', password: '', role: 'admin' });
+      setShowPassword(false);
       fetchMasterData();
     } catch (err: unknown) {
       const msg = httpErrorMessage(err, 'Gagal menyimpan akun baru.');
@@ -179,9 +281,18 @@ export default function SettingsPage() {
   const handleSaveUmumSettings = async (e: React.FormEvent) => {
     e.preventDefault(); setLoadingUmum(true);
     try {
-        await libAxios.post('/api/admin/system-config', { ppdb_status: ppdbStatus, kuota_sd: kuotaSD, kuota_smp: kuotaSMP });
-        Swal.fire({ icon: 'success', title: 'Tersimpan!', text: 'Konfigurasi SPMB diperbarui.', timer: 1500, showConfirmButton: false });
-    } catch { Swal.fire('Gagal', 'Terjadi kesalahan sistem.', 'error'); } 
+        await libAxios.post('/api/admin/system-config', { 
+          ppdb_status: ppdbStatus, 
+          gate_jalur_umum: gateUmum,
+          gate_jalur_internal: gateInternal,
+          kuota_sd: kuotaSD, 
+          kuota_smp_ikhwan: kuotaSmpIkhwan,
+          kuota_smp_akhwat: kuotaSmpAkhwat,
+          kuota_smp: kuotaSmpIkhwan + kuotaSmpAkhwat
+        });
+        Swal.fire({ icon: 'success', title: 'Tersimpan!', text: 'Konfigurasi SPMB & pembagian kuota berhasil diperbarui.', timer: 1500, showConfirmButton: false });
+        fetchMasterData();
+    } catch { Swal.fire('Gagal', 'Terjadi kesalahan sistem saat menyimpan konfigurasi.', 'error'); } 
     finally { setLoadingUmum(false); }
   };
 
@@ -191,7 +302,7 @@ export default function SettingsPage() {
     try {
         const res = await libAxios.post('/api/admin/whitelists', formWhite);
         const number = res.data?.registration_number;
-        setFormWhite({ nama_siswa: '', jenjang: 'SD', asal_sekolah: '' });
+        setFormWhite({ nama_siswa: '', jenjang: 'SD', jenis_kelamin: 'L', asal_sekolah: '' });
         fetchMasterData();
 
         if (!number) {
@@ -321,35 +432,172 @@ export default function SettingsPage() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,NAMA,JENJANG,ASAL\nBudi Santoso,SD,TK IT Al-Mubarak";
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri); link.setAttribute("download", "Template_Whitelist_Internal.csv");
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+      ['NO', 'NAMA_SISWA', 'JENJANG', 'JENIS_KELAMIN', 'ASAL_SEKOLAH'],
+      [1, 'Ahmad Fauzi', 'SD', 'L', 'TK IT Al-Mubarak'],
+      [2, 'Muhammad Rizqi', 'SMP', 'L', 'SDIT Al-Mubarak'],
+      [3, 'Siti Aisyah', 'SMP', 'P', 'SD Negeri 01'],
+      ['', '', '', '', ''],
+      ['* PETUNJUK PENGISIAN:', '', '', '', ''],
+      ['1. Kolom JENJANG wajib diisi "SD" (tujuan SDIT) atau "SMP" (tujuan SMPIT).', '', '', '', ''],
+      ['2. Kolom JENIS_KELAMIN diisi "L" (Ikhwan / Putra) atau "P" (Akhwat / Putri) - penting untuk pembagian kuota SMPIT.', '', '', '', ''],
+      ['3. Kolom ASAL_SEKOLAH bersifat opsional (boleh dikosongkan).', '', '', '', ''],
+      ['4. Kolom NO bersifat nomor urut bantuan (opsional).', '', '', '', '']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 6 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 30 },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Template Jalur Internal');
+    XLSX.writeFile(wb, 'Template_Jalur_Internal_Al_Mubarak.xlsx');
   };
 
-  // Card-level export — purely client-side, dumps the already-fetched
-  // whitelist list as a CSV download. No backend endpoint involved.
+  // Card-level export — unduh daftar jalur internal langsung ke file .xlsx rapi
   const handleExportWhitelist = () => {
-    const header = 'nama_siswa,jenjang,asal_sekolah,status';
-    const rows = whitelists.map(w =>
-      `"${(w.nama_siswa || '').replace(/"/g, '""')}","${w.jenjang}","${(w.asal_sekolah || '').replace(/"/g, '""')}","${w.is_used ? 'DIGUNAKAN' : 'TERSEDIA'}"`
-    );
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'jalur_internal.csv'; a.click();
-    window.URL.revokeObjectURL(url);
+    if (whitelists.length === 0) {
+      Swal.fire('Info', 'Belum ada data pendaftar jalur internal untuk diexport.', 'info');
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+      ['NO', 'NAMA_LENGKAP_SISWA', 'JENJANG', 'GENDER', 'ASAL_SEKOLAH', 'STATUS', 'WAKTU_DIBUAT'],
+      ...whitelists.map((w, idx) => [
+        idx + 1,
+        w.nama_siswa || '',
+        w.jenjang ? `${w.jenjang}IT` : '',
+        w.jenis_kelamin === 'L' ? 'Ikhwan (L)' : w.jenis_kelamin === 'P' ? 'Akhwat (P)' : '—',
+        w.asal_sekolah || '',
+        w.is_used ? 'DIPAKAI' : 'TERSEDIA',
+        w.created_at ? new Date(w.created_at).toLocaleString('id-ID') : '—',
+      ]),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 6 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 22 },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Jalur Internal');
+    XLSX.writeFile(wb, `Daftar_Jalur_Internal_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const formDataFile = new FormData(); formDataFile.append('file', file);
-    Swal.fire({ title: 'Mengimpor Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value agar file yang sama bisa dipilih ulang jika perlu
+    e.target.value = '';
+
+    Swal.fire({
+      title: 'Membaca File...',
+      text: file.name,
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
     try {
-        const res = await libAxios.post('/api/admin/whitelists/import', formDataFile, { headers: { 'Content-Type': 'multipart/form-data' } });
-        Swal.fire('Berhasil!', res.data.message, 'success'); fetchMasterData();
-    } catch { Swal.fire('Gagal', 'Format file CSV tidak sesuai standar', 'error'); }
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const firstSheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[firstSheetName];
+      const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (!rows || rows.length <= 1) {
+        Swal.fire('File Kosong', 'Tidak ada data siswa ditemukan di dalam file Excel.', 'warning');
+        return;
+      }
+
+      // Cari baris header
+      let headerIdx = -1;
+      let colNama = -1;
+      let colJenjang = -1;
+      let colGender = -1;
+      let colAsal = -1;
+
+      for (let i = 0; i < Math.min(5, rows.length); i++) {
+        const r = (rows[i] || []).map(c => String(c || '').toLowerCase().trim());
+        const idxNama = r.findIndex(c => c.includes('nama'));
+        const idxJenjang = r.findIndex(c => c.includes('jenjang') || c.includes('tujuan') || c === 'sd' || c === 'smp');
+        if (idxNama !== -1) {
+          headerIdx = i;
+          colNama = idxNama;
+          colJenjang = idxJenjang;
+          colGender = r.findIndex(c => c.includes('kelamin') || c.includes('gender') || c.includes('jk') || c.includes('ikhwan'));
+          colAsal = r.findIndex(c => c.includes('asal') || c.includes('sekolah'));
+          break;
+        }
+      }
+
+      // Default jika tidak ketemu nama header spesifik
+      if (headerIdx === -1) {
+        headerIdx = 0;
+        if (rows[0] && rows[0].length >= 5) {
+          colNama = 1; colJenjang = 2; colGender = 3; colAsal = 4;
+        } else if (rows[0] && rows[0].length >= 4) {
+          colNama = 1; colJenjang = 2; colGender = -1; colAsal = 3;
+        } else {
+          colNama = 0; colJenjang = 1; colGender = -1; colAsal = 2;
+        }
+      }
+
+      const parsedRows: Array<{ nama_siswa: string; jenjang: string; jenis_kelamin?: string; asal_sekolah: string }> = [];
+
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length === 0) continue;
+        const rawNama = String(r[colNama] ?? '').trim();
+        // Lewati jika baris catatan / petunjuk atau kosong
+        if (!rawNama || rawNama.startsWith('*') || rawNama.toLowerCase().includes('petunjuk')) continue;
+
+        const rawJenjang = colJenjang !== -1 ? String(r[colJenjang] ?? '').trim() : '';
+        const rawGender = colGender !== -1 ? String(r[colGender] ?? '').trim() : '';
+        const rawAsal = colAsal !== -1 ? String(r[colAsal] ?? '').trim() : '';
+
+        parsedRows.push({
+          nama_siswa: rawNama,
+          jenjang: rawJenjang,
+          jenis_kelamin: rawGender,
+          asal_sekolah: rawAsal,
+        });
+      }
+
+      if (parsedRows.length === 0) {
+        Swal.fire('Data Tidak Valid', 'Tidak ada baris data siswa yang terbaca. Pastikan format kolom sesuai template.', 'warning');
+        return;
+      }
+
+      // Kirim parsedRows ke backend
+      Swal.fire({
+        title: 'Mengimpor Data...',
+        text: `Memproses ${parsedRows.length} data siswa...`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      await libAxios.get('/sanctum/csrf-cookie');
+      const res = await libAxios.post('/api/admin/whitelists/import', { rows: parsedRows });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Import Selesai!',
+        text: res.data.message || `${res.data.total_sukses || parsedRows.length} data berhasil diimpor.`,
+      });
+
+      fetchMasterData();
+    } catch (err: unknown) {
+      console.error('Gagal import file', err);
+      const errMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Format file Excel tidak sesuai standar.';
+      Swal.fire('Gagal Import', errMsg, 'error');
+    }
   };
 
   // === 5. LOGIKA TAB TOKEN ===
@@ -431,7 +679,20 @@ export default function SettingsPage() {
                     <tr key={u.id} className={styles.tableRow}>
                       <td className={styles.tdPad}>
                         <div className={styles.adminName}>{u.name}</div>
-                        <div className={styles.adminEmail}>{u.email}</div>
+                        <div className={styles.adminEmailRow}>
+                          <span className={styles.adminEmail}>{u.email}</span>
+                          <button
+                            type="button"
+                            title="Salin Email"
+                            className={styles.copyMiniBtn}
+                            onClick={() => handleCopyText(u.email, 'Email')}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                       <td>
                         <span className={`${styles.roleBadge} ${u.role === 'super_admin' ? styles.roleSuperAdmin : styles.roleAdmin}`}>
@@ -450,13 +711,109 @@ export default function SettingsPage() {
             <div className={styles.card} style={{ marginBottom: '25px' }}>
               <h3 className={styles.cardTitle}>Tambah Akses Baru</h3>
               <form onSubmit={handleAddAdmin} className={styles.adminForm}>
-                <input className={styles.formInput} placeholder="Nama Lengkap" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                <input className={styles.formInput} type="email" placeholder="Email Login" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                <input className={styles.formInput} type="password" placeholder="Password Login" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                <input
+                  className={styles.formInput}
+                  placeholder="Nama Lengkap"
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                />
+
+                {/* Input Email dengan tombol Salin */}
+                <div className={styles.inputWithAction}>
+                  <input
+                    className={styles.formInput}
+                    type="email"
+                    placeholder="Email Login"
+                    required
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  />
+                  {formData.email && (
+                    <div className={styles.inputActionGroup}>
+                      <button
+                        type="button"
+                        className={styles.inputActionIconBtn}
+                        onClick={() => handleCopyText(formData.email, 'Email')}
+                        title="Salin Email"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Password dengan tombol Lihat/Sembunyikan & Salin */}
+                <div className={styles.inputWithAction}>
+                  <input
+                    className={styles.formInput}
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Password Login"
+                    required
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  <div className={styles.inputActionGroup}>
+                    {formData.password && (
+                      <button
+                        type="button"
+                        className={styles.inputActionIconBtn}
+                        onClick={() => handleCopyText(formData.password, 'Password')}
+                        title="Salin Password"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.inputActionIconBtn}
+                      onClick={() => setShowPassword(!showPassword)}
+                      title={showPassword ? 'Sembunyikan Password' : 'Lihat Password'}
+                    >
+                      {showPassword ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
                 <select className={`${styles.formInput} ${styles.selectInput}`} value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
                   <option value="admin">Admin (TU / Keuangan)</option>
                   <option value="guru">Guru (Tim Observasi)</option>
                 </select>
+
+                {/* Banner Cepat Salin Akun Lengkap Saat Sedang Diketik */}
+                {formData.email && formData.password && (
+                  <div className={styles.copyAccountBanner}>
+                    <span className={styles.copyAccountText}>Siap dibagikan ke penerima</span>
+                    <button
+                      type="button"
+                      className={styles.copyAccountBtn}
+                      onClick={() => handleCopyAccountCredentials(formData.name, formData.email, formData.password, formData.role)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      Salin Lengkap
+                    </button>
+                  </div>
+                )}
+
                 <button type="submit" className={styles.submitBtn}>Tambahkan Akun</button>
               </form>
             </div>
@@ -503,31 +860,99 @@ export default function SettingsPage() {
 
       {/* ========================================= TAB 2: KONFIGURASI GLOBAL ========================================= */}
       {activeTab === 'UMUM' && (
-        <div className={styles.card} style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div className={styles.card} style={{ maxWidth: '680px', margin: '0 auto' }}>
           <h3 className={styles.cardTitle} style={{ marginBottom: '20px' }}>Kontrol Utama Aplikasi SPMB</h3>
           <form onSubmit={handleSaveUmumSettings} className={styles.adminForm}>
-            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #edf2f7' }}>
-              <label style={{ fontSize: '14px', fontWeight: 800, color: '#2d3748', display: 'block', marginBottom: '15px' }}>Status Gerbang Pendaftaran</label>
-              <div style={{ display: 'flex', gap: '15px' }}>
-                  <label className={`${styles.radioLabel} ${ppdbStatus === 'BUKA' ? styles.radioActiveSuccess : ''}`}>
-                      <input type="radio" value="BUKA" checked={ppdbStatus === 'BUKA'} onChange={(e) => setPpdbStatus(e.target.value as PpdbStatus)} /> BUKA TERUS
-                  </label>
-                  <label className={`${styles.radioLabel} ${ppdbStatus === 'TUTUP' ? styles.radioActiveDanger : ''}`}>
-                      <input type="radio" value="TUTUP" checked={ppdbStatus === 'TUTUP'} onChange={(e) => setPpdbStatus(e.target.value as PpdbStatus)} /> TUTUP KUNCI
-                  </label>
+            {/* SAKLAR GLOBAL */}
+            <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: '12px', border: '1px solid #edf2f7' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <label style={{ fontSize: '14px', fontWeight: 800, color: '#2d3748', display: 'block' }}>Master Gerbang PPDB</label>
+                  <p style={{ fontSize: '12px', color: '#718096', margin: '2px 0 0 0' }}>Saklar utama seluruh operasional pendaftaran SPMB.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <label className={`${styles.radioLabel} ${ppdbStatus === 'BUKA' ? styles.radioActiveSuccess : ''}`} style={{ padding: '6px 14px', fontSize: '12px' }}>
+                        <input type="radio" value="BUKA" checked={ppdbStatus === 'BUKA'} onChange={(e) => setPpdbStatus(e.target.value as PpdbStatus)} /> BUKA
+                    </label>
+                    <label className={`${styles.radioLabel} ${ppdbStatus === 'TUTUP' ? styles.radioActiveDanger : ''}`} style={{ padding: '6px 14px', fontSize: '12px' }}>
+                        <input type="radio" value="TUTUP" checked={ppdbStatus === 'TUTUP'} onChange={(e) => setPpdbStatus(e.target.value as PpdbStatus)} /> TUTUP
+                    </label>
+                </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#4a5568' }}>Total Kursi SDIT</label>
-                  <input className={styles.formInput} type="number" required value={kuotaSD} onChange={(e) => setKuotaSD(parseInt(e.target.value))} />
+
+            {/* SAKLAR KHUSUS JALUR */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div style={{ background: '#f0fdf4', padding: '16px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#166534', display: 'block', marginBottom: '4px' }}>Jalur Internal (SD &amp; SMP)</span>
+                <p style={{ fontSize: '11px', color: '#15803d', margin: '0 0 12px 0', lineHeight: 1.4 }}>Pendaftaran menggunakan nomor registrasi internal 10 digit.</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <label className={`${styles.radioLabel} ${gateInternal === 'BUKA' ? styles.radioActiveSuccess : ''}`} style={{ padding: '5px 12px', fontSize: '11px', flex: 1, textAlign: 'center' }}>
+                      <input type="radio" value="BUKA" checked={gateInternal === 'BUKA'} onChange={(e) => setGateInternal(e.target.value as PpdbStatus)} /> DIBUKA
+                  </label>
+                  <label className={`${styles.radioLabel} ${gateInternal === 'TUTUP' ? styles.radioActiveDanger : ''}`} style={{ padding: '5px 12px', fontSize: '11px', flex: 1, textAlign: 'center' }}>
+                      <input type="radio" value="TUTUP" checked={gateInternal === 'TUTUP'} onChange={(e) => setGateInternal(e.target.value as PpdbStatus)} /> DITUTUP
+                  </label>
+                </div>
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#4a5568' }}>Total Kursi SMPIT</label>
-                  <input className={styles.formInput} type="number" required value={kuotaSMP} onChange={(e) => setKuotaSMP(parseInt(e.target.value))} />
+
+              <div style={{ background: '#fef2f2', padding: '16px', borderRadius: '12px', border: '1px solid #fecaca' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: '#991b1b', display: 'block', marginBottom: '4px' }}>Jalur Reguler / Umum</span>
+                <p style={{ fontSize: '11px', color: '#b91c1c', margin: '0 0 12px 0', lineHeight: 1.4 }}>Pendaftaran mandiri menggunakan token reguler/email.</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <label className={`${styles.radioLabel} ${gateUmum === 'BUKA' ? styles.radioActiveSuccess : ''}`} style={{ padding: '5px 12px', fontSize: '11px', flex: 1, textAlign: 'center' }}>
+                      <input type="radio" value="BUKA" checked={gateUmum === 'BUKA'} onChange={(e) => setGateUmum(e.target.value as PpdbStatus)} /> DIBUKA
+                  </label>
+                  <label className={`${styles.radioLabel} ${gateUmum === 'TUTUP' ? styles.radioActiveDanger : ''}`} style={{ padding: '5px 12px', fontSize: '11px', flex: 1, textAlign: 'center' }}>
+                      <input type="radio" value="TUTUP" checked={gateUmum === 'TUTUP'} onChange={(e) => setGateUmum(e.target.value as PpdbStatus)} /> DITUTUP
+                  </label>
+                </div>
               </div>
             </div>
-            <button type="submit" className={styles.submitBtn} disabled={loadingUmum}>Terapkan Konfigurasi</button>
+
+            {/* PENGATURAN KUOTA */}
+            <div style={{ borderTop: '1px solid #edf2f7', paddingTop: '15px' }}>
+              <h4 style={{ fontSize: '13px', fontWeight: 800, color: '#1a5f51', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kapasitas &amp; Kuota Siswa</h4>
+
+              {/* KUOTA SD */}
+              <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#2d3748' }}>Kuota SDIT Al-Mubarak (Global)</label>
+                  <span style={{ fontSize: '11.5px', color: '#718096' }}>Terpakai: <b>{statsUmum.kuota_sd_terpakai ?? 0}</b> | Sisa: <b>{statsUmum.kuota_sd_sisa ?? kuotaSD}</b></span>
+                </div>
+                <input className={styles.formInput} type="number" required min="1" value={kuotaSD} onChange={(e) => setKuotaSD(parseInt(e.target.value) || 0)} />
+              </div>
+
+              {/* KUOTA SMP DENGAN GENDER */}
+              <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 700, color: '#2d3748', display: 'block' }}>Kuota SMPIT Al-Mubarak (Per Gender)</label>
+                    <span style={{ fontSize: '11.5px', color: '#718096' }}>Total Target: <b>{kuotaSmpIkhwan + kuotaSmpAkhwat} Kursi</b></span>
+                  </div>
+                  <span style={{ fontSize: '11.5px', color: '#718096' }}>Terpakai: <b>{statsUmum.kuota_smp_terpakai ?? 0}</b> | Sisa: <b>{statsUmum.kuota_smp_sisa ?? (kuotaSmpIkhwan + kuotaSmpAkhwat)}</b></span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <span style={{ fontWeight: 600, color: '#2b6cb0' }}>Ikhwan (Putra)</span>
+                      <span style={{ color: '#718096', fontSize: '11px' }}>Sisa: {statsUmum.kuota_smp_ikhwan_sisa ?? kuotaSmpIkhwan}</span>
+                    </div>
+                    <input className={styles.formInput} type="number" required min="0" value={kuotaSmpIkhwan} onChange={(e) => setKuotaSmpIkhwan(parseInt(e.target.value) || 0)} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <span style={{ fontWeight: 600, color: '#97266d' }}>Akhwat (Putri)</span>
+                      <span style={{ color: '#718096', fontSize: '11px' }}>Sisa: {statsUmum.kuota_smp_akhwat_sisa ?? kuotaSmpAkhwat}</span>
+                    </div>
+                    <input className={styles.formInput} type="number" required min="0" value={kuotaSmpAkhwat} onChange={(e) => setKuotaSmpAkhwat(parseInt(e.target.value) || 0)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className={styles.submitBtn} disabled={loadingUmum} style={{ marginTop: '10px' }}>Terapkan Konfigurasi</button>
           </form>
         </div>
       )}
@@ -607,11 +1032,20 @@ export default function SettingsPage() {
         <div className={styles.settingsGrid}>
           <div className={styles.rightCol}>
             <div className={styles.card} style={{ marginBottom: '20px' }}>
-                <h3 className={styles.cardTitle}>Upload Massal (CSV)</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-                    <button onClick={downloadTemplate} className={styles.btnOutline}>Download Template CSV</button>
-                    <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
-                    <button onClick={() => fileInputRef.current?.click()} className={styles.submitBtn} style={{background: '#2b6cb0', width: '100%'}}>Import File CSV</button>
+                <h3 className={styles.cardTitle}>Upload Massal (Excel / XLSX)</h3>
+                <p style={{ fontSize: '12px', color: '#718096', margin: '6px 0 14px 0', lineHeight: 1.5 }}>
+                  Unduh template Excel resmi untuk mendaftarkan siswa jalur internal (mendukung jenjang SD &amp; SMP sekaligus).
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button type="button" onClick={downloadTemplate} className={styles.btnOutline} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Download Template Excel (.xlsx)
+                    </button>
+                    <input type="file" accept=".xlsx, .xls, .csv" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className={styles.submitBtn} style={{background: '#2b6cb0', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      Import File Excel (.xlsx)
+                    </button>
                 </div>
             </div>
 
@@ -619,10 +1053,16 @@ export default function SettingsPage() {
                 <h3 className={styles.cardTitle}>Input Manual 1 Siswa</h3>
                 <form onSubmit={handleAddWhitelist} className={styles.adminForm}>
                     <input className={styles.formInput} type="text" placeholder="Nama Lengkap Anak" required value={formWhite.nama_siswa} onChange={(e) => setFormWhite({...formWhite, nama_siswa: e.target.value})} />
-                    <select className={`${styles.formInput} ${styles.selectInput}`} value={formWhite.jenjang} onChange={(e) => setFormWhite({...formWhite, jenjang: e.target.value as Jenjang})}>
-                        <option value="SD">SD (Tujuan SDIT)</option>
-                        <option value="SMP">SMP (Tujuan SMPIT)</option>
-                    </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <select className={`${styles.formInput} ${styles.selectInput}`} value={formWhite.jenjang} onChange={(e) => setFormWhite({...formWhite, jenjang: e.target.value as Jenjang})}>
+                          <option value="SD">SD (SDIT)</option>
+                          <option value="SMP">SMP (SMPIT)</option>
+                      </select>
+                      <select className={`${styles.formInput} ${styles.selectInput}`} value={formWhite.jenis_kelamin} onChange={(e) => setFormWhite({...formWhite, jenis_kelamin: e.target.value as 'L' | 'P'})}>
+                          <option value="L">Ikhwan (L)</option>
+                          <option value="P">Akhwat (P)</option>
+                      </select>
+                    </div>
                     <input className={styles.formInput} type="text" placeholder="Asal Sekolah (opsional)" value={formWhite.asal_sekolah} onChange={(e) => setFormWhite({...formWhite, asal_sekolah: e.target.value})} />
                     <button type="submit" className={styles.submitBtn}>Simpan Data Manual</button>
                 </form>
@@ -633,7 +1073,10 @@ export default function SettingsPage() {
             <div className={styles.card}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #edf2f7', paddingBottom: '12px' }}>
                     <h3 className={styles.cardTitle} style={{ borderBottom: 'none', paddingBottom: 0 }}>Daftar Jalur Internal ({whitelists.length} Data)</h3>
-                    <button className={styles.submitBtn} style={{ padding: '6px 14px', fontSize: '11px', width: 'auto', whiteSpace: 'nowrap' }} onClick={handleExportWhitelist}>Export Data</button>
+                    <button type="button" className={styles.submitBtn} style={{ padding: '6px 14px', fontSize: '11px', width: 'auto', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExportWhitelist}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      Export Excel (.xlsx)
+                    </button>
                 </div>
                 <div style={{ overflowX: 'auto', marginTop: '15px' }}>
                     <table className={styles.adminTable}>
@@ -641,6 +1084,7 @@ export default function SettingsPage() {
                             <tr className={styles.tableHeader}>
                                 <th className={styles.thPad}>IDENTITAS</th>
                                 <th>JENJANG</th>
+                                <th>GENDER</th>
                                 <th>STATUS</th>
                                 <th className={styles.aksiCol}>AKSI</th>
                             </tr>
@@ -654,6 +1098,11 @@ export default function SettingsPage() {
                                     </td>
                                     <td>
                                         <span className={`${styles.roleBadge} ${styles.roleSuperAdmin}`}>{w.jenjang || '-'}</span>
+                                    </td>
+                                    <td>
+                                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: w.jenis_kelamin === 'L' ? '#2b6cb0' : w.jenis_kelamin === 'P' ? '#97266d' : '#a0aec0' }}>
+                                            {w.jenis_kelamin === 'L' ? 'Ikhwan' : w.jenis_kelamin === 'P' ? 'Akhwat' : '—'}
+                                        </span>
                                     </td>
                                     <td>
                                         <span className={`${styles.roleBadge} ${w.is_used ? styles.roleAdmin : styles.roleSuperAdmin}`}>

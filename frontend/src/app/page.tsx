@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import libAxios from '@/lib/axios';
 import HeroSlider, { type HeroSlide } from '@/components/HeroSlider';
 import styles from './page.module.css';
@@ -34,17 +36,33 @@ function useCountUp(end: number, duration: number = 2000) {
 export default function Home() {
   const router = useRouter();
 
+  // Animasi scroll-reveal (AOS) di seluruh section beranda.
+  useEffect(() => {
+    AOS.init({ duration: 700, easing: 'ease-out-cubic', once: true, offset: 60 });
+  }, []);
+
   // Kuota berasal dari backend (/api/public/kuota). Tidak ada angka hardcoded.
-  type KuotaJenjang = { total: number; terpakai: number; sisa: number; tersedia: boolean };
+  type KuotaJenjang = {
+    total: number;
+    terpakai: number;
+    sisa: number;
+    tersedia: boolean;
+    ikhwan?: { total: number; terpakai: number; sisa: number; tersedia: boolean };
+    akhwat?: { total: number; terpakai: number; sisa: number; tersedia: boolean };
+  };
   const [kuota, setKuota] = useState<{
     status: string;
+    status_umum?: string;
+    status_internal?: string;
     sd: KuotaJenjang;
     smp: KuotaJenjang;
   } | null>(null);
 
   // Animasi Angka Berjalan (Counter) — 0 sampai data termuat.
-  const animatedSD  = useCountUp(kuota?.sd.sisa  ?? 0);
-  const animatedSMP = useCountUp(kuota?.smp.sisa ?? 0);
+  const animatedSD         = useCountUp(kuota?.sd.sisa  ?? 0);
+  const animatedSMP        = useCountUp(kuota?.smp.sisa ?? 0);
+  const animatedSMPIkhwan  = useCountUp(kuota?.smp.ikhwan?.sisa ?? 0);
+  const animatedSMPAkhwat  = useCountUp(kuota?.smp.akhwat?.sisa ?? 0);
 
   // Hero slides berasal dari CMS banner backend (null = belum termuat).
   const [slides, setSlides] = useState<HeroSlide[] | null>(null);
@@ -120,14 +138,14 @@ export default function Home() {
 
       {/* INFO KUOTA SECTION (GOJEK "SKALA KAMI" STYLE) */}
       <section id="kuota" className={styles.skalaSection}>
-        <div className={styles.skalaHeader}>
+        <div className={styles.skalaHeader} data-aos="fade-up">
           <h2>Kapasitas Pendaftaran</h2>
           <button className={styles.btnPill} onClick={() => router.push('/login')}>Daftar Sekarang</button>
         </div>
         
         <div className={styles.skalaGrid}>
           {/* Kartu 1: SDIT Al-Mubarak */}
-          <div className={`${styles.skalaCard} ${styles.skalaGreen}`}>
+          <div className={`${styles.skalaCard} ${styles.skalaGreen}`} data-aos="fade-up" data-aos-delay="100">
             <div className={styles.skalaIconWrapper}>
                 {/* Ilustrasi SVG lokal orisinal (public/icon-sd.svg). Next.js
                     memaksa `unoptimized` untuk SVG pada loader bawaan, jadi
@@ -143,7 +161,7 @@ export default function Home() {
           </div>
 
           {/* Kartu 2: SMPIT Al-Mubarak */}
-          <div className={`${styles.skalaCard} ${styles.skalaPurple}`}>
+          <div className={`${styles.skalaCard} ${styles.skalaPurple}`} data-aos="fade-up" data-aos-delay="200">
             <div className={styles.skalaIconWrapper}>
                 {/* Ilustrasi SVG lokal orisinal (public/icon-smp.svg), satu gaya
                     dengan ikon SDIT — alasan <img> sama seperti kartu di atas. */}
@@ -153,6 +171,18 @@ export default function Home() {
             <div className={styles.skalaTextBottom}>
                 <h3 className={styles.animatedNumber}>{animatedSMP} <span className={styles.normalText}>Kursi SMPIT</span></h3>
                 <p>Sisa kuota pendaftaran reguler dari total {kuota?.smp.total ?? 0} kursi yang disediakan.</p>
+                {kuota?.smp.ikhwan && kuota?.smp.akhwat && (
+                  <div className={styles.genderQuotaBadgeWrapper}>
+                    <div className={styles.genderQuotaBadge}>
+                      <span className={styles.genderQuotaLabel}>Ikhwan (Putra)</span>
+                      <span className={styles.genderQuotaValue}>{animatedSMPIkhwan} / {kuota.smp.ikhwan.total}</span>
+                    </div>
+                    <div className={styles.genderQuotaBadge}>
+                      <span className={styles.genderQuotaLabel}>Akhwat (Putri)</span>
+                      <span className={styles.genderQuotaValue}>{animatedSMPAkhwat} / {kuota.smp.akhwat.total}</span>
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -161,12 +191,12 @@ export default function Home() {
 
       {/* TATA CARA SECTION */}
       <section id="tatacara" className={styles.tataCaraSection}>
-        <div className={styles.tataCaraHeader}>
+        <div className={styles.tataCaraHeader} data-aos="fade-up">
           <h2>Kami menghadirkan sistem SPMB yang<br/>mudah, transparan, dan terintegrasi</h2>
         </div>
 
         <div className={styles.tataCaraGrid}>
-          <div className={`${styles.tcCard} ${styles.cardGreen}`}>
+          <div className={`${styles.tcCard} ${styles.cardGreen}`} data-aos="fade-up" data-aos-delay="100">
             <div className={styles.tcContent}>
               <div className={styles.tcListItem}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
@@ -186,7 +216,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`${styles.tcCard} ${styles.cardRed}`}>
+          <div className={`${styles.tcCard} ${styles.cardRed}`} data-aos="fade-up" data-aos-delay="200">
             <div className={styles.tcContent}>
               <div className={styles.tcListItem}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
@@ -206,7 +236,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`${styles.tcCard} ${styles.cardPurple}`}>
+          <div className={`${styles.tcCard} ${styles.cardPurple}`} data-aos="fade-up" data-aos-delay="300">
             <div className={styles.tcContent}>
               <div className={styles.tcListItem}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
@@ -227,10 +257,71 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={styles.tcActionContainer}>
+        <div className={styles.tcActionContainer} data-aos="zoom-in">
             <button onClick={() => router.push('/login')} className={styles.btnActionGreen}>
                 Mulai Pendaftaran Sekarang
             </button>
+        </div>
+      </section>
+
+      {/* KONTAK ADMIN SECTION — nomor dari info pendaftaran web yayasan
+          (sitalmubarak.com/pendaftaran, komponen FinalCta). */}
+      <section id="kontak" className={styles.kontakSection}>
+        <div className={styles.kontakHeader} data-aos="fade-up">
+          <h2>Butuh Bantuan? Hubungi Admin Jenjang</h2>
+          <p>
+            {kuota?.status_umum === 'TUTUP'
+              ? 'Pendaftaran Jalur Reguler (Umum) saat ini sedang ditutup. Untuk informasi seputar SPMB atau pendaftaran Jalur Alumni Internal, silakan hubungi admin melalui WhatsApp berikut.'
+              : 'Untuk meminta token pendaftaran atau bertanya seputar SPMB, hubungi admin sesuai jenjang calon murid melalui WhatsApp berikut.'}
+          </p>
+        </div>
+        <div className={styles.kontakGrid}>
+          <a
+            href={kuota?.status_umum === 'TUTUP'
+              ? 'https://wa.me/6289517036100?text=Halo%20Admin%20SDIT%20Al-Mubarak,%20saya%20ingin%20bertanya%20seputar%20informasi%20SPMB'
+              : 'https://wa.me/6289517036100'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.kontakCard}
+            data-aos="fade-up"
+            data-aos-delay="100"
+            aria-label="Hubungi Admin SDIT Al Mubarak via WhatsApp"
+          >
+            <span className={styles.kontakIconChip}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/whatsapp.svg" alt="" width={30} height={30} />
+            </span>
+            <div className={styles.kontakBody}>
+              <span className={styles.kontakJenjang}>Admin SDIT Al Mubarak</span>
+              <span className={styles.kontakNomor}>0895-1703-6100</span>
+              <span className={styles.kontakCta}>
+                {kuota?.status_umum === 'TUTUP' ? 'Konsultasi via WhatsApp →' : 'Chat via WhatsApp →'}
+              </span>
+            </div>
+          </a>
+          <a
+            href={kuota?.status_umum === 'TUTUP'
+              ? 'https://wa.me/6289512322694?text=Halo%20Admin%20SMPIT%20Al-Mubarak,%20saya%20ingin%20bertanya%20seputar%20informasi%20SPMB'
+              : 'https://wa.me/6289512322694'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.kontakCard}
+            data-aos="fade-up"
+            data-aos-delay="200"
+            aria-label="Hubungi Admin SMPIT Al Mubarak via WhatsApp"
+          >
+            <span className={styles.kontakIconChip}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/whatsapp.svg" alt="" width={30} height={30} />
+            </span>
+            <div className={styles.kontakBody}>
+              <span className={styles.kontakJenjang}>Admin SMPIT Al Mubarak</span>
+              <span className={styles.kontakNomor}>0895-1232-2694</span>
+              <span className={styles.kontakCta}>
+                {kuota?.status_umum === 'TUTUP' ? 'Konsultasi via WhatsApp →' : 'Chat via WhatsApp →'}
+              </span>
+            </div>
+          </a>
         </div>
       </section>
 

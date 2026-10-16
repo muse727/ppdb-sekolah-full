@@ -353,20 +353,20 @@ export default function BiodataPage() {
                             {JALUR_PENDAFTARAN_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>{fieldError('jalur_pendaftaran')}</div>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Lengkap <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_lengkap" required value={formData.nama_lengkap} onChange={handleChange} /></div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}><label className={styles.label}>Nama Panggilan</label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_panggilan" value={formData.nama_panggilan} onChange={handleChange} /></div>
                             <div className={styles.inputGroup}><label className={styles.label}>Jenis Kelamin <span className={styles.required}>*</span></label><select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="jenis_kelamin" required value={formData.jenis_kelamin} onChange={handleChange}><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
                         </div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}><label className={styles.label}>NISN (opsional)</label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nisn" value={formData.nisn} onChange={handleChange} />{fieldError('nisn')}</div>
                             <div className={styles.inputGroup}><label className={styles.label}>NIK Siswa <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_siswa" required value={formData.nik_siswa} onChange={handleChange} />{fieldError('nik_siswa')}</div>
                         </div>
                         <div className={styles.inputGroup}><label className={styles.label}>No. Kartu Keluarga <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="no_kk" required value={formData.no_kk} onChange={handleChange} />{fieldError('no_kk')}</div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}><label className={styles.label}>Tempat Lahir <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="tempat_lahir" required value={formData.tempat_lahir} onChange={handleChange} /></div>
                             <div className={styles.inputGroup}><label className={styles.label}>Tanggal Lahir <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="date" name="tanggal_lahir" required value={formData.tanggal_lahir} onChange={handleChange} /></div>
                         </div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label} htmlFor="anak-ke">Anak Ke- <span className={styles.required}>*</span></label>
                                 <select id="anak-ke" className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} required value={isOtherChildOrder ? 'LAINNYA' : formData.anak_ke} onChange={handleChildOrderChange}>
@@ -395,7 +395,7 @@ export default function BiodataPage() {
                         <h3 className={styles.sectionTitle} style={{color: '#d35400'}}>Data Ibu Kandung</h3>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Ibu <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_ibu" required value={formData.nama_ibu} onChange={handleChange} /></div>
                         <div className={styles.inputGroup}><label className={styles.label}>NIK Ibu <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_ibu" required value={formData.nik_ibu} onChange={handleChange} />{fieldError('nik_ibu')}</div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Pend. Ibu <span className={styles.required}>*</span></label>
                                 <select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="pendidikan_ibu" required value={formData.pendidikan_ibu} onChange={handleChange}>
@@ -415,7 +415,7 @@ export default function BiodataPage() {
                         <h3 className={styles.sectionTitle} style={{marginTop: '25px', color: '#2980b9'}}>Data Ayah Kandung</h3>
                         <div className={styles.inputGroup}><label className={styles.label}>Nama Ayah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="nama_ayah" required value={formData.nama_ayah} onChange={handleChange} /></div>
                         <div className={styles.inputGroup}><label className={styles.label}>NIK Ayah <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" inputMode="numeric" autoComplete="off" name="nik_ayah" required value={formData.nik_ayah} onChange={handleChange} />{fieldError('nik_ayah')}</div>
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Pend. Ayah <span className={styles.required}>*</span></label>
                                 <select className={`${styles.inputField} ${styles.selectField}`} style={{paddingLeft: '15px'}} name="pendidikan_ayah" required value={formData.pendidikan_ayah} onChange={handleChange}>
@@ -448,7 +448,7 @@ export default function BiodataPage() {
                             <textarea className={styles.inputField} style={{paddingLeft: '15px', height: '80px', resize: 'none'}} name="alamat_lengkap" placeholder="Nama Jalan, Blok, Perumahan" required value={formData.alamat_lengkap} onChange={handleChange} />
                         </div>
                         
-                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                        <div className={styles.twoColGrid}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Kota / Kabupaten <span className={styles.required}>*</span></label>
                                 <CustomSearchSelect name="kota" options={listKota} value={formData.kota} onChange={handleCustomChange} placeholder="Pilih Kota..." />
@@ -459,13 +459,15 @@ export default function BiodataPage() {
                             </div>
                         </div>
 
-                        <div style={{display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', zIndex: 1}}>
+                        <div className={styles.addressRowGrid}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Kelurahan <span className={styles.required}>*</span></label>
                                 <CustomSearchSelect name="kelurahan" options={listKelurahan} value={formData.kelurahan} onChange={handleCustomChange} placeholder="Pilih / Ketik..." />
                             </div>
-                            <div className={styles.inputGroup}><label className={styles.label}>RT <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="rt" required value={formData.rt} onChange={handleChange} /></div>
-                            <div className={styles.inputGroup}><label className={styles.label}>RW <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="rw" required value={formData.rw} onChange={handleChange} /></div>
+                            <div className={styles.subTwoColGrid}>
+                                <div className={styles.inputGroup}><label className={styles.label}>RT <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="rt" required value={formData.rt} onChange={handleChange} /></div>
+                                <div className={styles.inputGroup}><label className={styles.label}>RW <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="text" name="rw" required value={formData.rw} onChange={handleChange} /></div>
+                            </div>
                         </div>
 
                         <div className={styles.inputGroup} style={{marginTop:'15px'}}><label className={styles.label}>No HP Ortu (WA) <span className={styles.required}>*</span></label><input className={styles.inputField} style={{paddingLeft: '15px'}} type="tel" name="no_hp_ortu" required value={formData.no_hp_ortu} onChange={handleChange} /></div>

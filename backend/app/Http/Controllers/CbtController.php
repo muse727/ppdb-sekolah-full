@@ -13,6 +13,7 @@ use App\Models\CbtAttempt;
 use App\Models\CbtSession;
 use App\Models\CbtQuestion;
 use App\Models\CbtResult;
+use App\Models\User;
 use App\Http\Resources\CbtQuestionGuruResource;
 use App\Http\Resources\CbtQuestionStudentResource;
 
@@ -148,31 +149,55 @@ class CbtController extends Controller
 
     public function loginCbt(Request $request)
     {
-        $user = $request->user();
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string|size:6',
+        ]);
+
+        $email = strtolower(trim((string) $request->input('email')));
+        $token = strtoupper(trim((string) $request->input('token')));
+
+        $user = User::where('email', $email)->first();
         if (!$user || $user->role !== 'orang_tua') {
-            return response()->json(['success' => false, 'message' => 'Akun orang tua wajib login untuk mengikuti CBT.'], $user ? 403 : 401);
+            return response()->json([
+                'success' => false,
+                'message' => 'Email pendaftar tidak ditemukan atau belum terdaftar.'
+            ], 404);
         }
-        $request->validate(['token' => 'required|string|size:6']);
+
         $key = 'cbt-login:' . $request->ip() . ':' . $user->id;
-        if (RateLimiter::tooManyAttempts($key, 30)) return response()->json(['success' => false, 'message' => 'Terlalu banyak percobaan.'], 429);
-        RateLimiter::hit($key, 60);
-        $session = CbtSession::where('token', $request->input('token'))->where('is_active', true)->first();
-        if (!$session) return response()->json(['success' => false, 'message' => 'Token tidak valid atau sesi belum aktif.'], 422);
-        if (CbtAttempt::where('cbt_session_id', $session->id)->where('user_id', $user->id)->exists()) {
-            return response()->json(['success' => false, 'message' => 'Akun ini telah memulai atau menyelesaikan ujian ini.'], 403);
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            return response()->json(['success' => false, 'message' => 'Terlalu banyak percobaan.'], 429);
         }
+        RateLimiter::hit($key, 60);
+
+        $session = CbtSession::where('token', $token)->where('is_active', true)->first();
+        if (!$session) {
+            return response()->json(['success' => false, 'message' => 'Token tidak valid atau sesi belum aktif.'], 422);
+        }
+
+        if (CbtAttempt::where('cbt_session_id', $session->id)->where('user_id', $user->id)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Akun dengan email ini telah memulai atau menyelesaikan ujian ini.'], 403);
+        }
+
         $startedAt = now();
-        $windowStart = Carbon::parse($session->tanggal_ujian->format('Y-m-d') . ' ' . $session->jam_mulai);
-        $expiresAt = Carbon::parse($session->tanggal_ujian->format('Y-m-d') . ' ' . $session->jam_selesai);
+        $dateStr = $session->tanggal_ujian->format('Y-m-d');
+        // Parse jadwal dengan timezone lokal WIB (Asia/Jakarta) lalu selaraskan ke waktu server UTC
+        $windowStart = Carbon::parse($dateStr . ' ' . $session->jam_mulai, 'Asia/Jakarta')->setTimezone('UTC');
+        $expiresAt = Carbon::parse($dateStr . ' ' . $session->jam_selesai, 'Asia/Jakarta')->setTimezone('UTC');
         if ($expiresAt->lessThanOrEqualTo($windowStart)) $expiresAt->addDay();
         if ($startedAt->lessThan($windowStart) || $startedAt->greaterThanOrEqualTo($expiresAt)) {
             return response()->json(['success' => false, 'message' => 'Ujian di luar jadwal.'], 403);
         }
+
         try {
             $attempt = CbtAttempt::create([
-                'cbt_session_id' => $session->id, 'user_id' => $user->id,
-                'attempt_token' => Str::random(64), 'started_at' => $startedAt,
-                'expires_at' => $expiresAt, 'status' => 'IN_PROGRESS',
+                'cbt_session_id' => $session->id,
+                'user_id' => $user->id,
+                'attempt_token' => Str::random(64),
+                'started_at' => $startedAt,
+                'expires_at' => $expiresAt,
+                'status' => 'IN_PROGRESS',
             ]);
         } catch (QueryException $exception) {
             if (!$this->isAttemptUserSessionUniqueConflict($exception)) {
@@ -181,6 +206,7 @@ class CbtController extends Controller
 
             return response()->json(['success' => false, 'message' => 'Akun ini telah memulai atau menyelesaikan ujian ini.'], 403);
         }
+
         /**
          * P4-B: student-facing shape. Same allowlist that used to be inlined
          * here, now shared with any other student path so there is exactly one
@@ -192,9 +218,19 @@ class CbtController extends Controller
             ->get();
 
         return response()->json([
-            'success' => true, 'attempt_token' => $attempt->attempt_token,
-            'student_name' => $user->name, 'expires_at' => $attempt->expires_at->toISOString(),
-            'session' => ['id' => $session->id, 'nama_ujian' => $session->nama_ujian, 'tanggal_ujian' => $session->tanggal_ujian, 'jam_mulai' => $session->jam_mulai, 'jam_selesai' => $session->jam_selesai, 'ruangan' => $session->ruangan],
+            'success' => true,
+            'attempt_token' => $attempt->attempt_token,
+            'student_name' => $user->name,
+            'student_email' => $user->email,
+            'expires_at' => $attempt->expires_at->toISOString(),
+            'session' => [
+                'id' => $session->id,
+                'nama_ujian' => $session->nama_ujian,
+                'tanggal_ujian' => $session->tanggal_ujian,
+                'jam_mulai' => $session->jam_mulai,
+                'jam_selesai' => $session->jam_selesai,
+                'ruangan' => $session->ruangan,
+            ],
             'questions' => CbtQuestionStudentResource::collection($questions)->resolve(),
         ]);
     }
@@ -211,32 +247,68 @@ class CbtController extends Controller
 
     public function submitCbt(Request $request)
     {
-        $user = $request->user();
-        if (!$user || $user->role !== 'orang_tua') return response()->json(['success' => false, 'message' => 'Akses CBT ditolak.'], $user ? 403 : 401);
-        $request->validate(['attempt_token' => 'required|string|size:64', 'jawaban' => 'required|array', 'pelanggaran' => 'nullable|integer|min:0']);
-        $key = 'cbt-submit:' . $request->ip() . ':' . $user->id;
-        if (RateLimiter::tooManyAttempts($key, 10)) return response()->json(['success' => false, 'message' => 'Terlalu banyak percobaan submit.'], 429);
-        RateLimiter::hit($key, 60);
-        return DB::transaction(function () use ($request, $user) {
-            $attempt = CbtAttempt::where('attempt_token', $request->input('attempt_token'))->lockForUpdate()->first();
-            if (!$attempt || (int) $attempt->user_id !== (int) $user->id) return response()->json(['success' => false, 'message' => 'Attempt tidak valid.'], 403);
+        $request->validate([
+            'attempt_token' => 'required|string|size:64',
+            'jawaban'       => 'required|array',
+            'pelanggaran'   => 'nullable|integer|min:0',
+        ]);
+
+        $attemptToken = (string) $request->input('attempt_token');
+
+        return DB::transaction(function () use ($request, $attemptToken) {
+            $attempt = CbtAttempt::where('attempt_token', $attemptToken)->lockForUpdate()->first();
+            if (!$attempt) {
+                return response()->json(['success' => false, 'message' => 'Attempt ujian tidak valid.'], 403);
+            }
+
+            $user = $attempt->user;
+            $key = 'cbt-submit:' . $request->ip() . ':' . $attempt->user_id;
+            if (RateLimiter::tooManyAttempts($key, 10)) {
+                return response()->json(['success' => false, 'message' => 'Terlalu banyak percobaan submit.'], 429);
+            }
+            RateLimiter::hit($key, 60);
+
             if ($attempt->status !== 'IN_PROGRESS' || $attempt->submitted_at || now()->greaterThanOrEqualTo($attempt->expires_at)) {
                 return response()->json(['success' => false, 'message' => 'Attempt sudah selesai atau kedaluwarsa.'], 403);
             }
             if (!$attempt->session?->is_active || now()->lessThan($attempt->started_at)) {
                 return response()->json(['success' => false, 'message' => 'Sesi ujian tidak tersedia.'], 403);
             }
+
             $questions = CbtQuestion::where('cbt_session_id', $attempt->cbt_session_id)->get();
-            $answers = $request->input('jawaban'); $benar = 0; $salah = 0;
-            foreach ($questions as $q) if ($q->jenis_soal === 'PG') { (($answers[$q->id] ?? null) === $q->kunci_jawaban) ? $benar++ : $salah++; }
+            $answers = $request->input('jawaban');
+            $benar = 0;
+            $salah = 0;
+
+            foreach ($questions as $q) {
+                if ($q->jenis_soal === 'PG') {
+                    (($answers[$q->id] ?? null) === $q->kunci_jawaban) ? $benar++ : $salah++;
+                }
+            }
+
             $skor = round(($benar / max(1, $questions->where('jenis_soal', 'PG')->count())) * 100, 2);
+
             CbtResult::create([
-                'cbt_session_id' => $attempt->cbt_session_id, 'cbt_attempt_id' => $attempt->id,
-                'user_id' => $attempt->user_id, 'nama_siswa' => $user->name, 'jawaban_json' => json_encode($answers),
-                'benar' => $benar, 'salah' => $salah, 'skor' => $skor, 'jumlah_pelanggaran' => $request->input('pelanggaran', 0),
+                'cbt_session_id'     => $attempt->cbt_session_id,
+                'cbt_attempt_id'     => $attempt->id,
+                'user_id'            => $attempt->user_id,
+                'nama_siswa'         => $user ? $user->name : 'Peserta Ujian',
+                'jawaban_json'       => json_encode($answers),
+                'benar'              => $benar,
+                'salah'              => $salah,
+                'skor'               => $skor,
+                'jumlah_pelanggaran' => $request->input('pelanggaran', 0),
             ]);
+
             $attempt->update(['status' => 'SUBMITTED', 'submitted_at' => now()]);
-            return response()->json(['success' => true, 'student_name' => $user->name, 'skor' => $skor, 'benar' => $benar, 'salah' => $salah]);
+
+            return response()->json([
+                'success'      => true,
+                'student_name' => $user ? $user->name : 'Peserta Ujian',
+                'skor'         => $skor,
+                'benar'        => $benar,
+                'salah'        => $salah,
+            ]);
         });
     }
 

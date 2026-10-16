@@ -21,8 +21,13 @@ interface Question {
 
 interface LoginResponse {
     student_name: string;
+    student_email?: string;
     attempt_token: string;
     expires_at: string;
+    session?: {
+        nama_ujian: string;
+        ruangan?: string;
+    };
     questions: Question[];
 }
 
@@ -49,6 +54,7 @@ interface SubmitResponse {
 }
 
 export default function StudentCBTPage() {
+    const [email, setEmail] = useState('');
     const [token, setToken] = useState('');
     const [studentName, setStudentName] = useState('');
     const [attemptToken, setAttemptToken] = useState('');
@@ -75,10 +81,12 @@ export default function StudentCBTPage() {
         if (!isStarted || showReview) return; // Matikan anti-nyontek kalau udah di layar review
 
         const handleBlur = () => {
+            if (submittedRef.current) return;
             setCheatCount(prev => prev + 1);
             Swal.fire({ title: 'PELANGGARAN TERDETEKSI!', text: 'Anda keluar dari layar ujian. Tindakan ini dicatat oleh sistem!', icon: 'error', confirmButtonColor: '#1a5f51', confirmButtonText: 'Kembali', allowOutsideClick: false, allowEscapeKey: false });
         };
         const handleFullscreenChange = () => {
+            if (submittedRef.current) return;
             if (!document.fullscreenElement && !showReview) {
                 setCheatCount(prev => prev + 1);
                 Swal.fire({ title: 'LAYAR PENUH DITUTUP!', text: 'Anda keluar dari mode layar penuh. Segera kembali!', icon: 'warning', confirmButtonText: 'Masuk Layar Penuh', confirmButtonColor: '#1a5f51', allowOutsideClick: false, allowEscapeKey: false })
@@ -108,9 +116,20 @@ export default function StudentCBTPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        Swal.fire({ title: 'Menyiapkan Soal...', didOpen: () => Swal.showLoading() });
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanToken = token.trim().toUpperCase();
+
+        if (!cleanEmail || !cleanToken) {
+            Swal.fire('Data Belum Lengkap', 'Masukkan email pendaftar dan token ujian.', 'warning');
+            return;
+        }
+
+        Swal.fire({ title: 'Memverifikasi Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-            const res = await libAxios.post<LoginResponse>('/api/cbt/login', { token });
+            const res = await libAxios.post<LoginResponse>('/api/cbt/login', { 
+                email: cleanEmail, 
+                token: cleanToken 
+            });
             setStudentName(res.data.student_name);
             setAttemptToken(res.data.attempt_token);
             
@@ -118,14 +137,33 @@ export default function StudentCBTPage() {
             expiresAtRef.current = new Date(res.data.expires_at).getTime();
             setTimeLeft(Math.max(0, Math.ceil((expiresAtRef.current - Date.now()) / 1000)));
 
-            Swal.fire({ title: 'Siap Memulai?', text: 'Waktu akan berjalan dan browser akan masuk mode layar penuh.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Mulai Ujian', confirmButtonColor: '#1a5f51' })
-            .then((result) => {
+            Swal.fire({ 
+                title: 'Konfirmasi Peserta', 
+                html: `
+                    <p style="font-size:14px;color:#4a5568;margin-bottom:12px">Pastikan identitas di bawah ini sesuai dengan data Ananda:</p>
+                    <div style="background:#f0fdf4;border:1.5px solid #86efac;padding:14px 16px;border-radius:12px;text-align:left;font-size:14px;color:#166534">
+                        <div style="margin-bottom:6px"><strong>Nama Peserta:</strong> ${res.data.student_name}</div>
+                        <div style="margin-bottom:6px"><strong>Email:</strong> ${cleanEmail}</div>
+                        <div><strong>Sesi:</strong> ${res.data.session?.nama_ujian || 'Ujian CBT'}</div>
+                    </div>
+                    <p style="font-size:12px;color:#718096;margin-top:12px;font-style:italic">Browser akan beralih ke mode layar penuh saat ujian dimulai.</p>
+                `, 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonText: 'Ya, Mulai Ujian', 
+                cancelButtonText: 'Batal / Bukan Saya',
+                confirmButtonColor: '#1a5f51',
+                cancelButtonColor: '#718096',
+                allowOutsideClick: false
+            }).then((result) => {
                 if (result.isConfirmed) {
-                    document.documentElement.requestFullscreen().then(() => setIsStarted(true)).catch(() => Swal.fire('Error', 'Gagal masuk fullscreen', 'error'));
+                    document.documentElement.requestFullscreen()
+                        .then(() => setIsStarted(true))
+                        .catch(() => setIsStarted(true));
                 }
             });
         } catch (error) {
-            Swal.fire('Gagal Masuk', isAxiosError<{ message?: string }>(error) ? error.response?.data?.message || 'Token tidak valid' : 'Token tidak valid', 'error');
+            Swal.fire('Gagal Masuk', isAxiosError<{ message?: string }>(error) ? error.response?.data?.message || 'Data pendaftar atau token tidak valid' : 'Data pendaftar atau token tidak valid', 'error');
         }
     };
 
@@ -190,6 +228,10 @@ export default function StudentCBTPage() {
                         <div className={styles.scoreStats}>
                             <span className={styles.statBenar} style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Benar: {reviewData.benar}</span>
                             <span className={styles.statSalah} style={{display: 'inline-flex', alignItems: 'center', gap: '4px'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Salah: {reviewData.salah}</span>
+                            <span style={{display: 'inline-flex', alignItems: 'center', gap: '4px', background: cheatCount > 0 ? '#fee2e2' : '#e6f0ee', color: cheatCount > 0 ? '#991b1b' : '#1a5f51', padding: '4px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 800}}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink: 0}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                Pelanggaran: {cheatCount}x
+                            </span>
                         </div>
                     </div>
                     <p className={styles.reviewThanks}>Ujian telah selesai. Terima kasih, <strong>{studentName}</strong>. Berikut adalah rekap jawaban Anda.</p>
@@ -274,9 +316,38 @@ export default function StudentCBTPage() {
                 <div className={styles.loginCard}>
                     <div className={styles.logoBox}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1a5f51" strokeWidth="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></div>
                     <h1>Portal Ujian CBT</h1>
-                    <p>Masukkan token ujian. Login ke akun pendaftar terlebih dahulu.</p>
+                    <p>Masukkan email yang didaftarkan ke sistem dan token ujian dari pengawas.</p>
                     <form onSubmit={handleLogin}>
-                        <input type="text" className={styles.tokenInput} placeholder="TOKEN UJIAN" value={token} onChange={(e) => setToken(e.target.value.toUpperCase())} maxLength={6} required />
+                        <div style={{ textAlign: 'left', marginBottom: '16px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#2d3748', marginBottom: '6px' }}>
+                                Email Akun Pendaftar
+                            </label>
+                            <input 
+                                type="email" 
+                                className={styles.formInput} 
+                                placeholder="nama@email.com" 
+                                value={email} 
+                                onChange={(e) => setEmail(e.target.value)} 
+                                required 
+                                autoFocus
+                            />
+                        </div>
+
+                        <div style={{ textAlign: 'left', marginBottom: '20px' }}>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#2d3748', marginBottom: '6px' }}>
+                                Token Ujian (6 Karakter)
+                            </label>
+                            <input 
+                                type="text" 
+                                className={styles.tokenInput} 
+                                placeholder="TOKEN" 
+                                value={token} 
+                                onChange={(e) => setToken(e.target.value.toUpperCase())} 
+                                maxLength={6} 
+                                required 
+                            />
+                        </div>
+
                         <button type="submit" className={styles.loginBtn}>MASUK UJIAN</button>
                     </form>
                 </div>

@@ -347,6 +347,29 @@
 }
 .typeImage { background: #f1f5f9; color: #475569; }
 .typeVideo { background: #fef3c7; color: #b45309; }
+.targetBadgePendaftar { background: #e0f2fe; color: #0369a1; }
+.targetBadgeLanding { background: #fef3c7; color: #92400e; }
+.targetBadgeAll { background: #f3e8ff; color: #7e22ce; }
+
+.colorPresetGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+.colorCircle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.colorCircleSelected {
+  border-color: #0f172a;
+  transform: scale(1.15);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
 
 .info p { font-size: 12.5px; color: #64748b; margin: 0 0 6px 0; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

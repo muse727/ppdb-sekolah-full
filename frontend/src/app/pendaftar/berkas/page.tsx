@@ -19,55 +19,283 @@ import styles from './berkas.module.css';
 // =================================================================
 
 
-const ocrKeywords: Record<string, string[]> = {
-    kartu_keluarga: ["KARTU KELUARGA", "KEPALA KELUARGA"],
-    akte_kelahiran: ["AKTA KELAHIRAN", "AKTE KELAHIRAN", "KUTIPAN", "PENCATATAN SIPIL"],
+interface KeywordGroup {
+    primary: string[];    // Kata kunci utama (skor tinggi)
+    secondary: string[];  // Kata kunci pendukung (skor sedang)
+}
+
+const documentKeywords: Record<string, KeywordGroup> = {
+    kartu_keluarga: {
+        primary: [
+            "KARTU KELUARGA",
+            "KEPALA KELUARGA",
+            "NO. KK",
+            "NOMOR KK",
+            "NO KK",
+            "KELUARGA",
+        ],
+        secondary: [
+            "REPUBLIK INDONESIA",
+            "PROVINSI",
+            "KABUPATEN",
+            "KOTA",
+            "KECAMATAN",
+            "KELURAHAN",
+            "DESA",
+            "HUBUNGAN KELUARGA",
+            "STATUS HUBUNGAN",
+            "NIK",
+            "NAMA LENGKAP",
+            "JENIS KELAMIN",
+            "AGAMA",
+            "PENDIDIKAN",
+            "JENIS PEKERJAAN",
+            "TANGGAL LAHIR",
+            "TEMPAT LAHIR",
+            "GOLONGAN DARAH",
+            "STATUS PERKAWINAN",
+            "KEWARGANEGARAAN",
+            "DOKUMEN IMIGRASI",
+            "NAMA ORANG TUA",
+            "AYAH",
+            "IBU",
+            "TANDA TANGAN",
+            "KEPALA DINAS",
+            "DINAS KEPENDUDUKAN",
+            "PENCATATAN SIPIL",
+        ],
+    },
+    akte_kelahiran: {
+        primary: [
+            "AKTA KELAHIRAN",
+            "AKTE KELAHIRAN",
+            "SURAT KELAHIRAN",
+            "KELAHIRAN",
+            "KENAL LAHIR",
+        ],
+        secondary: [
+            "KUTIPAN",
+            "PENCATATAN SIPIL",
+            "WARGA NEGARA",
+            "WARGANEGARA",
+            "ANAK KE",
+            "LAHIR DI",
+            "DINAS KEPENDUDUKAN",
+            "PEJABAT PENCATATAN",
+            "NOMOR AKTA",
+            "NO. AKTA",
+            "NO AKTA",
+            "MEMBERIKAN KUTIPAN",
+            "DIPERTEMUKAN",
+            "DITANDATANGANI",
+            "HARI",
+            "TANGGAL",
+            "BULAN",
+            "TAHUN",
+            "REPUBLIK INDONESIA",
+        ],
+    },
 };
 
-// Batas pra-OCR supaya perangkat lambat tidak terbebani. File melebihi ini
-// dilewati OCR-nya (bukan ditolak) dan langsung ditawarkan upload.
-const OCR_MAX_BYTES = 5 * 1024 * 1024; // 5 MB, sama dengan backend
-const OCR_TIMEOUT_MS = 30000;          // 30 detik
+function normalizeOcrText(rawText: string): string {
+    return rawText
+        .toUpperCase()
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[^A-Z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getFuzzyOcrText(text: string): string {
+    return text
+        .replace(/0/g, 'O')
+        .replace(/1/g, 'I')
+        .replace(/5/g, 'S')
+        .replace(/8/g, 'B')
+        .replace(/6/g, 'G');
+}
+
+async function prepareImageForOcr(file: File, rotationDeg: number = 0): Promise<Blob | File> {
+    if (typeof window === 'undefined') return file;
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const MAX_DIM = 1800;
+            let srcW = img.width;
+            let srcH = img.height;
+
+            if (srcW > MAX_DIM || srcH > MAX_DIM) {
+                if (srcW > srcH) {
+                    srcH = Math.round((srcH * MAX_DIM) / srcW);
+                    srcW = MAX_DIM;
+                } else {
+                    srcW = Math.round((srcW * MAX_DIM) / srcH);
+                    srcH = MAX_DIM;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            const isSideways = rotationDeg === 90 || rotationDeg === 270;
+            canvas.width = isSideways ? srcH : srcW;
+            canvas.height = isSideways ? srcW : srcH;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(file);
+                return;
+            }
+
+            ctx.save();
+            if (rotationDeg === 90) {
+                ctx.translate(canvas.width, 0);
+                ctx.rotate((90 * Math.PI) / 180);
+            } else if (rotationDeg === 180) {
+                ctx.translate(canvas.width, canvas.height);
+                ctx.rotate((180 * Math.PI) / 180);
+            } else if (rotationDeg === 270) {
+                ctx.translate(0, canvas.height);
+                ctx.rotate((270 * Math.PI) / 180);
+            }
+
+            // Gambar ulang
+            ctx.drawImage(img, 0, 0, srcW, srcH);
+            ctx.restore();
+
+            // Binarization & contrast boost untuk mempertajam teks dokumen resmi
+            try {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                const contrast = 25;
+                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+                for (let i = 0; i < data.length; i += 4) {
+                    const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                    const contrasted = factor * (gray - 128) + 128;
+                    const clamped = Math.max(0, Math.min(255, contrasted));
+                    data[i] = clamped;
+                    data[i + 1] = clamped;
+                    data[i + 2] = clamped;
+                }
+                ctx.putImageData(imgData, 0, 0);
+            } catch {
+                // Fallback jika getImageData dibatasi cross-origin
+            }
+
+            canvas.toBlob(
+                (blob) => {
+                    resolve(blob ?? file);
+                },
+                'image/jpeg',
+                0.90
+            );
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+        };
+        img.src = url;
+    });
+}
+
+const OCR_TIMEOUT_MS = 25000;
 
 type OcrOutcome = "match" | "mismatch" | "skipped" | "error";
+
+function evaluateTextKeywords(rawText: string, jenis: string): 'match' | 'mismatch' {
+    const config = documentKeywords[jenis];
+    if (!config) return 'match';
+
+    const normalized = normalizeOcrText(rawText);
+    const fuzzy = getFuzzyOcrText(normalized);
+
+    // Cek keberadaan pola NIK (16 digit atau variasi OCR-nya) khusus untuk KK
+    const hasNikPattern = /\b\d{14,16}\b/.test(normalized) || /\b[0-9OISBG]{14,16}\b/.test(fuzzy);
+
+    let score = 0;
+
+    for (const kw of config.primary) {
+        const normKw = normalizeOcrText(kw);
+        const fuzzyKw = getFuzzyOcrText(normKw);
+        if (normalized.includes(normKw) || fuzzy.includes(fuzzyKw)) {
+            score += 3;
+            break;
+        }
+    }
+
+    for (const kw of config.secondary) {
+        const normKw = normalizeOcrText(kw);
+        const fuzzyKw = getFuzzyOcrText(normKw);
+        if (normalized.includes(normKw) || fuzzy.includes(fuzzyKw)) {
+            score += 1;
+        }
+    }
+
+    if (jenis === 'kartu_keluarga' && hasNikPattern) {
+        score += 2;
+    }
+
+    // Cukup skor >= 1 (minimal 1 kata kunci utama atau 1 kata pendukung/NIK terdeteksi)
+    return score >= 1 ? 'match' : 'mismatch';
+}
 
 /** Hasil pre-check: 'match' | 'mismatch' | 'skipped' | 'error' */
 async function runOcrPrecheck(
     file: File,
     jenis: string,
 ): Promise<'match' | 'mismatch' | 'skipped' | 'error'> {
-    // PDF tidak bisa dibaca pipeline OCR ini (tesseract.js hanya
-    // menerima gambar) — dilewati dengan jujur, TIDAK diklaim terpindai.
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (isPdf) return 'skipped';
 
-    // Skip pra-cek untuk file non-gambar (ditolak backend dengan 422).
     if (!file.type.startsWith('image/')) return 'skipped';
 
-    // Jangan OCR file besar di perangkat lambat — cek ukuran dulu
-    // sehingga tidak menyalin buffer besar ke worker.
-    if (file.size > OCR_MAX_BYTES) return 'skipped';
+    if (!documentKeywords[jenis]) return 'skipped';
 
-    const keywords = ocrKeywords[jenis] ?? [];
-    if (keywords.length === 0) return 'skipped';
-
-    // Satu worker per pre-check, selalu di-terminate di finally() supaya
-    // tidak ada worker menggantung / jalan ulang saat React re-render.
-    // (Tesseract.recognize() membuat worker internal yang sulit
-    // dibersihkan, jadi worker dikelola sendiri di sini.)
-    const worker = await Tesseract.createWorker('ind');
     try {
-        const result = await Promise.race([
-            worker.recognize(file),
-            new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('ocr-timeout')), OCR_TIMEOUT_MS)),
-        ]);
-        const text = (result.data.text ?? '').toUpperCase();
-        return keywords.some((kw) => text.includes(kw)) ? 'match' : 'mismatch';
+        const worker = await Tesseract.createWorker('ind');
+        try {
+            // Putaran 1: Cek orientasi asli dokumen (0 derajat)
+            const processedFile0 = await prepareImageForOcr(file, 0);
+            const result0 = await Promise.race([
+                worker.recognize(processedFile0),
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('ocr-timeout')), OCR_TIMEOUT_MS)),
+            ]);
+
+            const text0 = result0?.data?.text ?? '';
+            if (evaluateTextKeywords(text0, jenis) === 'match') {
+                return 'match';
+            }
+
+            // Putaran 2: Banyak orang tua memotret KK landscape secara portrait (posisi miring 90° atau 270°)
+            // Jika putaran 1 belum cocok, coba rotasi 270 derajat (putar 90° counter-clockwise)
+            const processedFile270 = await prepareImageForOcr(file, 270);
+            const result270 = await Promise.race([
+                worker.recognize(processedFile270),
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('ocr-timeout')), OCR_TIMEOUT_MS)),
+            ]);
+
+            const text270 = result270?.data?.text ?? '';
+            if (evaluateTextKeywords(text270, jenis) === 'match') {
+                return 'match';
+            }
+
+            // Putaran 3: Coba rotasi 90 derajat searah jarum jam jika orientasi HP sebaliknya
+            const processedFile90 = await prepareImageForOcr(file, 90);
+            const result90 = await Promise.race([
+                worker.recognize(processedFile90),
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('ocr-timeout')), OCR_TIMEOUT_MS)),
+            ]);
+
+            const text90 = result90?.data?.text ?? '';
+            return evaluateTextKeywords(text90, jenis);
+        } finally {
+            void worker.terminate().catch(() => undefined);
+        }
     } catch {
-        return 'error'; // gagal/timeout → fallback, jangan blokir upload
-    } finally {
-        void worker.terminate().catch(() => undefined);
+        return 'error';
     }
 }
 
@@ -82,6 +310,126 @@ export default function BerkasPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeJenis, setActiveJenis] = useState('');
     const [activeLabel, setActiveLabel] = useState('');
+
+    // STATE UNTUK SCANNING / ANALYZING ANIMATION
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanStage, setScanStage] = useState<'reading' | 'analyzing' | 'uploading'>('reading');
+
+    // STATE UNTUK DIALOG MODAL PREMIUM (NO GRADIENT, NO EMOJI)
+    const [dialogState, setDialogState] = useState<{
+        isOpen: boolean;
+        type: 'warning' | 'info' | 'error' | 'success';
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        onConfirm: () => void;
+        onCancel?: () => void;
+    }>({
+        isOpen: false,
+        type: 'info',
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
+    const closeDialog = () => {
+        setDialogState((prev) => ({ ...prev, isOpen: false }));
+    };
+
+    const showDialog = (
+        type: 'warning' | 'info' | 'error' | 'success',
+        title: string,
+        message: string,
+        onConfirm?: () => void,
+        confirmText: string = 'Mengerti',
+        cancelText?: string,
+        onCancel?: () => void,
+    ) => {
+        setDialogState({
+            isOpen: true,
+            type,
+            title,
+            message,
+            confirmText,
+            cancelText,
+            onConfirm: () => {
+                closeDialog();
+                if (onConfirm) onConfirm();
+            },
+            onCancel: () => {
+                closeDialog();
+                if (onCancel) onCancel();
+            },
+        });
+    };
+
+    const askConfirm = (type: 'warning' | 'info', title: string, message: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+            setDialogState({
+                isOpen: true,
+                type,
+                title,
+                message,
+                confirmText: 'Ya, Tetap Unggah',
+                cancelText: 'Periksa Ulang File',
+                onConfirm: () => {
+                    closeDialog();
+                    resolve(true);
+                },
+                onCancel: () => {
+                    closeDialog();
+                    resolve(false);
+                },
+            });
+        });
+    };
+
+    /**
+     * Membuka berkas lewat XHR ber-kredensial lalu menampilkannya sebagai
+     * blob URL. Endpoint berkas memakai sesi Sanctum: permintaan navigasi
+     * langsung (tab baru tanpa Referer) tidak dianggap stateful sehingga
+     * selalu 401 (halaman blank). XHR dari halaman ini menyertakan Referer
+     * dan cookie, jadi otentikasi berjalan normal.
+     */
+    const handleViewFile = async (userId: number | string | undefined, jenis: string) => {
+        if (userId === undefined || userId === null) {
+            showDialog('error', 'Berkas Belum Tersedia', 'Data berkas belum termuat. Silakan muat ulang halaman.', undefined, 'Tutup');
+            return;
+        }
+        // Buka tab baru segera dan sinkron dengan klik agar tidak diblokir
+        // popup blocker, baru isi lokasinya setelah blob siap.
+        const newTab = window.open('', '_blank');
+
+        try {
+            const res = await libAxios.get<Blob>(`/api/berkas/file/${userId}/${jenis}`, { responseType: 'blob' });
+            const blobUrl = URL.createObjectURL(res.data);
+
+            if (newTab && !newTab.closed) {
+                newTab.location.href = blobUrl;
+            } else {
+                // Popup diblokir browser: fallback unduh file.
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `dokumen-${jenis}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+
+            // Revoke belakangan supaya PDF/gambar di tab baru sempat termuat.
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
+        } catch (error) {
+            if (newTab && !newTab.closed) newTab.close();
+            showDialog(
+                'error',
+                'Gagal Membuka Berkas',
+                httpErrorMessage(error, 'Berkas tidak dapat dibuka saat ini. Silakan coba lagi.'),
+                undefined,
+                'Tutup',
+            );
+        }
+    };
 
     const API_URL = libAxios.defaults.baseURL?.replace(/\/$/, '') ?? '';
 
@@ -133,12 +481,11 @@ export default function BerkasPage() {
         const okMime = ['image/jpeg', 'image/png', 'application/pdf'].includes(file.type);
         const okSize = file.size <= 5 * 1024 * 1024;
         if (!okMime || !okSize) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Format Tidak Didukung',
-                text: (okMime ? 'Ukuran file melebihi 5 MB.' : 'Gunakan file JPG, PNG, atau PDF maksimal 5 MB.'),
-                confirmButtonColor: '#1a5f51',
-            });
+            showDialog(
+                'error',
+                'Format Tidak Didukung',
+                okMime ? 'Ukuran file melebihi batas maksimal 5 MB.' : 'Gunakan file JPG, PNG, atau PDF maksimal 5 MB.',
+            );
             return;
         }
 
@@ -146,34 +493,33 @@ export default function BerkasPage() {
         // dan skipped — tetap menawarkan upload; user yang memutuskan.
         // Keyword cocok pun TIDAK menandakan dokumen valid/terverifikasi.
         let ocrOutcome: OcrOutcome = "skipped";
+        setIsScanning(true);
+        setScanStage('reading');
+
         try {
+            // Berikan feedback visual bahwa dokumen sedang diproses
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+            if (!isPdf && file.type.startsWith('image/')) {
+                setScanStage('analyzing');
+            }
             ocrOutcome = await runOcrPrecheck(file, activeJenis);
         } catch {
             ocrOutcome = 'error';
+        } finally {
+            setIsScanning(false);
         }
-
-        const confirmUpload = (icon: 'warning' | 'info', title: string, text: string) =>
-            Swal.fire({
-                icon,
-                title,
-                text,
-                showCancelButton: true,
-                confirmButtonText: 'Ya, Tetap Unggah',
-                cancelButtonText: 'Periksa Ulang File',
-                confirmButtonColor: '#1a5f51',
-            }).then(({ isConfirmed }) => isConfirmed);
 
         if (ocrOutcome === 'mismatch') {
             // Tawarkan lanjut, jangan blokir: keyword tidak cocok bukan
             // berarti dokumen tidak valid (foto buram sering gagal terbaca).
-            const lanjut = await confirmUpload(
+            const lanjut = await askConfirm(
                 'warning',
                 'Kata Kunci Tidak Terdeteksi',
                 'Pemeriksaan awal tidak menemukan kata kunci dokumen ini di gambar. Ini bisa terjadi bila foto kurang jelas — bukan berarti dokumen salah. Tetap unggah?',
             );
             if (!lanjut) return;
         } else if (ocrOutcome === 'error') {
-            const lanjut = await confirmUpload(
+            const lanjut = await askConfirm(
                 'info',
                 'Pemeriksaan Awal Dilewati',
                 'Pemeriksaan kata kunci otomatis gagal atau memakan waktu terlalu lama di perangkat ini. Ini tidak menghalangi unggah — file tetap akan dicek otomatis oleh server.',
@@ -183,7 +529,7 @@ export default function BerkasPage() {
             // PDF atau file terlalu besar: tidak dipindai. Jangan klaim
             // "sudah dipindai" — file tetap dicek otomatis oleh server.
             const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-            const lanjut = await confirmUpload(
+            const lanjut = await askConfirm(
                 'info',
                 isPdf ? 'PDF Tidak Dipindai Kata Kunci' : 'File Dilewati Pemeriksaan Kata Kunci',
                 isPdf
@@ -193,19 +539,32 @@ export default function BerkasPage() {
             if (!lanjut) return;
         }
 
-        Swal.fire({ title: 'Mengunggah...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        setIsScanning(true);
+        setScanStage('uploading');
+
         const formData = new FormData();
         formData.append('jenis', activeJenis);
         formData.append('file', file);
 
         try {
             const res = await libAxios.post('/api/berkas/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            Swal.fire('Berhasil!', res.data?.message ?? `${activeLabel} berhasil diunggah dan lolos pemeriksaan teknis.`, 'success')
-                .then(() => window.location.reload());
+            setIsScanning(false);
+            showDialog(
+                'success',
+                'Unggah Berhasil',
+                res.data?.message ?? `${activeLabel} berhasil diunggah dan lolos verifikasi teknis.`,
+                () => window.location.reload(),
+                'Selesai',
+            );
         } catch (error) {
-            // Tampilkan pesan server asli (mis. 429 throttle / 422 format),
-            // bukan pesan generik yang menelan penyebab sebenarnya.
-            Swal.fire('Gagal', httpErrorMessage(error, 'Terjadi kesalahan saat mengunggah.'), 'error');
+            setIsScanning(false);
+            showDialog(
+                'error',
+                'Gagal Mengunggah',
+                httpErrorMessage(error, 'Terjadi kesalahan saat mengunggah berkas.'),
+                undefined,
+                'Tutup',
+            );
         }
     };
     const openUploadModal = (jenis: string, label: string) => {
@@ -252,7 +611,7 @@ export default function BerkasPage() {
                                 <div className={styles.berkasUploaded}>
                                     {renderStatusBadge()}
                                     <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-                                        <a href={`${API_URL}/api/berkas/file/${berkasData.user_id}/kartu_keluarga`} target="_blank" rel="noreferrer" className={styles.viewBtn}>Lihat File</a>
+                                        <button type="button" className={styles.viewBtn} onClick={() => handleViewFile(berkasData.user_id, 'kartu_keluarga')}>Lihat File</button>
                                         <button className={styles.changeBtn} onClick={() => openUploadModal('kartu_keluarga', 'Kartu Keluarga (KK)')}>Ganti File</button>
                                     </div>
                                 </div>
@@ -278,7 +637,7 @@ export default function BerkasPage() {
                                 <div className={styles.berkasUploaded}>
                                     {renderStatusBadge()}
                                     <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-                                        <a href={`${API_URL}/api/berkas/file/${berkasData.user_id}/akte_kelahiran`} target="_blank" rel="noreferrer" className={styles.viewBtn}>Lihat File</a>
+                                        <button type="button" className={styles.viewBtn} onClick={() => handleViewFile(berkasData.user_id, 'akte_kelahiran')}>Lihat File</button>
                                         <button className={styles.changeBtn} onClick={() => openUploadModal('akte_kelahiran', 'Akte Kelahiran')}>Ganti File</button>
                                     </div>
                                 </div>
@@ -326,6 +685,126 @@ export default function BerkasPage() {
                         </div>
 
                         <button className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Batal</button>
+                    </div>
+                </div>
+            )}
+
+            {/* =========================================================
+                PREMIUM SCANNING & VERIFICATION OVERLAY (NO EMOJI)
+            ========================================================= */}
+            {isScanning && (
+                <div className={styles.scanningOverlay}>
+                    <div className={styles.scanningCard}>
+                        <div className={styles.scannerBeam}>
+                            <div className={styles.scannerPulse}></div>
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 7V4h3"></path>
+                                <path d="M20 7V4h-3"></path>
+                                <path d="M4 17v3h3"></path>
+                                <path d="M20 17v3h-3"></path>
+                                <line x1="4" y1="12" x2="20" y2="12"></line>
+                                <circle cx="12" cy="12" r="2"></circle>
+                            </svg>
+                        </div>
+
+                        <div className={styles.scanningBadge}>
+                            <span className={styles.scanningBadgeDot}></span>
+                            {scanStage === 'reading' && 'Membaca Berkas'}
+                            {scanStage === 'analyzing' && 'Analisis Dokumen'}
+                            {scanStage === 'uploading' && 'Sinkronisasi Server'}
+                        </div>
+
+                        <h3 className={styles.scanningTitle}>
+                            {scanStage === 'reading' && 'Memindai Struktur Dokumen'}
+                            {scanStage === 'analyzing' && 'Menganalisis Keterbacaan'}
+                            {scanStage === 'uploading' && 'Mengenkripsi & Mengunggah'}
+                        </h3>
+
+                        <p className={styles.scanningDesc}>
+                            {scanStage === 'reading' && 'Sistem sedang membaca format dan memeriksa ketajaman gambar dokumen Anda.'}
+                            {scanStage === 'analyzing' && 'Memverifikasi kesesuaian kata kunci identitas dokumen secara otomatis.'}
+                            {scanStage === 'uploading' && 'Mengamankan dan mentransfer berkas ke penyimpanan server terenkripsi.'}
+                        </p>
+
+                        <div className={styles.scanningProgressBg}>
+                            <div className={styles.scanningProgressBar}></div>
+                        </div>
+
+                        <p className={styles.scanningStepText}>
+                            Mohon tunggu sebentar, proses ini berjalan otomatis...
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* =========================================================
+                PREMIUM DIALOG / CONFIRMATION MODAL (FLAT, NO GRADIENT)
+            ========================================================= */}
+            {dialogState.isOpen && (
+                <div className={styles.dialogOverlay}>
+                    <div className={styles.dialogCard}>
+                        {/* Icon Sesuai Type */}
+                        <div
+                            className={`${styles.dialogIcon} ${
+                                dialogState.type === 'warning'
+                                    ? styles.dialogIconWarning
+                                    : dialogState.type === 'error'
+                                    ? styles.dialogIconError
+                                    : dialogState.type === 'success'
+                                    ? styles.dialogIconSuccess
+                                    : styles.dialogIconInfo
+                            }`}
+                        >
+                            {dialogState.type === 'warning' && (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                            )}
+                            {dialogState.type === 'info' && (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            )}
+                            {dialogState.type === 'error' && (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                            )}
+                            {dialogState.type === 'success' && (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="9 12 12 15 16 10"></polyline>
+                                </svg>
+                            )}
+                        </div>
+
+                        <h3 className={styles.dialogTitle}>{dialogState.title}</h3>
+                        <p className={styles.dialogMessage}>{dialogState.message}</p>
+
+                        <div className={styles.dialogActions}>
+                            {dialogState.cancelText && (
+                                <button
+                                    type="button"
+                                    className={styles.dialogCancelBtn}
+                                    onClick={dialogState.onCancel ?? closeDialog}
+                                >
+                                    {dialogState.cancelText}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className={styles.dialogConfirmBtn}
+                                onClick={dialogState.onConfirm}
+                            >
+                                {dialogState.confirmText ?? 'Mengerti'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

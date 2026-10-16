@@ -89,6 +89,22 @@ class AuthController extends Controller
             ], 429);
         }
 
+        // Normalisasi untuk jalur INTERNAL: jika salah satu field (kredensial / nomor_internal) terisi,
+        // sinkronkan ke keduanya agar kompatibel baik via API payload maupun form registrasi frontend.
+        if ($request->jalur === 'INTERNAL') {
+            if (!$request->filled('nomor_internal') && $request->filled('kredensial')) {
+                $request->merge(['nomor_internal' => trim((string)$request->kredensial)]);
+            }
+            if (!$request->filled('kredensial') && $request->filled('nomor_internal')) {
+                $request->merge(['kredensial' => trim((string)$request->nomor_internal)]);
+            }
+        }
+
+        // Normalisasi jika jalur UMUM memasukkan format token SMP Email (SMP-XXXX-XXXX-XXXX-XXXX)
+        if ($request->jalur === 'UMUM' && str_starts_with(strtoupper(trim((string)$request->kredensial)), 'SMP-')) {
+            $request->merge(['jalur' => 'SMP_EMAIL']);
+        }
+
         $request->validate([
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|max:255|unique:users,email',
@@ -98,6 +114,9 @@ class AuthController extends Controller
             // P4-D.2: jalur INTERNAL credential is a single 10-digit registration
             // number (nomor_internal). No NISN, no NIK, no second access_code.
             'nomor_internal' => 'required_if:jalur,INTERNAL|nullable|string|digits:10',
+        ], [
+            'nomor_internal.required_if' => 'Nomor registrasi jalur internal wajib diisi.',
+            'nomor_internal.digits'      => 'Nomor registrasi jalur internal harus terdiri dari 10 digit angka.',
         ]);
 
         // Hitung hanya attempt yang lolos validasi (well-formed), supaya
@@ -105,16 +124,29 @@ class AuthController extends Controller
         // sebelum bcrypt/token-lookup sehingga brute-force tetap terbendung.
         RateLimiter::hit($throttleKey, 60);
 
-        // === GLOBAL PPDB GATE (backend-enforced, checked BEFORE anything else) ===
-        // If PPDB is closed, reject immediately. The token/whitelist is NOT touched,
-        // so a closed gate never burns a credential.
+        // === GLOBAL & JALUR-SPECIFIC PPDB GATE (backend-enforced) ===
         if (!$capacity->isGlobalOpen()) {
             return response()->json([
                 'message' => 'Pendaftaran PPDB sedang ditutup.',
             ], 403);
         }
 
+        if ($request->jalur === 'INTERNAL') {
+            if (!$capacity->isInternalOpen()) {
+                return response()->json([
+                    'message' => 'Pendaftaran Jalur Internal sedang ditutup oleh pihak sekolah.',
+                ], 403);
+            }
+        } else {
+            if (!$capacity->isUmumOpen()) {
+                return response()->json([
+                    'message' => 'Pendaftaran Jalur Reguler (Umum) belum dibuka. Saat ini hanya dibuka untuk Jalur Internal.',
+                ], 403);
+            }
+        }
+
         $targetJenjang = null;
+        $candidateGender = null;
 
         DB::beginTransaction();
         try {
@@ -138,16 +170,14 @@ class AuthController extends Controller
                 }
 
                 // Jenjang is the candidate's SERVER-AUTHORITATIVE explicit value.
-                // Client-supplied jenjang is ignored. A candidate without a valid
-                // jenjang (SD/SMP) can NEVER register — no INTERNAL user with
-                // jenjang=NULL may be created.
                 $targetJenjang = $whitelist->jenjang;
+                $candidateGender = $whitelist->jenis_kelamin;
                 if (!in_array($targetJenjang, ['SD', 'SMP'], true)) {
                     DB::rollBack();
                     return response()->json(['message' => 'Data kandidat tidak valid (jenjang belum ditetapkan). Hubungi admin.'], 422);
                 }
 
-                $capacity->lockRegistrationCapacity($targetJenjang);
+                $capacity->lockRegistrationCapacity($targetJenjang, $candidateGender);
 
             } elseif ($request->jalur === 'SMP_EMAIL') {
                 // =========================================================
@@ -182,7 +212,8 @@ class AuthController extends Controller
                 }
 
                 $targetJenjang = $smpToken->jenjang;
-                $capacity->lockRegistrationCapacity($targetJenjang);
+                $candidateGender = $smpToken->jenis_kelamin;
+                $capacity->lockRegistrationCapacity($targetJenjang, $candidateGender);
 
                 $user = User::create([
                     'name'     => $smpToken->nama,
@@ -246,11 +277,12 @@ class AuthController extends Controller
             }
 
             PpdbSeatAllocation::create([
-                'user_id' => $user->id,
-                'payment_id' => null,
-                'jenjang' => $targetJenjang,
-                'status' => PpdbSeatAllocation::STATUS_ALLOCATED,
-                'allocated_at' => now(),
+                'user_id'       => $user->id,
+                'payment_id'    => null,
+                'jenjang'       => $targetJenjang,
+                'jenis_kelamin' => $candidateGender,
+                'status'        => PpdbSeatAllocation::STATUS_ALLOCATED,
+                'allocated_at'  => now(),
             ]);
 
             if ($request->jalur === 'SMP_EMAIL') {

@@ -178,3 +178,105 @@
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
+
+/* === AKSI INPUT: LIHAT & SALIN PASSWORD / EMAIL === */
+.inputWithAction {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inputWithAction .formInput {
+  padding-right: 78px;
+}
+
+.inputActionGroup {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.inputActionIconBtn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  color: #718096;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inputActionIconBtn:hover {
+  background-color: #edf2f7;
+  color: #1a5f51;
+}
+
+.copyAccountBanner {
+  background-color: #f0fdf4;
+  border: 1px dashed #10b981;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.copyAccountText {
+  font-size: 12px;
+  color: #065f46;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.copyAccountBtn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.copyAccountBtn:hover {
+  background-color: #059669;
+}
+
+.adminEmailRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copyMiniBtn {
+  background: none;
+  border: none;
+  padding: 3px;
+  border-radius: 4px;
+  color: #a0aec0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.copyMiniBtn:hover {
+  background-color: #edf2f7;
+  color: #1a5f51;
+}

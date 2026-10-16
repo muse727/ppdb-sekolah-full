@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:sanctum', CheckRole::class.':orang_tua'])->prefix('daftar-ulang')->group(function () {
     Route::get('/pricing', [DaftarUlangController::class, 'pricing']);
     Route::post('/invoices', [DaftarUlangController::class, 'createInvoice']);
+    Route::get('/invoices/active', [DaftarUlangController::class, 'activeInvoice']);
     Route::get('/invoices/{id}', [DaftarUlangController::class, 'invoice'])->whereNumber('id');
     Route::post('/invoices/{id}/agreement', [DaftarUlangController::class, 'accept'])->whereNumber('id');
     // B.6A: parent uploads their own Daftar Ulang proof of payment.
@@ -44,10 +45,8 @@ Route::middleware(['auth:sanctum', CheckRole::class.':admin'])->prefix('admin/da
 
     Route::get('/pricing/default/{jenjang}', [DaftarUlangController::class, 'defaultPricing']);
     Route::get('/pricing/individual/{userId}', [DaftarUlangController::class, 'individual'])->whereNumber('userId');
-    Route::middleware(CheckRole::class.':super_admin')->group(function () {
-        Route::put('/pricing/default/{jenjang}', [DaftarUlangController::class, 'updateDefault']);
-        Route::put('/pricing/individual/{userId}', [DaftarUlangController::class, 'updateIndividual'])->whereNumber('userId');
-    });
+    Route::put('/pricing/default/{jenjang}', [DaftarUlangController::class, 'updateDefault']);
+    Route::put('/pricing/individual/{userId}', [DaftarUlangController::class, 'updateIndividual'])->whereNumber('userId');
 
     // B.7.4-B: admin consultation desk. The list is strictly read-only; the only
     // mutations are schedule/reschedule and the two terminal resolutions. Any
